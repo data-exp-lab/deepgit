@@ -2,6 +2,22 @@
 
 ## Preparing the Data
 
+### From SBOM File (The OLD Way)
+
+This file contains every dependency, down to the root level. It's not what we want eventually. This is only for future reference.
+
+Codes are in `code`, which is singled out from the JupyterLab (`prepare_csv.ipynb`).
+
+**Steps:**
+
+1. 
+
+The csv files have been loaded into the `neo4j/neo4j.dump`.
+
+### From Repo 
+
+Using other packages to graph the direct dependency of a repo, and then we can use web crawling and GitHub API to get the data.
+
 ## Loading Data to Neo4j
 
 ### The Graph Model
@@ -13,6 +29,7 @@ The graph model currently used in database in `neo4j`.
 #### Nodes
 
 All of the repository information are get through GitHub API once we have their full name (ex: `data-exp-lab/deepgit`).
+Remember to use the token, so that the server won't block you.
 
 ```python
 from github import Github
@@ -22,8 +39,8 @@ repo = g.get_repo(full_name_or_id=repo_full_name)
 
 ##### Repo `(:Repo)`
 
-Be really carefully about getting the descriptions.
-Because Neo4j wraps strings with `"`, we need to replace every `"` to `'` in the description.
+Be really carefully when getting the descriptions.
+Because csv wraps strings with `"`, we need to replace every `"` to `'` in the description.
 
 - Label: `Repo`
 - Properties:
@@ -32,7 +49,7 @@ Because Neo4j wraps strings with `"`, we need to replace every `"` to `'` in the
   - starsCount: num (`repo.stargazers_count`)
   - forksCount: num (`repo.forks`)
   - watchersCount: num (`repo.subscribers_count`)
-  - createdAt: datetime (`repo.created_at`)
+  - createdAt: date (`repo.created_at`)
   - description: string (`repo.description`)
   - githubPage: string (`repo.html_url`)
   - ownedByOrg: boolean (`repo.organization` is not None)
@@ -41,7 +58,7 @@ Because Neo4j wraps strings with `"`, we need to replace every `"` to `'` in the
 
 ##### Target `(:Repo:Target)`
 
-Target node has the exactly same properties as in repo node, except that their is a secondary label `:Target`.
+Target node has the exactly same properties as in repo node, except that there is a secondary label `:Target`.
 
 ##### Topic `(:Topic)`
 
@@ -119,7 +136,7 @@ RETURN r.name AS name,
 
 ![](./img/most-used-dep-but-starless.png)
 
-> ![:NOTE]
+> [!NOTE]
 > Some of the most used dependencies in those target examined repo have just a few stars, even though lots of projects use it.
 
 ### What Topics (Tags) Do Our Target Examined Repo Covered?
@@ -131,5 +148,5 @@ RETURN n, f, t
 
 ![](./img/target-repo-topics.png)
 
-> ![:NOTE]
+> [!NOTE]
 > Because tags are self-defined by the owner, they don't overlap with each other, even though they have similar usage and features.
