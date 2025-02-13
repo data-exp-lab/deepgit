@@ -1,0 +1,4 @@
+.ipynb_checkpoints/
+.env
+repo_metadata.json
+.DS_Store
