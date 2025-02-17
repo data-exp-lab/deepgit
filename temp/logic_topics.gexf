@@ -5,707 +5,94 @@
   </meta>
   <graph defaultedgetype="undirected" mode="static" name="">
     <nodes>
-      <node id="linux" label="linux" />
-      <node id="programming-language" label="programming-language" />
-      <node id="cpp" label="cpp" />
-      <node id="fsharp" label="fsharp" />
-      <node id="functional-programming" label="functional-programming" />
-      <node id="python" label="python" />
-      <node id="logic" label="logic" />
-      <node id="c" label="c" />
-      <node id="scala" label="scala" />
-      <node id="functional-reactive-programming" label="functional-reactive-programming" />
-      <node id="frp" label="frp" />
-      <node id="ios" label="ios" />
-      <node id="swift" label="swift" />
-      <node id="concurrency" label="concurrency" />
-      <node id="zio" label="zio" />
-      <node id="effects" label="effects" />
-      <node id="compiler" label="compiler" />
-      <node id="language" label="language" />
-      <node id="native" label="native" />
-      <node id="java" label="java" />
-      <node id="javascript" label="javascript" />
-      <node id="lua" label="lua" />
-      <node id="golang" label="golang" />
-      <node id="event-sourcing" label="event-sourcing" />
-      <node id="nodejs" label="nodejs" />
-      <node id="llvm" label="llvm" />
-      <node id="typescript" label="typescript" />
-      <node id="fp-ts" label="fp-ts" />
-      <node id="types" label="types" />
-      <node id="scripting" label="scripting" />
-      <node id="interpreter" label="interpreter" />
-      <node id="scripting-language" label="scripting-language" />
-      <node id="rust" label="rust" />
-      <node id="lisp" label="lisp" />
-      <node id="basic" label="basic" />
-      <node id="lambda-calculus" label="lambda-calculus" />
-      <node id="hacktoberfest" label="hacktoberfest" />
-      <node id="machine-learning" label="machine-learning" />
-      <node id="python3" label="python3" />
-      <node id="tutorial" label="tutorial" />
-      <node id="optics" label="optics" />
-      <node id="cats" label="cats" />
-      <node id="typelevel" label="typelevel" />
-      <node id="stack-based" label="stack-based" />
-      <node id="ruby" label="ruby" />
-      <node id="android" label="android" />
-      <node id="kotlin" label="kotlin" />
-      <node id="object-oriented-programming" label="object-oriented-programming" />
-      <node id="stream" label="stream" />
-      <node id="esoteric-language" label="esoteric-language" />
-      <node id="pattern-matching" label="pattern-matching" />
-      <node id="awesome-list" label="awesome-list" />
-      <node id="awesome" label="awesome" />
-      <node id="react" label="react" />
-      <node id="redux" label="redux" />
-      <node id="reactive" label="reactive" />
-      <node id="vm" label="vm" />
-      <node id="scalajs" label="scalajs" />
-      <node id="async" label="async" />
-      <node id="fp" label="fp" />
-      <node id="monad" label="monad" />
-      <node id="csharp" label="csharp" />
-      <node id="library" label="library" />
-      <node id="es6" label="es6" />
-      <node id="programming" label="programming" />
-      <node id="haskell" label="haskell" />
-      <node id="ramda" label="ramda" />
-      <node id="parser" label="parser" />
-      <node id="artificial-intelligence" label="artificial-intelligence" />
-      <node id="logic-programming" label="logic-programming" />
-      <node id="datalog" label="datalog" />
-      <node id="prolog" label="prolog" />
-      <node id="prolog-programming-language" label="prolog-programming-language" />
-      <node id="go" label="go" />
-      <node id="data-structures" label="data-structures" />
-      <node id="functional" label="functional" />
-      <node id="cats-effect" label="cats-effect" />
-      <node id="scala3" label="scala3" />
-      <node id="elm" label="elm" />
-      <node id="composition" label="composition" />
-      <node id="virtual-machine" label="virtual-machine" />
-      <node id="cross-platform" label="cross-platform" />
-      <node id="ide" label="ide" />
-      <node id="ocaml" label="ocaml" />
-      <node id="category-theory" label="category-theory" />
-      <node id="lambda" label="lambda" />
-      <node id="typeclasses" label="typeclasses" />
-      <node id="testing" label="testing" />
-      <node id="monads" label="monads" />
-      <node id="reactive-programming" label="reactive-programming" />
-      <node id="algebraic-effects" label="algebraic-effects" />
-      <node id="object-oriented" label="object-oriented" />
-      <node id="esoteric" label="esoteric" />
-      <node id="js" label="js" />
-      <node id="programming-languages" label="programming-languages" />
-      <node id="esoteric-programming-language" label="esoteric-programming-language" />
-      <node id="esolang" label="esolang" />
-      <node id="wasm" label="wasm" />
-      <node id="webassembly" label="webassembly" />
-      <node id="learning" label="learning" />
-      <node id="transpiler" label="transpiler" />
-      <node id="declarative-programming" label="declarative-programming" />
-      <node id="swi-prolog" label="swi-prolog" />
-      <node id="repl" label="repl" />
-      <node id="type-theory" label="type-theory" />
-      <node id="dependent-types" label="dependent-types" />
-      <node id="windows" label="windows" />
-      <node id="macos" label="macos" />
-      <node id="elixir" label="elixir" />
-      <node id="clojure" label="clojure" />
-      <node id="node" label="node" />
-      <node id="purescript" label="purescript" />
-      <node id="type-safety" label="type-safety" />
-      <node id="open-source" label="open-source" />
-      <node id="functor" label="functor" />
-      <node id="architecture" label="architecture" />
-      <node id="immutable" label="immutable" />
-      <node id="deep-learning" label="deep-learning" />
-      <node id="php" label="php" />
-      <node id="assembly" label="assembly" />
-      <node id="bytecode" label="bytecode" />
-      <node id="book" label="book" />
-      <node id="compilers" label="compilers" />
-      <node id="c-plus-plus" label="c-plus-plus" />
-      <node id="framework" label="framework" />
-      <node id="compiler-design" label="compiler-design" />
-      <node id="fs2" label="fs2" />
-      <node id="lexer" label="lexer" />
-      <node id="algebraic-data-types" label="algebraic-data-types" />
-      <node id="maybe" label="maybe" />
-      <node id="ast" label="ast" />
-      <node id="simulation" label="simulation" />
-      <node id="logic-gates" label="logic-gates" />
-      <node id="result" label="result" />
-      <node id="simulator" label="simulator" />
-      <node id="circuit" label="circuit" />
-      <node id="either" label="either" />
-      <node id="domain-driven-design" label="domain-driven-design" />
-      <node id="applicative" label="applicative" />
-      <node id="parallel" label="parallel" />
-      <node id="immutable-collections" label="immutable-collections" />
-      <node id="fantasy-land" label="fantasy-land" />
-      <node id="svg" label="svg" />
-      <node id="kafka" label="kafka" />
-      <node id="immutability" label="immutability" />
-      <node id="json" label="json" />
-      <node id="lox-language" label="lox-language" />
-      <node id="streaming" label="streaming" />
-      <node id="notes" label="notes" />
-      <node id="state-machine" label="state-machine" />
-      <node id="tdd" label="tdd" />
-      <node id="filter" label="filter" />
-      <node id="state-management" label="state-management" />
-      <node id="lox" label="lox" />
-      <node id="data-science" label="data-science" />
-      <node id="inference" label="inference" />
-      <node id="dynamic-programming" label="dynamic-programming" />
-      <node id="config" label="config" />
-      <node id="number-theory" label="number-theory" />
-      <node id="llm" label="llm" />
-      <node id="gleam" label="gleam" />
-      <node id="university" label="university" />
-      <node id="graphics" label="graphics" />
-      <node id="optimization" label="optimization" />
-      <node id="functional-languages" label="functional-languages" />
-      <node id="nlp" label="nlp" />
-      <node id="expert-system" label="expert-system" />
-      <node id="asynchronous-programming" label="asynchronous-programming" />
-      <node id="option" label="option" />
-      <node id="function" label="function" />
-      <node id="scientific-computing" label="scientific-computing" />
-      <node id="streams" label="streams" />
-      <node id="web-development" label="web-development" />
-      <node id="prolog-interpreter" label="prolog-interpreter" />
-      <node id="latex" label="latex" />
-      <node id="music" label="music" />
-      <node id="security" label="security" />
-      <node id="constraint-programming" label="constraint-programming" />
-      <node id="pipeline" label="pipeline" />
-      <node id="functions" label="functions" />
-      <node id="gpu" label="gpu" />
-      <node id="microservices" label="microservices" />
-      <node id="recursion" label="recursion" />
-      <node id="scheme" label="scheme" />
-      <node id="graph" label="graph" />
-      <node id="golfing-language" label="golfing-language" />
-      <node id="html" label="html" />
-      <node id="algorithm" label="algorithm" />
-      <node id="ethereum" label="ethereum" />
-      <node id="persistent-data-structure" label="persistent-data-structure" />
-      <node id="lambda-expressions" label="lambda-expressions" />
-      <node id="c-sharp" label="c-sharp" />
-      <node id="game-development" label="game-development" />
-      <node id="gui" label="gui" />
-      <node id="systems-language" label="systems-language" />
-      <node id="code-golf" label="code-golf" />
-      <node id="asynchronous" label="asynchronous" />
-      <node id="elm-lang" label="elm-lang" />
-      <node id="observable" label="observable" />
-      <node id="automation" label="automation" />
+      <node id="blockly" label="blockly" />
       <node id="education" label="education" />
+      <node id="javascript" label="javascript" />
+      <node id="fbp" label="fbp" />
+      <node id="flow-based-programming" label="flow-based-programming" />
+      <node id="dataflow" label="dataflow" />
+      <node id="visual-programming" label="visual-programming" />
+      <node id="visual-programming-language" label="visual-programming-language" />
+      <node id="dataflow-programming" label="dataflow-programming" />
+      <node id="graph" label="graph" />
+      <node id="node-editor" label="node-editor" />
       <node id="editor" label="editor" />
-      <node id="http4s" label="http4s" />
-      <node id="bytecode-interpreter" label="bytecode-interpreter" />
-      <node id="math" label="math" />
-      <node id="game" label="game" />
-      <node id="systems-programming" label="systems-programming" />
-      <node id="monoid" label="monoid" />
-      <node id="pytorch" label="pytorch" />
-      <node id="robotics" label="robotics" />
-      <node id="iot" label="iot" />
-      <node id="java-8" label="java-8" />
-      <node id="performance" label="performance" />
-      <node id="concurrent-programming" label="concurrent-programming" />
-      <node id="arrays" label="arrays" />
-      <node id="pandas" label="pandas" />
-      <node id="cplusplus" label="cplusplus" />
-      <node id="course" label="course" />
-      <node id="interpreted-language" label="interpreted-language" />
-      <node id="functional-js" label="functional-js" />
-      <node id="parsing" label="parsing" />
-      <node id="discrete-mathematics" label="discrete-mathematics" />
-      <node id="linq" label="linq" />
-      <node id="dotnet" label="dotnet" />
-      <node id="design-patterns" label="design-patterns" />
-      <node id="system-programming" label="system-programming" />
-      <node id="swiftui" label="swiftui" />
-      <node id="cpp-library" label="cpp-library" />
-      <node id="smt" label="smt" />
-      <node id="macros" label="macros" />
-      <node id="beginner-friendly" label="beginner-friendly" />
-      <node id="mathematics" label="mathematics" />
-      <node id="server" label="server" />
-      <node id="gamedev" label="gamedev" />
-      <node id="oop" label="oop" />
-      <node id="livecoding" label="livecoding" />
-      <node id="teaching" label="teaching" />
-      <node id="distributed-systems" label="distributed-systems" />
-      <node id="strongly-typed" label="strongly-typed" />
-      <node id="common-lisp" label="common-lisp" />
-      <node id="adt" label="adt" />
-      <node id="declarative" label="declarative" />
-      <node id="lodash" label="lodash" />
-      <node id="proglangs-discord" label="proglangs-discord" />
-      <node id="reasoning" label="reasoning" />
-      <node id="transducers" label="transducers" />
-      <node id="proof-assistant" label="proof-assistant" />
-      <node id="constraints" label="constraints" />
-      <node id="brainfuck" label="brainfuck" />
-      <node id="cqrs" label="cqrs" />
-      <node id="multithreading" label="multithreading" />
-      <node id="cpp11" label="cpp11" />
-      <node id="high-performance" label="high-performance" />
-      <node id="lazy-evaluation" label="lazy-evaluation" />
-      <node id="terminal" label="terminal" />
-      <node id="spreadsheet" label="spreadsheet" />
-      <node id="assembler" label="assembler" />
-      <node id="clp" label="clp" />
-      <node id="books" label="books" />
-      <node id="jvm-languages" label="jvm-languages" />
-      <node id="julia" label="julia" />
-      <node id="proof" label="proof" />
-      <node id="devops" label="devops" />
-      <node id="ddd" label="ddd" />
-      <node id="metaprogramming" label="metaprogramming" />
-      <node id="lens" label="lens" />
-      <node id="higher-order-functions" label="higher-order-functions" />
-      <node id="operating-system" label="operating-system" />
-      <node id="forth" label="forth" />
-      <node id="lenses" label="lenses" />
-      <node id="type-safe" label="type-safe" />
-      <node id="reactjs" label="reactjs" />
-      <node id="statically-typed" label="statically-typed" />
-      <node id="dsl" label="dsl" />
-      <node id="solver" label="solver" />
-      <node id="algorithms" label="algorithms" />
-      <node id="database" label="database" />
-      <node id="iterator" label="iterator" />
-      <node id="verilog" label="verilog" />
-      <node id="domain-specific-language" label="domain-specific-language" />
-      <node id="audio" label="audio" />
-      <node id="tagless-final" label="tagless-final" />
-      <node id="cpp14" label="cpp14" />
-      <node id="cpp20" label="cpp20" />
-      <node id="interpreters" label="interpreters" />
-      <node id="cli" label="cli" />
-      <node id="probabilistic-programming" label="probabilistic-programming" />
-      <node id="documentation" label="documentation" />
-      <node id="currying" label="currying" />
-      <node id="prover" label="prover" />
-      <node id="theorem-prover" label="theorem-prover" />
-      <node id="solutions" label="solutions" />
-      <node id="first-order-logic" label="first-order-logic" />
-      <node id="knowledge-base" label="knowledge-base" />
-      <node id="study" label="study" />
-      <node id="console" label="console" />
-      <node id="probability" label="probability" />
-      <node id="prolog-implementation" label="prolog-implementation" />
-      <node id="lisp-interpreter" label="lisp-interpreter" />
-      <node id="languages" label="languages" />
-      <node id="general-purpose" label="general-purpose" />
-      <node id="r" label="r" />
-      <node id="educational" label="educational" />
-      <node id="type-inference" label="type-inference" />
-      <node id="arrow-kt" label="arrow-kt" />
-      <node id="web" label="web" />
-      <node id="error-handling" label="error-handling" />
-      <node id="declarative-ui" label="declarative-ui" />
-      <node id="3d" label="3d" />
-      <node id="statistics" label="statistics" />
-      <node id="reasonml" label="reasonml" />
-      <node id="code-generation" label="code-generation" />
-      <node id="polymorphism" label="polymorphism" />
-      <node id="answer-set-programming" label="answer-set-programming" />
-      <node id="cryptography" label="cryptography" />
-      <node id="validation" label="validation" />
-      <node id="interpreted-programming-language" label="interpreted-programming-language" />
-      <node id="hindley-milner" label="hindley-milner" />
-      <node id="compiler-construction" label="compiler-construction" />
-      <node id="clojurescript" label="clojurescript" />
-      <node id="calculator" label="calculator" />
-      <node id="formal-verification" label="formal-verification" />
-      <node id="blockchain" label="blockchain" />
-      <node id="emacs" label="emacs" />
-      <node id="array" label="array" />
-      <node id="declarative-language" label="declarative-language" />
-      <node id="function-composition" label="function-composition" />
-      <node id="flutter" label="flutter" />
-      <node id="learn-to-code" label="learn-to-code" />
-      <node id="static-typing" label="static-typing" />
-      <node id="inductive-logic-programming" label="inductive-logic-programming" />
-      <node id="symbolic-computation" label="symbolic-computation" />
-      <node id="digital" label="digital" />
-      <node id="embeddable" label="embeddable" />
-      <node id="cocoapods" label="cocoapods" />
-      <node id="visualization" label="visualization" />
-      <node id="monad-transformers" label="monad-transformers" />
-      <node id="scalaz" label="scalaz" />
-      <node id="procedural" label="procedural" />
-      <node id="coroutines" label="coroutines" />
-      <node id="ui" label="ui" />
-      <node id="static-analysis" label="static-analysis" />
-      <node id="combinatory-logic" label="combinatory-logic" />
-      <node id="deno" label="deno" />
-      <node id="coq" label="coq" />
-      <node id="browser" label="browser" />
-      <node id="jvm" label="jvm" />
-      <node id="kubernetes" label="kubernetes" />
-      <node id="promise" label="promise" />
-      <node id="postgresql" label="postgresql" />
-      <node id="rpc" label="rpc" />
-      <node id="algebra" label="algebra" />
-      <node id="property-based-testing" label="property-based-testing" />
-      <node id="kotlin-library" label="kotlin-library" />
-      <node id="collection" label="collection" />
-      <node id="sum-types" label="sum-types" />
-      <node id="graphql" label="graphql" />
-      <node id="dom" label="dom" />
-      <node id="learning-by-doing" label="learning-by-doing" />
-      <node id="either-monad" label="either-monad" />
-      <node id="event-driven" label="event-driven" />
-      <node id="curry" label="curry" />
-      <node id="verification" label="verification" />
-      <node id="type-system" label="type-system" />
-      <node id="functors" label="functors" />
-      <node id="list" label="list" />
-      <node id="functional-language" label="functional-language" />
-      <node id="rust-lang" label="rust-lang" />
-      <node id="pdf" label="pdf" />
-      <node id="neural-network" label="neural-network" />
-      <node id="standard-ml" label="standard-ml" />
-      <node id="quantum-computing" label="quantum-computing" />
-      <node id="distributed-computing" label="distributed-computing" />
-      <node id="bash" label="bash" />
-      <node id="formal-methods" label="formal-methods" />
-      <node id="rxjs" label="rxjs" />
-      <node id="embedded" label="embedded" />
-      <node id="software-engineering" label="software-engineering" />
-      <node id="semantic-web" label="semantic-web" />
-      <node id="xml" label="xml" />
-      <node id="collections" label="collections" />
-      <node id="minikanren" label="minikanren" />
-      <node id="theorem-proving" label="theorem-proving" />
-      <node id="script" label="script" />
-      <node id="haskell-library" label="haskell-library" />
-      <node id="unix" label="unix" />
-      <node id="computer-science" label="computer-science" />
-      <node id="redis" label="redis" />
-      <node id="sql" label="sql" />
-      <node id="regex" label="regex" />
-      <node id="logic-circuit" label="logic-circuit" />
-      <node id="dlang" label="dlang" />
-      <node id="natural-language-processing" label="natural-language-processing" />
-      <node id="cpp17" label="cpp17" />
-      <node id="jdbc" label="jdbc" />
-      <node id="racket" label="racket" />
-      <node id="erlang" label="erlang" />
-      <node id="parallel-computing" label="parallel-computing" />
-      <node id="header-only" label="header-only" />
-      <node id="science" label="science" />
-      <node id="actor-model" label="actor-model" />
-      <node id="docker" label="docker" />
-      <node id="x86-64" label="x86-64" />
+      <node id="vvvv" label="vvvv" />
+      <node id="arduino" label="arduino" />
+      <node id="flow" label="flow" />
+      <node id="no-code" label="no-code" />
+      <node id="nodejs" label="nodejs" />
+      <node id="workflow" label="workflow" />
+      <node id="language" label="language" />
+      <node id="windows" label="windows" />
+      <node id="music" label="music" />
       <node id="vue" label="vue" />
-      <node id="smart-contracts" label="smart-contracts" />
-      <node id="css" label="css" />
-      <node id="tensorflow" label="tensorflow" />
-      <node id="jit" label="jit" />
-      <node id="fpga" label="fpga" />
-      <node id="jupyter-notebook" label="jupyter-notebook" />
-      <node id="excel" label="excel" />
-      <node id="runtime" label="runtime" />
-      <node id="c99" label="c99" />
-      <node id="language-design" label="language-design" />
-      <node id="sml" label="sml" />
-      <node id="data" label="data" />
-      <node id="parser-combinators" label="parser-combinators" />
+      <node id="low-code" label="low-code" />
+      <node id="compiler" label="compiler" />
+      <node id="blueprints" label="blueprints" />
+      <node id="graphics" label="graphics" />
+      <node id="unity3d" label="unity3d" />
+      <node id="ide" label="ide" />
+      <node id="react" label="react" />
       <node id="ai" label="ai" />
-      <node id="kotlin-android" label="kotlin-android" />
-      <node id="exercises" label="exercises" />
-      <node id="examples" label="examples" />
-      <node id="agent" label="agent" />
-      <node id="query-language" label="query-language" />
-      <node id="agda" label="agda" />
-      <node id="computer" label="computer" />
-      <node id="knowledge-graph" label="knowledge-graph" />
-      <node id="clean-architecture" label="clean-architecture" />
-      <node id="unification" label="unification" />
-      <node id="optional" label="optional" />
-      <node id="generator" label="generator" />
-      <node id="api" label="api" />
-      <node id="frontend" label="frontend" />
-      <node id="concurrent" label="concurrent" />
-      <node id="java8" label="java8" />
-      <node id="shell" label="shell" />
-      <node id="basic-programming-language" label="basic-programming-language" />
-      <node id="map" label="map" />
-      <node id="concatenative" label="concatenative" />
-      <node id="dart" label="dart" />
+      <node id="visualization" label="visualization" />
+      <node id="functional-programming" label="functional-programming" />
+      <node id="cpp" label="cpp" />
+      <node id="java" label="java" />
+      <node id="unity" label="unity" />
+      <node id="automation" label="automation" />
+      <node id="typescript" label="typescript" />
+      <node id="scratch" label="scratch" />
+      <node id="programming" label="programming" />
+      <node id="svg" label="svg" />
+      <node id="electron" label="electron" />
+      <node id="3d" label="3d" />
+      <node id="imgui" label="imgui" />
+      <node id="qt5" label="qt5" />
+      <node id="node-graph" label="node-graph" />
+      <node id="graph-editor" label="graph-editor" />
+      <node id="programming-language" label="programming-language" />
+      <node id="csharp" label="csharp" />
+      <node id="browser" label="browser" />
+      <node id="rust" label="rust" />
+      <node id="visual" label="visual" />
+      <node id="node-based" label="node-based" />
+      <node id="qt" label="qt" />
+      <node id="python" label="python" />
+      <node id="framework" label="framework" />
+      <node id="data-science" label="data-science" />
+      <node id="hacktoberfest" label="hacktoberfest" />
+      <node id="pipelines" label="pipelines" />
+      <node id="flowchart" label="flowchart" />
+      <node id="iot" label="iot" />
+      <node id="visualprogramming" label="visualprogramming" />
+      <node id="reactive-programming" label="reactive-programming" />
+      <node id="machine-learning" label="machine-learning" />
+      <node id="visual-scripting" label="visual-scripting" />
+      <node id="vl" label="vl" />
+      <node id="nodes" label="nodes" />
+      <node id="raspberry-pi" label="raspberry-pi" />
+      <node id="visual-programming-editor" label="visual-programming-editor" />
+      <node id="cross-platform" label="cross-platform" />
+      <node id="esp32" label="esp32" />
+      <node id="node" label="node" />
+      <node id="creative-coding" label="creative-coding" />
     </nodes>
     <edges>
-      <edge source="linux" target="programming-language" id="0" />
-      <edge source="linux" target="windows" id="1" />
-      <edge source="programming-language" target="cpp" id="2" />
-      <edge source="programming-language" target="compiler" id="3" />
-      <edge source="programming-language" target="native" id="4" />
-      <edge source="programming-language" target="language" id="5" />
-      <edge source="programming-language" target="java" id="6" />
-      <edge source="programming-language" target="lua" id="7" />
-      <edge source="programming-language" target="golang" id="8" />
-      <edge source="programming-language" target="javascript" id="9" />
-      <edge source="programming-language" target="llvm" id="10" />
-      <edge source="programming-language" target="scripting" id="11" />
-      <edge source="programming-language" target="interpreter" id="12" />
-      <edge source="programming-language" target="scripting-language" id="13" />
-      <edge source="programming-language" target="rust" id="14" />
-      <edge source="programming-language" target="lisp" id="15" />
-      <edge source="programming-language" target="basic" id="16" />
-      <edge source="programming-language" target="lambda-calculus" id="17" />
-      <edge source="programming-language" target="stack-based" id="18" />
-      <edge source="programming-language" target="esoteric-language" id="19" />
-      <edge source="programming-language" target="hacktoberfest" id="20" />
-      <edge source="programming-language" target="functional-programming" id="21" />
-      <edge source="programming-language" target="awesome-list" id="22" />
-      <edge source="programming-language" target="vm" id="23" />
-      <edge source="programming-language" target="csharp" id="24" />
-      <edge source="programming-language" target="python" id="25" />
-      <edge source="programming-language" target="programming" id="26" />
-      <edge source="programming-language" target="c" id="27" />
-      <edge source="programming-language" target="parser" id="28" />
-      <edge source="programming-language" target="virtual-machine" id="29" />
-      <edge source="programming-language" target="go" id="30" />
-      <edge source="programming-language" target="cross-platform" id="31" />
-      <edge source="programming-language" target="ide" id="32" />
-      <edge source="programming-language" target="python3" id="33" />
-      <edge source="programming-language" target="object-oriented" id="34" />
-      <edge source="programming-language" target="esoteric" id="35" />
-      <edge source="programming-language" target="programming-languages" id="36" />
-      <edge source="programming-language" target="esoteric-programming-language" id="37" />
-      <edge source="programming-language" target="esolang" id="38" />
-      <edge source="programming-language" target="wasm" id="39" />
-      <edge source="programming-language" target="webassembly" id="40" />
-      <edge source="programming-language" target="tutorial" id="41" />
-      <edge source="programming-language" target="learning" id="42" />
-      <edge source="programming-language" target="transpiler" id="43" />
-      <edge source="programming-language" target="repl" id="44" />
-      <edge source="programming-language" target="type-theory" id="45" />
-      <edge source="programming-language" target="dependent-types" id="46" />
-      <edge source="programming-language" target="windows" id="47" />
-      <edge source="programming-language" target="macos" id="48" />
-      <edge source="programming-language" target="typescript" id="49" />
-      <edge source="programming-language" target="open-source" id="50" />
-      <edge source="programming-language" target="concurrency" id="51" />
-      <edge source="programming-language" target="assembly" id="52" />
-      <edge source="programming-language" target="functional" id="53" />
-      <edge source="programming-language" target="bytecode" id="54" />
-      <edge source="programming-language" target="book" id="55" />
-      <edge source="programming-language" target="compilers" id="56" />
-      <edge source="programming-language" target="c-plus-plus" id="57" />
-      <edge source="programming-language" target="ocaml" id="58" />
-      <edge source="programming-language" target="compiler-design" id="59" />
-      <edge source="programming-language" target="lexer" id="60" />
-      <edge source="programming-language" target="machine-learning" id="61" />
-      <edge source="programming-language" target="ast" id="62" />
-      <edge source="programming-language" target="haskell" id="63" />
-      <edge source="cpp" target="python" id="64" />
-      <edge source="cpp" target="c" id="65" />
-      <edge source="cpp" target="java" id="66" />
-      <edge source="cpp" target="functional-programming" id="67" />
-      <edge source="cpp" target="compiler" id="68" />
-      <edge source="fsharp" target="functional-programming" id="69" />
-      <edge source="functional-programming" target="scala" id="70" />
-      <edge source="functional-programming" target="functional-reactive-programming" id="71" />
-      <edge source="functional-programming" target="frp" id="72" />
-      <edge source="functional-programming" target="ios" id="73" />
-      <edge source="functional-programming" target="swift" id="74" />
-      <edge source="functional-programming" target="concurrency" id="75" />
-      <edge source="functional-programming" target="zio" id="76" />
-      <edge source="functional-programming" target="effects" id="77" />
-      <edge source="functional-programming" target="event-sourcing" id="78" />
-      <edge source="functional-programming" target="typescript" id="79" />
-      <edge source="functional-programming" target="fp-ts" id="80" />
-      <edge source="functional-programming" target="types" id="81" />
-      <edge source="functional-programming" target="javascript" id="82" />
-      <edge source="functional-programming" target="hacktoberfest" id="83" />
-      <edge source="functional-programming" target="python" id="84" />
-      <edge source="functional-programming" target="machine-learning" id="85" />
-      <edge source="functional-programming" target="tutorial" id="86" />
-      <edge source="functional-programming" target="optics" id="87" />
-      <edge source="functional-programming" target="cats" id="88" />
-      <edge source="functional-programming" target="android" id="89" />
-      <edge source="functional-programming" target="object-oriented-programming" id="90" />
-      <edge source="functional-programming" target="kotlin" id="91" />
-      <edge source="functional-programming" target="java" id="92" />
-      <edge source="functional-programming" target="stream" id="93" />
-      <edge source="functional-programming" target="pattern-matching" id="94" />
-      <edge source="functional-programming" target="react" id="95" />
-      <edge source="functional-programming" target="redux" id="96" />
-      <edge source="functional-programming" target="reactive" id="97" />
-      <edge source="functional-programming" target="rust" id="98" />
-      <edge source="functional-programming" target="scalajs" id="99" />
-      <edge source="functional-programming" target="async" id="100" />
-      <edge source="functional-programming" target="fp" id="101" />
-      <edge source="functional-programming" target="monad" id="102" />
-      <edge source="functional-programming" target="library" id="103" />
-      <edge source="functional-programming" target="es6" id="104" />
-      <edge source="functional-programming" target="interpreter" id="105" />
-      <edge source="functional-programming" target="c" id="106" />
-      <edge source="functional-programming" target="language" id="107" />
-      <edge source="functional-programming" target="haskell" id="108" />
-      <edge source="functional-programming" target="ramda" id="109" />
-      <edge source="functional-programming" target="go" id="110" />
-      <edge source="functional-programming" target="golang" id="111" />
-      <edge source="functional-programming" target="data-structures" id="112" />
-      <edge source="functional-programming" target="functional" id="113" />
-      <edge source="functional-programming" target="cats-effect" id="114" />
-      <edge source="functional-programming" target="scala3" id="115" />
-      <edge source="functional-programming" target="elm" id="116" />
-      <edge source="functional-programming" target="composition" id="117" />
-      <edge source="functional-programming" target="ocaml" id="118" />
-      <edge source="functional-programming" target="category-theory" id="119" />
-      <edge source="functional-programming" target="lambda" id="120" />
-      <edge source="functional-programming" target="lambda-calculus" id="121" />
-      <edge source="functional-programming" target="typeclasses" id="122" />
-      <edge source="functional-programming" target="testing" id="123" />
-      <edge source="functional-programming" target="monads" id="124" />
-      <edge source="functional-programming" target="reactive-programming" id="125" />
-      <edge source="functional-programming" target="compiler" id="126" />
-      <edge source="functional-programming" target="algebraic-effects" id="127" />
-      <edge source="functional-programming" target="declarative-programming" id="128" />
-      <edge source="functional-programming" target="lisp" id="129" />
-      <edge source="functional-programming" target="elixir" id="130" />
-      <edge source="functional-programming" target="clojure" id="131" />
-      <edge source="functional-programming" target="purescript" id="132" />
-      <edge source="functional-programming" target="type-safety" id="133" />
-      <edge source="functional-programming" target="functor" id="134" />
-      <edge source="functional-programming" target="architecture" id="135" />
-      <edge source="functional-programming" target="immutable" id="136" />
-      <edge source="functional-programming" target="php" id="137" />
-      <edge source="functional-programming" target="ruby" id="138" />
-      <edge source="functional-programming" target="framework" id="139" />
-      <edge source="functional-programming" target="nodejs" id="140" />
-      <edge source="functional-programming" target="fs2" id="141" />
-      <edge source="functional-programming" target="algebraic-data-types" id="142" />
-      <edge source="functional-programming" target="c-plus-plus" id="143" />
-      <edge source="functional-programming" target="maybe" id="144" />
-      <edge source="functional-programming" target="result" id="145" />
-      <edge source="functional-programming" target="either" id="146" />
-      <edge source="python" target="logic" id="147" />
-      <edge source="python" target="c" id="148" />
-      <edge source="python" target="machine-learning" id="149" />
-      <edge source="python" target="python3" id="150" />
-      <edge source="python" target="javascript" id="151" />
-      <edge source="python" target="ruby" id="152" />
-      <edge source="python" target="artificial-intelligence" id="153" />
-      <edge source="python" target="logic-programming" id="154" />
-      <edge source="python" target="interpreter" id="155" />
-      <edge source="python" target="language" id="156" />
-      <edge source="python" target="compiler" id="157" />
-      <edge source="python" target="hacktoberfest" id="158" />
-      <edge source="python" target="prolog" id="159" />
-      <edge source="python" target="haskell" id="160" />
-      <edge source="python" target="java" id="161" />
-      <edge source="logic" target="javascript" id="162" />
-      <edge source="logic" target="machine-learning" id="163" />
-      <edge source="logic" target="logic-programming" id="164" />
-      <edge source="logic" target="simulation" id="165" />
-      <edge source="logic" target="logic-gates" id="166" />
-      <edge source="logic" target="simulator" id="167" />
-      <edge source="logic" target="circuit" id="168" />
-      <edge source="c" target="javascript" id="169" />
-      <edge source="c" target="interpreter" id="170" />
-      <edge source="c" target="language" id="171" />
-      <edge source="c" target="compiler" id="172" />
-      <edge source="c" target="scripting-language" id="173" />
-      <edge source="scala" target="zio" id="174" />
-      <edge source="scala" target="cats" id="175" />
-      <edge source="scala" target="typelevel" id="176" />
-      <edge source="scala" target="scalajs" id="177" />
-      <edge source="scala" target="cats-effect" id="178" />
-      <edge source="scala" target="scala3" id="179" />
-      <edge source="scala" target="fp" id="180" />
-      <edge source="scala" target="fs2" id="181" />
-      <edge source="functional-reactive-programming" target="frp" id="182" />
-      <edge source="ios" target="swift" id="183" />
-      <edge source="compiler" target="language" id="184" />
-      <edge source="compiler" target="llvm" id="185" />
-      <edge source="compiler" target="rust" id="186" />
-      <edge source="compiler" target="interpreter" id="187" />
-      <edge source="compiler" target="scripting-language" id="188" />
-      <edge source="compiler" target="virtual-machine" id="189" />
-      <edge source="compiler" target="programming-languages" id="190" />
-      <edge source="compiler" target="javascript" id="191" />
-      <edge source="compiler" target="programming" id="192" />
-      <edge source="compiler" target="hacktoberfest" id="193" />
-      <edge source="compiler" target="transpiler" id="194" />
-      <edge source="compiler" target="haskell" id="195" />
-      <edge source="compiler" target="esoteric-language" id="196" />
-      <edge source="compiler" target="compiler-design" id="197" />
-      <edge source="compiler" target="parser" id="198" />
-      <edge source="compiler" target="webassembly" id="199" />
-      <edge source="language" target="interpreter" id="200" />
-      <edge source="language" target="scripting-language" id="201" />
-      <edge source="language" target="llvm" id="202" />
-      <edge source="language" target="go" id="203" />
-      <edge source="language" target="golang" id="204" />
-      <edge source="language" target="rust" id="205" />
-      <edge source="language" target="programming-languages" id="206" />
-      <edge source="language" target="transpiler" id="207" />
-      <edge source="language" target="repl" id="208" />
-      <edge source="language" target="hacktoberfest" id="209" />
-      <edge source="language" target="logic-programming" id="210" />
-      <edge source="language" target="object-oriented" id="211" />
-      <edge source="language" target="functional" id="212" />
-      <edge source="language" target="windows" id="213" />
-      <edge source="language" target="virtual-machine" id="214" />
-      <edge source="java" target="javascript" id="215" />
-      <edge source="java" target="prolog" id="216" />
-      <edge source="javascript" target="nodejs" id="217" />
-      <edge source="javascript" target="react" id="218" />
-      <edge source="javascript" target="js" id="219" />
-      <edge source="javascript" target="typescript" id="220" />
-      <edge source="javascript" target="monad" id="221" />
-      <edge source="javascript" target="node" id="222" />
-      <edge source="javascript" target="fp" id="223" />
-      <edge source="javascript" target="hacktoberfest" id="224" />
-      <edge source="javascript" target="functional" id="225" />
-      <edge source="golang" target="go" id="226" />
-      <edge source="golang" target="interpreter" id="227" />
-      <edge source="nodejs" target="typescript" id="228" />
-      <edge source="typescript" target="fp-ts" id="229" />
-      <edge source="typescript" target="fp" id="230" />
-      <edge source="interpreter" target="scripting-language" id="231" />
-      <edge source="interpreter" target="rust" id="232" />
-      <edge source="interpreter" target="lisp" id="233" />
-      <edge source="interpreter" target="virtual-machine" id="234" />
-      <edge source="interpreter" target="esoteric-language" id="235" />
-      <edge source="interpreter" target="repl" id="236" />
-      <edge source="interpreter" target="bytecode" id="237" />
-      <edge source="scripting-language" target="virtual-machine" id="238" />
-      <edge source="machine-learning" target="artificial-intelligence" id="239" />
-      <edge source="machine-learning" target="logic-programming" id="240" />
-      <edge source="machine-learning" target="deep-learning" id="241" />
-      <edge source="cats" target="cats-effect" id="242" />
-      <edge source="cats" target="fp" id="243" />
-      <edge source="android" target="kotlin" id="244" />
-      <edge source="esoteric-language" target="esoteric-programming-language" id="245" />
-      <edge source="esoteric-language" target="esolang" id="246" />
-      <edge source="awesome-list" target="awesome" id="247" />
-      <edge source="fp" target="cats-effect" id="248" />
-      <edge source="monad" target="functor" id="249" />
-      <edge source="parser" target="lexer" id="250" />
-      <edge source="artificial-intelligence" target="logic-programming" id="251" />
-      <edge source="artificial-intelligence" target="prolog" id="252" />
-      <edge source="logic-programming" target="datalog" id="253" />
-      <edge source="logic-programming" target="prolog" id="254" />
-      <edge source="prolog" target="prolog-programming-language" id="255" />
-      <edge source="prolog" target="swi-prolog" id="256" />
-      <edge source="wasm" target="webassembly" id="257" />
-      <edge source="type-theory" target="dependent-types" id="258" />
-      <edge source="windows" target="macos" id="259" />
+      <edge source="blockly" target="education" id="0" />
+      <edge source="blockly" target="javascript" id="1" />
+      <edge source="blockly" target="arduino" id="2" />
+      <edge source="fbp" target="flow-based-programming" id="3" />
+      <edge source="flow-based-programming" target="dataflow" id="4" />
+      <edge source="flow-based-programming" target="visual-programming" id="5" />
+      <edge source="flow-based-programming" target="dataflow-programming" id="6" />
+      <edge source="flow-based-programming" target="flow" id="7" />
+      <edge source="dataflow" target="dataflow-programming" id="8" />
+      <edge source="visual-programming" target="visual-programming-language" id="9" />
+      <edge source="visual-programming" target="editor" id="10" />
+      <edge source="visual-programming" target="dataflow-programming" id="11" />
+      <edge source="visual-programming" target="vvvv" id="12" />
+      <edge source="graph" target="node-editor" id="13" />
     </edges>
   </graph>
 </gexf>
