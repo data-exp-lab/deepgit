@@ -1,0 +1,105 @@
+$viz-in-color: #333;
+$viz-out-color: #999;
+
+.terms-filter {
+  $bar-height: 5px;
+
+  .term {
+    margin-bottom: 0.1em;
+    border-radius: 5px;
+    padding: 2px;
+
+    &.editable .value {
+      cursor: pointer;
+    }
+    .value:hover {
+      opacity: 0.7;
+    }
+
+    .value span {
+      color: $viz-out-color;
+    }
+
+    &.active .value span {
+      color: $viz-in-color;
+    }
+  }
+
+  .bar {
+    height: $bar-height;
+    position: relative;
+
+    .global,
+    .filtered {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      transition: width ease-in-out 0.2s;
+    }
+
+    .global {
+      background: $gray-300;
+    }
+    .filtered {
+      background: $gray-800;
+    }
+  }
+}
+
+.range-filter {
+  height: 160px;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  .bar {
+    position: relative;
+    height: 100%;
+    flex-grow: 1;
+
+    &:not(:last-child) {
+      margin-right: 1px;
+    }
+  }
+
+  .global,
+  .filtered {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transition: height ease-in-out 0.2s;
+  }
+
+  .global {
+    background: $gray-300;
+  }
+  .filtered {
+    background: $gray-800;
+  }
+  .label {
+    @extend .ellipsis;
+
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    font-size: 0.8em;
+
+    &.inside {
+      top: 0;
+    }
+    &.outside {
+      bottom: 100%;
+      color: $text-muted;
+    }
+  }
+}
+
+.rc-slider-mark-text {
+  color: $viz-out-color !important;
+}
+.rc-slider-mark-text-active {
+  color: $viz-in-color !important;
+}

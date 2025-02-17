@@ -1,0 +1,32 @@
+.home-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+  .expanding-block {
+    width: 100%;
+  }
+
+  .title-block {
+    flex-grow: 1;
+
+    padding: 20vh 0.5rem 0.5rem;
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: center;
+
+    min-height: 85vh;
+  }
+
+  .gexf-form {
+    transition: opacity ease-in-out 0.6s;
+  }
+
+  .footer {
+    flex-shrink: 0;
+
+    width: 600px;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+}

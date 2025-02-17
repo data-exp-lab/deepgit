@@ -1,0 +1,183 @@
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: $font-family-serif;
+}
+
+hr {
+  margin: 2em 0;
+}
+
+.text-ellipsis {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.circle,
+.disc {
+  display: inline-block;
+  height: 1em;
+  width: 1em;
+  border-radius: 1em;
+  vertical-align: top;
+}
+.circle {
+  position: relative;
+
+  &::after {
+    content: " ";
+    position: absolute;
+    inset: 1px;
+    border-radius: 1em;
+    background: white;
+  }
+}
+.hoverable:hover {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.triangle {
+  width: 0;
+  height: 0;
+  border-top: 0.3em solid transparent;
+  border-bottom: 0.3em solid transparent;
+}
+.triangle-left {
+  border-right: 0.8em solid $arrow-color;
+}
+.triangle-right {
+  border-left: 0.8em solid $arrow-color;
+}
+.line {
+  width: 2.6em;
+  height: 0.25em;
+  background: $arrow-color;
+  position: relative;
+
+  &:first-child:last-child {
+    width: 3.4em;
+  }
+
+  .count {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    padding: 0.3em;
+    background: white;
+
+    box-sizing: content-box;
+  }
+}
+
+.edge,
+.edges {
+  display: inline-block;
+  width: 3em;
+  text-align: center;
+}
+
+.btn > svg {
+  vertical-align: text-bottom;
+}
+.btn-inline {
+  line-height: 1em;
+}
+
+.w-1 {
+  width: 1% !important;
+}
+.w-45 {
+  width: 45% !important;
+}
+.line-height-1 {
+  line-height: 1em !important;
+}
+
+.flex-regular-width {
+  flex-shrink: 1 !important;
+  flex-grow: 1 !important;
+  flex-basis: 0 !important;
+  width: 0 !important;
+}
+
+input:placeholder-shown {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.input-inline {
+  width: 5em;
+}
+
+.custom-scrollbar {
+  scrollbar-color: grey whitesmoke;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar-track {
+    background-color: whitesmoke;
+  }
+
+  &::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+    background-color: #fff;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: grey;
+  }
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+/**
+ * Vendors:
+ */
+.react-select__menu-portal {
+  z-index: $zindex-tooltip !important;
+}
+.react-select__control {
+  border-color: black !important;
+}
+.react-select__menu {
+  margin-bottom: 1em;
+}
+.react-select__menu-list {
+  @extend .custom-scrollbar;
+}
+.react-select__control--is-focused {
+  box-shadow: 0 0 0 1px black !important;
+}
+
+.scrollbar-left {
+  direction: rtl;
+
+  & > * {
+    direction: ltr;
+  }
+}
+
+.dropzone {
+  padding: 4rem;
+  border-radius: 1rem;
+  border: 3px dotted black;
+  width: 100%;
+}
