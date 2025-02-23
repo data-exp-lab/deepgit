@@ -8,8 +8,8 @@
       <attribute id="2" title="shared_topics" type="string" />
     </attributes>
     <attributes mode="static" class="node">
-      <attribute id="0" title="topics" type="string" />
-      <attribute id="1" title="category" type="string" />
+      <attribute id="0" title="Tag" type="string" />
+      <attribute id="1" title="Cluster" type="string" />
     </attributes>
     <nodes>
       <node id="gooofy/zamia-prolog" label="gooofy/zamia-prolog">
