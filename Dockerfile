@@ -1,7 +1,10 @@
-FROM node:18-bullseye
+FROM seanyl/deepgit:latest
+
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm install --legacy-peer-deps
-COPY . .
-RUN npm run build
+
+# Remove problematic dependencies and force a fresh install
+RUN rm -rf node_modules package-lock.json && \
+    npm cache clean --force && \
+    npm install --force
+
 CMD ["npm", "start"]
