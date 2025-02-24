@@ -36,18 +36,18 @@ const HomeView: FC = () => {
     <main className="home-view">
       <div className="title-block">
         <div className="text-center">
-          <img src={import.meta.env.BASE_URL + "/logo.svg"} alt="Retina Logo" className="mb-3" />
+          <img src={import.meta.env.BASE_URL + "/deepgit_logo.png"} alt="DeepGit Logo" className="mb-3" style={{ width: "120px", height: "auto" }} />
         </div>
         <h1 className="mb-4">
           <span className="position-relative">
-            Retina{" "}
+            DeepGit{" "}
             <small className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning fs-6">
               beta
             </small>
           </span>
         </h1>
         <h2 className="h4 text-center">
-          Retina is a web application that helps you share your graph visualizations online.
+          DeepGit is a free, open-source web application designed to help researchers and research software engineers discover and explore research software within specific domains
         </h2>
         <h2 className="h5 text-center">
           It currently accepts <a href="http://gexf.net/">GEXF</a> and{" "}

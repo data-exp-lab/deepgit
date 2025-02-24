@@ -113,12 +113,12 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
 
             <h1 className="fs-4 mt-4 mb-4">
               <img
-                src={import.meta.env.BASE_URL + "/logo.svg"}
-                alt="Retina logo"
-                style={{ height: "1em" }}
+                src={import.meta.env.BASE_URL + "/deepgit_logo.png"}
+                alt="DeepGit logo"
+                style={{ height: "1em", filter: "invert(1)" }} // Inverts colors (turns black to white)
                 className="me-1 mb-1"
-              />{" "}
-              Welcome to Retina
+              />
+              Welcome to DeepGit
             </h1>
 
             <p>
@@ -138,7 +138,7 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
             </p>
             {!navState.local && (
               <p className="fst-italic mb-0">
-                PS: This panel is only here to help you configure Retina. Unless you specifically want it to be, it will
+                PS: This panel is only here to help you configure DeepGit. Unless you specifically want it to be, it will
                 not be visible to the users you share your graph with, if you click the{" "}
                 <button
                   type="button"
