@@ -1,7 +1,6 @@
 {
-  "name": "retina",
+  "name": "deepgit",
   "version": "1.0.0-beta.4",
-  "homepage": "https://ouestware.gitlab.io/retina",
   "scripts": {
     "start": "vite",
     "build": "vite build",
