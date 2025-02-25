@@ -6,7 +6,9 @@ import { useLocation, useNavigate } from "react-router";
 
 import DropInput from "../components/DropInput";
 import Footer from "../components/Footer";
-import { SAMPLE_DATASET_URI } from "../lib/consts";
+import { WIKIPEDIA_DATA_URI } from "../lib/consts";
+import { LOGIC_PROGRAMMING_DATA_URI } from "../lib/consts";
+import { VISUAL_PROGRAMMING_DATA_URI } from "../lib/consts";
 import { getErrorMessage } from "../lib/errors";
 import { useNotifications } from "../lib/notifications";
 
@@ -86,16 +88,37 @@ const HomeView: FC = () => {
                 <label htmlFor="graph-url-input" className="form-label h5">
                   Enter here your graph file URL, or use{" "}
                   <a
-                    href={SAMPLE_DATASET_URI}
+                    href={WIKIPEDIA_DATA_URI}
                     onClick={(e) => {
                       e.preventDefault();
-                      setState({ type: "url", input: window.location.origin + SAMPLE_DATASET_URI });
+                      setState({ type: "url", input: window.location.origin + WIKIPEDIA_DATA_URI });
                     }}
                   >
-                    our sample
+                    Wikipedia data
+                  </a>
+                  ,{" "}
+                  <a
+                    href={LOGIC_PROGRAMMING_DATA_URI}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setState({ type: "url", input: window.location.origin + LOGIC_PROGRAMMING_DATA_URI });
+                    }}
+                  >
+                    Logic Programming data
+                  </a>
+                  , or{" "}
+                  <a
+                    href={VISUAL_PROGRAMMING_DATA_URI}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setState({ type: "url", input: window.location.origin + VISUAL_PROGRAMMING_DATA_URI });
+                    }}
+                  >
+                    Visual Programming data
                   </a>
                   :
                 </label>
+
                 <input
                   type="url"
                   className="form-control"

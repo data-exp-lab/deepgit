@@ -6,7 +6,9 @@ import { Props as LinkifyProps } from "react-linkify";
 import { NodeCircleProgram } from "sigma/rendering";
 import { Settings } from "sigma/settings";
 
-export const SAMPLE_DATASET_URI = import.meta.env.BASE_URL + "/dataset.gexf";
+export const WIKIPEDIA_DATA_URI = import.meta.env.BASE_URL + "/dataset.gexf";
+export const LOGIC_PROGRAMMING_DATA_URI = import.meta.env.BASE_URL + "/lp_clusters.gexf";
+export const VISUAL_PROGRAMMING_DATA_URI = import.meta.env.BASE_URL + "/vp_clusters.gexf";
 
 // Palettes
 export const PALETTES = RAW_PALETTES as Record<number, string[]>;
