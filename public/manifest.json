@@ -1,6 +1,6 @@
 {
-  "short_name": "Retina",
-  "name": "A web application to share network visualizations",
+  "short_name": "DeepGit",
+  "name": "An open-source web application designed for research software discovery and exploration",
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",

@@ -10,7 +10,7 @@ const Footer: FC = () => (
       <Link to="/" className="flex-shrink-0 me-2 p-0">
         <img
           src={import.meta.env.BASE_URL + "/deepgit_logo.png"}
-          alt="Retina logo"
+          alt="DeepGit logo"
           style={{ height: "1.2em" }}
           className="me-1"
         />
