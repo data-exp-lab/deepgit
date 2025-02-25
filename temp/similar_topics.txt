@@ -1,8 +1,0 @@
-flow-based-programming
-visual-programming
-visual-programming-editor
-visual-programming-language
-dataflow-programming
-blockly
-graph-editor
-node-editor
