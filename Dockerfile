@@ -22,4 +22,4 @@ ENV HOST=0.0.0.0
 ENV BASE_PATH=/deepgit
 
 # Render assigns a PORT dynamically, so we use it
-CMD ["sh", "-c", "npm start -- --port $PORT --host 0.0.0.0"]
+CMD ["sh", "-c", "npm start -- --port 5173 --host 0.0.0.0"]

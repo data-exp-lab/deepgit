@@ -1,0 +1,6 @@
+version: "3"
+services:
+  deepgit-app:
+    image: deepgit-app
+    ports:
+      - "5173:5173"
