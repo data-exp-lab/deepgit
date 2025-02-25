@@ -1,4 +1,4 @@
-FROM seanyl/deepgit:latest
+FROM seanyl/deepgit:app
 
 WORKDIR /app
 
