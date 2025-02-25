@@ -1,0 +1,117 @@
+.graph-view {
+  $stage-margin: 1rem;
+  $button-size: 2em;
+
+  .graph-button {
+    width: $button-size;
+    height: $button-size;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    margin-bottom: 0.4em;
+    background: white;
+
+    &:hover {
+      background: black;
+    }
+  }
+
+  .graph {
+    position: relative;
+    flex-grow: 1;
+
+    .controls {
+      position: absolute;
+      top: $stage-margin;
+      right: $stage-margin;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+
+      & > * {
+        z-index: $zindex-buttons;
+      }
+    }
+
+    .captions {
+      position: absolute;
+      bottom: $stage-margin;
+      left: $stage-margin;
+
+      .size-caption {
+        z-index: $zindex-caption;
+
+        .nodes {
+          display: flex;
+          flex-direction: row;
+          align-items: flex-end;
+        }
+
+        .circle-wrapper {
+          height: 50px;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          min-width: 30px;
+          justify-content: center;
+        }
+
+        .dotted-circle {
+          border-radius: 100%;
+          background: #cccccc66;
+          border: 2px dotted black;
+        }
+      }
+    }
+
+    .sigma-wrapper {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .sigma-container {
+      position: absolute;
+      width: 100vw;
+      height: 100%;
+
+      left: 50%;
+      margin-left: -50vw;
+
+      background: #fcfcfc;
+
+      .sigma-mouse {
+        z-index: $zindex-sigma-mouse;
+      }
+    }
+
+    // Sigma layer is behind everything else, despite being absolutely placed:
+    & > * {
+      z-index: 1;
+    }
+    .sigma {
+      z-index: 0;
+    }
+  }
+
+  .context-panel {
+    background: white;
+  }
+
+  .toggle-button {
+    position: absolute;
+    top: $stage-margin;
+    left: $stage-margin;
+    z-index: $zindex-buttons;
+  }
+}
+
+// Inside a portal, but spawned from the GraphControl component:
+.search-node.active-node,
+.search-node:hover {
+  background: #eee;
+  cursor: pointer;
+}

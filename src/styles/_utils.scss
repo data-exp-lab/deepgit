@@ -1,0 +1,44 @@
+.flex-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+}
+
+.hidden {
+  visibility: hidden;
+}
+
+.with-end-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  & > *:first-child {
+    flex-grow: 1;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    line-height: 1.8em;
+  }
+
+  & > *:not(:first-child) {
+    flex-shrink: 0;
+  }
+}
+
+.ellipsis {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.box {
+  display: inline-block;
+  width: 1.5em;
+  text-align: center;
+}

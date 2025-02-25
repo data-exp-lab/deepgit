@@ -1,0 +1,151 @@
+body {
+  padding: 0;
+  margin: 0;
+
+  #root {
+    display: flex;
+    flex-direction: row;
+    background: white;
+    align-items: stretch;
+    overflow: hidden;
+
+    width: 100vw;
+    height: 100vh;
+
+    main {
+      flex-grow: 1;
+    }
+  }
+
+  #toasts-container {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    z-index: $zindex-tooltip;
+
+    .toast {
+      max-width: calc(100vw - 1rem);
+    }
+  }
+
+  #portal-target {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}
+
+// Side panels layout:
+.side-panel {
+  border-right: 1px solid $border-color;
+  overflow: hidden;
+  height: 100%;
+
+  z-index: $zindex-panel;
+
+  display: flex;
+  flex-direction: column;
+
+  .block {
+    &:not(:last-child) {
+      border-bottom: 1px solid $border-color;
+    }
+  }
+
+  .panel-header {
+    border-bottom: 1px solid $border-color;
+    flex-shrink: 0;
+
+    .header-buttons {
+      padding-left: 4.5em !important;
+    }
+  }
+
+  .panel-content {
+    flex-shrink: 1;
+    flex-grow: 1;
+    flex-basis: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    @extend .custom-scrollbar;
+    overflow-y: scroll;
+
+    & > * > *:not(hr) {
+      padding: 1rem;
+    }
+  }
+}
+
+// Graph container layout:
+.graph-view {
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+
+  .wrapper {
+    position: absolute;
+    inset: 0 0 0 auto;
+
+    display: flex;
+    flex-direction: row;
+
+    transition: width $base-transition;
+  }
+}
+.edition-panel {
+  transition: all $base-transition;
+  z-index: $zindex-panel + 1;
+
+  &.expanded {
+    box-shadow: 5px 0 15px rgba($black, 0.35);
+  }
+}
+
+@include media-breakpoint-up(md) {
+  $panelSize: 500px;
+
+  .graph-view.panel-collapsed .wrapper {
+    width: calc(#{$panelSize} + 100%);
+  }
+  .graph-view.panel-expanded .wrapper {
+    width: 100%;
+  }
+  .side-panel {
+    width: $panelSize;
+  }
+  .edition-panel.collapsed {
+    margin-left: -$panelSize;
+  }
+}
+@include media-breakpoint-down(md) {
+  .graph-view.panel-collapsed .wrapper {
+    width: 200%;
+  }
+  .graph-view.panel-expanded .wrapper {
+    width: 100%;
+  }
+  .side-panel {
+    width: 100vw;
+  }
+  .edition-panel.collapsed {
+    margin-left: -100vw;
+  }
+}
+
+// Modals layout:
+.modal {
+  display: block;
+
+  .modal-backdrop {
+    opacity: 0.1;
+    z-index: $zindex-modal-backdrop;
+  }
+  .modal-content {
+    z-index: $zindex-modal;
+  }
+  .modal-body {
+    @extend .custom-scrollbar;
+  }
+}

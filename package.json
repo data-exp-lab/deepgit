@@ -1,0 +1,90 @@
+{
+  "name": "deepgit",
+  "version": "1.0.0-beta.4",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "test": "vitest",
+    "clean": "prettier --write src",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@react-sigma/core": "^4.0.3",
+    "@sigma/export-image": "^3.0.0-beta.1",
+    "@sigma/node-border": "^3.0.0-beta.7",
+    "bootstrap": "^5.3.3",
+    "chroma-js": "^3.1.2",
+    "classnames": "^2.5.1",
+    "file-saver": "^2.0.5",
+    "graphology": "^0.25.4",
+    "graphology-gexf": "^0.13.2",
+    "graphology-graphml": "^0.5.2",
+    "graphology-layout": "^0.6.1",
+    "graphology-layout-forceatlas2": "^0.10.1",
+    "graphology-layout-noverlap": "^0.4.2",
+    "graphology-types": "^0.24.8",
+    "iwanthue": "^2.0.0",
+    "jotai": "^2.10.3",
+    "lodash": "^4.17.21",
+    "rc-slider": "^11.1.7",
+    "react": "^18.3.1",
+    "react-animate-height": "^3.2.3",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^14.3.5",
+    "react-icons": "^5.3.0",
+    "react-linkify": "^1.0.0-alpha",
+    "react-router": "^7.0.1",
+    "react-router-dom": "^7.0.1",
+    "react-select": "^5.8.3",
+    "react-transition-group": "^4.4.5",
+    "sigma": "^3.0.0-beta.38"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@playwright/test": "^1.49.0",
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "@types/chroma-js": "^2.4.4",
+    "@types/classnames": "^2.3.4",
+    "@types/file-saver": "^2.0.7",
+    "@types/lodash": "^4.17.13",
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/react-dropzone": "^5.1.0",
+    "@types/react-linkify": "^1.0.4",
+    "@types/react-select": "^5.0.1",
+    "@types/react-transition-group": "^4.4.11",
+    "@vitejs/plugin-react-swc": "^3.8.0",
+    "@vitest/browser": "^2.1.6",
+    "eslint": "^9.15.0",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.12.0",
+    "playwright": "^1.49.0",
+    "prettier": "^3.4.1",
+    "rollup": "^4.34.8",
+    "sass": "^1.77.6",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.16.0",
+    "vite": "^6.1.0",
+    "vite-tsconfig-paths": "^5.1.3",
+    "vitest": "^2.1.6"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
