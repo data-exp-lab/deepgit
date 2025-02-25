@@ -2,7 +2,7 @@
   "name": "deepgit",
   "version": "1.0.0-beta.4",
   "scripts": {
-    "start": "vite preview --port $PORT --host",
+    "start": "vite preview --port 5173 --host",
     "build": "vite build",
     "test": "vitest",
     "clean": "prettier --write src",
