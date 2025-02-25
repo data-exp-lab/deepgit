@@ -36,7 +36,7 @@ const HomeView: FC = () => {
     <main className="home-view">
       <div className="title-block">
         <div className="text-center">
-          <img src={import.meta.env.BASE_URL + "/deepgit_logo.png"} alt="DeepGit Logo" className="mb-3" style={{ width: "120px", height: "auto" }} />
+          <img src={import.meta.env.BASE_URL + "deepgit_logo.png"} alt="DeepGit Logo" className="mb-3" style={{ width: "120px", height: "auto" }} />
         </div>
         <h1 className="mb-4">
           <span className="position-relative">
