@@ -10,11 +10,11 @@ export default defineConfig({
     host: "0.0.0.0",
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
     strictPort: true,
-    allowedHosts: ["deepgit-1.onrender.com"]
+    allowedHosts: ["deepgit.onrender.com"]
   },
   preview: {
     host: "0.0.0.0",
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
-    allowedHosts: ["deepgit-1.onrender.com"]
+    allowedHosts: ["deepgit.onrender.com"]
   },
 });
