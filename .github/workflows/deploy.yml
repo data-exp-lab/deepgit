@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up QEMU
+      - name: Set up QEMU (for multi-arch support)
         uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker Buildx
@@ -31,6 +31,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
+          file: ./Dockerfile  # Explicitly specifying Dockerfile
           platforms: linux/amd64
           push: true
           tags: seanyl/deepgit:app
@@ -41,7 +42,12 @@ jobs:
 
     steps:
       - name: Trigger Render Deployment
-        run: |
-          curl -X POST "$RENDER_DEPLOY_HOOK"
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if curl -X POST "$RENDER_DEPLOY_HOOK"; then
+            echo "Render deployment triggered successfully."
+          else
+            echo "Render deployment failed!" >&2
+            exit 1
+          fi

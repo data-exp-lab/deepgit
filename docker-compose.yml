@@ -1,6 +1,11 @@
-version: "3"
+version: "3.8"
+
 services:
-  deepgit-app:
-    image: deepgit-app
+  deepgit:
+    image: seanyl/deepgit:app
+    platform: linux/amd64
     ports:
       - "5173:5173"
+    stdin_open: true # Equivalent to -it (interactive terminal)
+    tty: true # Keeps the terminal open
+    restart: unless-stopped
