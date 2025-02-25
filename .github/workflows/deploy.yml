@@ -3,13 +3,12 @@ name: Deploy to Render
 on:
   push:
     branches:
-      - retina  # Change to your deployment branch
+      - retina  # Triggers on every commit to this branch
     paths-ignore:
-      - '**.md'  # Ignore markdown file updates if necessary
+      - '**.md' 
 
 jobs:
   deploy:
-    if: github.event.head_commit.parent_ids # Ensures it's not an empty commit (merge commits have multiple parents)
     runs-on: ubuntu-latest
 
     steps:
