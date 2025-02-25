@@ -1,18 +1,25 @@
+# Use a minimal Node.js image
 FROM node:18-alpine 
 
+# Set working directory
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# Copy package.json and install dependencies
+COPY package*.json ./
+RUN npm install --force
 
-# Remove problematic dependencies and force a fresh install
-RUN rm -rf node_modules package-lock.json && \
-    npm cache clean --force && \
-    npm install --force
-
+# Copy the entire application
 COPY . .
 
-EXPOSE 5173
-ENV PORT=5173
-ENV HOST=0.0.0.0
+# Build the frontend
+RUN npm run build
 
-CMD ["npm", "start"]
+# Expose a port (Render provides it dynamically)
+EXPOSE 5173
+
+# Ensure the correct host and port are set
+ENV HOST=0.0.0.0
+ENV BASE_PATH=/deepgit
+
+# Render assigns a PORT dynamically, so we use it
+CMD ["sh", "-c", "npm start -- --port $PORT --host 0.0.0.0"]
