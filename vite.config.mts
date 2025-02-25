@@ -1,10 +1,10 @@
 import react from "@vitejs/plugin-react-swc";
 import { defineConfig } from "vite";
 
-console.log(`Building DeepGit with BASE_PATH="${process.env.BASE_PATH || "/deepgit"}"`);
+console.log(`Building DeepGit with BASE_PATH="${process.env.BASE_PATH || "/"}"`);
 
 export default defineConfig({
-  base: process.env.BASE_PATH || "/deepgit",
+  base: process.env.BASE_PATH || "/",
   plugins: [react()],
   server: {
     host: "0.0.0.0",
@@ -18,3 +18,4 @@ export default defineConfig({
     allowedHosts: ["deepgit.onrender.com"]
   },
 });
+
