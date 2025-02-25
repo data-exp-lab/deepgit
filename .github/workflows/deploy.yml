@@ -4,15 +4,21 @@ on:
   push:
     branches:
       - retina  # Change to your deployment branch
+    paths-ignore:
+      - '**.md'  # Ignore markdown file updates if necessary
 
 jobs:
-  deploy-to-render:
-    needs: build-and-push  # Ensure this runs only after the Docker image is pushed
+  deploy:
+    if: github.event.head_commit.parent_ids # Ensures it's not an empty commit (merge commits have multiple parents)
     runs-on: ubuntu-latest
 
     steps:
       - name: Trigger Render Deployment
-        run: |
-          curl -X POST "$RENDER_DEPLOY_HOOK"
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [[ -z "$RENDER_DEPLOY_HOOK" ]]; then
+            echo "Error: RENDER_DEPLOY_HOOK is not set."
+            exit 1
+          fi
+          curl -X POST "$RENDER_DEPLOY_HOOK" || { echo "Render deployment trigger failed"; exit 1; }
