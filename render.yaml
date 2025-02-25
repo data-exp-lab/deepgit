@@ -2,18 +2,17 @@ services:
   - type: web
     name: deepgit
     runtime: docker
-    image: seanyl/deepgit:app
-    plan: free # Change this based on your needs: free, starter, standard, pro
-    envVars:
-      - key: NODE_ENV
-        value: production
+    repo: https://github.com/data-exp-lab/deepgit/tree/retina # Change if needed
+    plan: free # Options: free, starter, standard, pro
     autoDeploy: true # Automatically deploy new images when updated
-    healthCheckPath: / # Adjust based on your app's health check
-    env: docker
-    region: oregon # Change based on your preferred Render region
+    healthCheckPath: "/" # Adjust based on your app's health check
+    region: oregon # Change based on preferred Render region
     disk:
       name: data
       mountPath: /app/data # Adjust if you need persistent storage
       sizeGB: 1 # Adjust storage size
     ports:
-      - 5173
+      - port: 5173
+    envVars:
+      - key: NODE_ENV
+        value: production

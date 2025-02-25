@@ -13,11 +13,7 @@ COPY . .
 
 # Build the frontend
 RUN npm run build
-
-# Expose a port (Render provides it dynamically)
 EXPOSE 5173
-
-# Ensure the correct host and port are set
 ENV HOST=0.0.0.0
 ENV BASE_PATH=/deepgit
 
