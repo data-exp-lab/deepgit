@@ -3,7 +3,7 @@ name: Deploy to Docker Hub and Render
 on:
   push:
     branches:
-      - retina  # Triggers on every commit to this branch
+      - retina
     paths-ignore:
       - '**.md' 
 
@@ -31,17 +31,20 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./Dockerfile  # Explicitly specifying Dockerfile
+          file: ./Dockerfile
           platforms: linux/amd64
           push: true
           tags: seanyl/deepgit:app
 
   deploy-to-render:
-    needs: build-and-push  # Ensure this runs only after the Docker image is pushed
+    needs: build-and-push
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger Render Deployment
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to Render
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |

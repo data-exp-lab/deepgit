@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: deepgit
+    runtime: docker
+    image: seanyl/deepgit:app
+    plan: free # Change this based on your needs: free, starter, standard, pro
+    envVars:
+      - key: NODE_ENV
+        value: production
+    autoDeploy: true # Automatically deploy new images when updated
+    healthCheckPath: / # Adjust based on your app's health check
+    env: docker
+    region: oregon # Change based on your preferred Render region
+    disk:
+      name: data
+      mountPath: /app/data # Adjust if you need persistent storage
+      sizeGB: 1 # Adjust storage size
+    ports:
+      - 5173
