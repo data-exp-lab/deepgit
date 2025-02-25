@@ -1,3 +1,4 @@
 node_modules
 .ipython_checkpoints
 dist
+.DS_Store
