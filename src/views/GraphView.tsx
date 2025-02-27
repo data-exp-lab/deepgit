@@ -75,8 +75,8 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
     (newNavState: NavState) => {
       navigate(
         location.hash.replace(/^#/, "").replace(/\?.*/, "") +
-          "?" +
-          navStateToQueryURL(data ? cleanNavState(newNavState, data) : newNavState),
+        "?" +
+        navStateToQueryURL(data ? cleanNavState(newNavState, data) : newNavState),
       );
     },
     [data, location.hash, navigate],
@@ -88,6 +88,7 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
 
   const [computedData, setComputedData] = useState<ComputedData | null>(null);
 
+  const [showEditionPanel, setShowEditionPanel] = useState(false); // Add this state
   // Refresh aggregations and filtered items lists:
   useEffect(() => {
     if (data) {
@@ -165,10 +166,10 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
 
     let promise:
       | Promise<{
-          name: string;
-          extension: string;
-          textContent: string;
-        }>
+        name: string;
+        extension: string;
+        textContent: string;
+      }>
       | undefined;
 
     if (!url && !local) {
@@ -267,6 +268,9 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
         isPanelExpanded,
         setIsPanelExpanded,
 
+        showEditionPanel,
+        setShowEditionPanel,
+
         modal: modalName,
         openModal: (modal: ModalName) => setModalName(modal),
         closeModal: () => setModalName(undefined),
@@ -280,7 +284,7 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
       }}
     >
       {navState.local && <LocalWarningBanner />}
-      <EditionPanel isExpanded={(navState.role || DEFAULT_ROLE) === "d"} />
+      {showEditionPanel && <EditionPanel isExpanded={true} />}
       <main className={cx("graph-view", isPanelExpanded ? "panel-expanded" : "panel-collapsed")} ref={domRoot}>
         <div className="wrapper">
           <ContextPanel />

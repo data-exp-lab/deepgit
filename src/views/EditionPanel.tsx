@@ -56,7 +56,7 @@ interface Option {
 }
 
 const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
-  const { navState, data, setNavState, openModal, setPanel } = useContext(GraphContext);
+  const { navState, data, setNavState, openModal, setPanel, setShowEditionPanel } = useContext(GraphContext);
   const { fields, fieldsIndex } = data;
   const { filterable, colorable, sizeable, subtitleFields } = navState;
 
@@ -106,6 +106,7 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
               style={{ top: 15, right: 15 }}
               onClick={() => {
                 setNavState({ ...navState, role: "x" });
+                setShowEditionPanel(false); // Add this line to hide the panel
               }}
             >
               <FaTimes />
