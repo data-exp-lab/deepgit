@@ -84,7 +84,11 @@ const SelectedNodePanel: FC<{ node: string; data: NodeData }> = ({ node, data: {
         <h2 key={key} className="fs-5 ellipsis">
           <small className="text-muted">{startCase(key)}:</small>{" "}
           <span title={value}>
-            {typeof value === "number" ? value.toLocaleString() : <Linkify {...DEFAULT_LINKIFY_PROPS}>{value}</Linkify>}
+            {typeof value === "number"
+              ? value.toLocaleString()
+              : typeof value === "string" && (value.startsWith("http://") || value.startsWith("https://"))
+                ? <a href={value} target="_blank" rel="noreferrer">{value}</a>
+                : <Linkify {...DEFAULT_LINKIFY_PROPS}>{String(value)}</Linkify>}
           </span>
         </h2>
       ))}
