@@ -9,6 +9,7 @@ import { Settings } from "sigma/settings";
 export const WIKIPEDIA_DATA_URI = import.meta.env.BASE_URL + "/dataset.gexf";
 export const LOGIC_PROGRAMMING_DATA_URI = import.meta.env.BASE_URL + "/lp_clusters.gexf";
 export const VISUAL_PROGRAMMING_DATA_URI = import.meta.env.BASE_URL + "/vp_clusters.gexf";
+export const LLM_DATA_URI = import.meta.env.BASE_URL + "/llm_clusters.gexf";
 
 // Palettes
 export const PALETTES = RAW_PALETTES as Record<number, string[]>;
