@@ -1,4 +1,6 @@
 node_modules
-.ipython_checkpoints
+*.ipython_checkpoints
 dist
 .DS_Store
+*temp
+llm_clusters.gexf
