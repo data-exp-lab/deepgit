@@ -2,3 +2,6 @@
 .env
 repo_metadata.json
 .DS_Store
+dist/
+node_modules/
+*llm_clusters.gexf
