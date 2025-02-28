@@ -72,7 +72,7 @@ const PublishModal: FC<{ close: () => void }> = ({ close }) => {
         }}
       >
         <p>
-          To be able to <strong>share</strong> your visualizations online, Retina needs to be able to access your graph
+          To be able to <strong>share</strong> your visualizations online, DeepGit needs to be able to access your graph
           file <strong>online</strong>, through HTTP. You can publish it on a server or your own, a cloud provider...
         </p>
 
@@ -81,7 +81,7 @@ const PublishModal: FC<{ close: () => void }> = ({ close }) => {
           <a href="https://gist.github.com/" target="_blank" rel="noreferrer">
             GitHub Gist
           </a>
-          , a site where you can freely upload your graph for Retina:
+          , a site where you can freely upload your graph for DeepGit:
         </p>
 
         <ol>
