@@ -1,0 +1,185 @@
+<?xml version='1.0' encoding='utf-8'?>
+<gexf xmlns="http://www.gexf.net/1.2draft" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd" version="1.2">
+  <meta lastmodifieddate="2025-03-03">
+    <creator>NetworkX 3.4.2</creator>
+  </meta>
+  <graph defaultedgetype="undirected" mode="static" name="">
+    <attributes mode="static" class="node">
+      <attribute id="0" title="topics" type="string" />
+      <attribute id="1" title="url" type="string" />
+      <attribute id="2" title="stars" type="long" />
+      <attribute id="3" title="watchers" type="long" />
+      <attribute id="4" title="forks" type="long" />
+      <attribute id="5" title="primaryLanguage" type="string" />
+      <attribute id="6" title="isFork" type="boolean" />
+      <attribute id="7" title="isArchived" type="boolean" />
+      <attribute id="8" title="license" type="string" />
+      <attribute id="9" title="category" type="string" />
+      <attribute id="10" title="cluster_id" type="long" />
+      <attribute id="11" title="color" type="string" />
+    </attributes>
+    <nodes>
+      <node id="Significant-Gravitas/AutoGPT" label="Significant-Gravitas/AutoGPT">
+        <attvalues>
+          <attvalue for="0" value="'ai','artificial-intelligence','autonomous-agents','gpt-4','openai','python'" />
+          <attvalue for="1" value="https://github.com/Significant-Gravitas/AutoGPT" />
+          <attvalue for="2" value="170526" />
+          <attvalue for="3" value="1548" />
+          <attvalue for="4" value="44831" />
+          <attvalue for="5" value="Python" />
+          <attvalue for="6" value="false" />
+          <attvalue for="7" value="false" />
+          <attvalue for="8" value="Other" />
+          <attvalue for="9" value="'artificial-intelligence'" />
+          <attvalue for="10" value="0" />
+          <attvalue for="11" value="#1f77b4" />
+        </attvalues>
+      </node>
+      <node id="huggingface/transformers" label="huggingface/transformers">
+        <attvalues>
+          <attvalue for="0" value="'bert','language-model','language-models','natural-language-processing','nlp','nlp-library','pytorch','pytorch-transformers','tensorflow','transformer'" />
+          <attvalue for="1" value="https://github.com/huggingface/transformers" />
+          <attvalue for="2" value="137641" />
+          <attvalue for="3" value="1128" />
+          <attvalue for="4" value="27570" />
+          <attvalue for="5" value="Python" />
+          <attvalue for="6" value="false" />
+          <attvalue for="7" value="false" />
+          <attvalue for="8" value="Apache License 2.0" />
+          <attvalue for="9" value="'bert'" />
+          <attvalue for="10" value="1" />
+          <attvalue for="11" value="#ff7f0e" />
+        </attvalues>
+      </node>
+      <node id="f/awesome-chatgpt-prompts" label="f/awesome-chatgpt-prompts">
+        <attvalues>
+          <attvalue for="0" value="'bots','chatbot','chatgpt','chatgpt-api','language'" />
+          <attvalue for="1" value="https://github.com/f/awesome-chatgpt-prompts" />
+          <attvalue for="2" value="117461" />
+          <attvalue for="3" value="1436" />
+          <attvalue for="4" value="15898" />
+          <attvalue for="5" value="HTML" />
+          <attvalue for="6" value="false" />
+          <attvalue for="7" value="false" />
+          <attvalue for="8" value="Creative Commons Zero v1.0 Universal" />
+          <attvalue for="9" value="'chatgpt'" />
+          <attvalue for="10" value="2" />
+          <attvalue for="11" value="#2ca02c" />
+        </attvalues>
+      </node>
+      <node id="ollama/ollama" label="ollama/ollama">
+        <attvalues>
+          <attvalue for="0" value="'gemma','go','golang','llama','llama2','llama3','llm','llms','mistral','ollama'" />
+          <attvalue for="1" value="https://github.com/ollama/ollama" />
+          <attvalue for="2" value="107827" />
+          <attvalue for="3" value="620" />
+          <attvalue for="4" value="8639" />
+          <attvalue for="5" value="Go" />
+          <attvalue for="6" value="false" />
+          <attvalue for="7" value="false" />
+          <attvalue for="8" value="MIT License" />
+          <attvalue for="9" value="'ollama'" />
+          <attvalue for="10" value="3" />
+          <attvalue for="11" value="#d62728" />
+        </attvalues>
+      </node>
+      <node id="ChatGPTNextWeb/NextChat" label="ChatGPTNextWeb/NextChat">
+        <attvalues>
+          <attvalue for="0" value="'chatgpt','cross-platform','desktop','gemini','nextjs','react','tauri','tauri-app','vercel','webui'" />
+          <attvalue for="1" value="https://github.com/ChatGPTNextWeb/NextChat" />
+          <attvalue for="2" value="78626" />
+          <attvalue for="3" value="420" />
+          <attvalue for="4" value="60053" />
+          <attvalue for="5" value="TypeScript" />
+          <attvalue for="6" value="false" />
+          <attvalue for="7" value="false" />
+          <attvalue for="8" value="MIT License" />
+          <attvalue for="9" value="'chatgpt'" />
+          <attvalue for="10" value="4" />
+          <attvalue for="11" value="#9467bd" />
+        </attvalues>
+      </node>
+      <node id="nomic-ai/gpt4all" label="nomic-ai/gpt4all">
+        <attvalues>
+          <attvalue for="0" value="'ai-chat','llm-inference'" />
+          <attvalue for="1" value="https://github.com/nomic-ai/gpt4all" />
+          <attvalue for="2" value="71745" />
+          <attvalue for="3" value="648" />
+          <attvalue for="4" value="7802" />
+          <attvalue for="5" value="C++" />
+          <attvalue for="6" value="false" />
+          <attvalue for="7" value="false" />
+          <attvalue for="8" value="MIT License" />
+          <attvalue for="9" value="'ai-chat'" />
+          <attvalue for="10" value="5" />
+          <attvalue for="11" value="#c49c94" />
+        </attvalues>
+      </node>
+      <node id="ggerganov/llama.cpp" label="ggerganov/llama.cpp">
+        <attvalues>
+          <attvalue for="0" value="'ggml','llama'" />
+          <attvalue for="1" value="https://github.com/ggerganov/llama.cpp" />
+          <attvalue for="2" value="70762" />
+          <attvalue for="3" value="561" />
+          <attvalue for="4" value="10225" />
+          <attvalue for="5" value="C++" />
+          <attvalue for="6" value="false" />
+          <attvalue for="7" value="false" />
+          <attvalue for="8" value="MIT License" />
+          <attvalue for="9" value="'llama'" />
+          <attvalue for="10" value="6" />
+          <attvalue for="11" value="#f7b6d2" />
+        </attvalues>
+      </node>
+      <node id="binary-husky/gpt_academic" label="binary-husky/gpt_academic">
+        <attvalues>
+          <attvalue for="0" value="'academic','chatglm-6b','chatgpt','gpt-4','large-language-models'" />
+          <attvalue for="1" value="https://github.com/binary-husky/gpt_academic" />
+          <attvalue for="2" value="66918" />
+          <attvalue for="3" value="283" />
+          <attvalue for="4" value="8217" />
+          <attvalue for="5" value="Python" />
+          <attvalue for="6" value="false" />
+          <attvalue for="7" value="false" />
+          <attvalue for="8" value="GNU General Public License v3.0" />
+          <attvalue for="9" value="'chatgpt'" />
+          <attvalue for="10" value="7" />
+          <attvalue for="11" value="#c7c7c7" />
+        </attvalues>
+      </node>
+      <node id="microsoft/generative-ai-for-beginners" label="microsoft/generative-ai-for-beginners">
+        <attvalues>
+          <attvalue for="0" value="'ai','azure','chatgpt','dall-e','generative-ai','generativeai','gpt','llms','openai','prompt-engineering'" />
+          <attvalue for="1" value="https://github.com/microsoft/generative-ai-for-beginners" />
+          <attvalue for="2" value="66387" />
+          <attvalue for="3" value="576" />
+          <attvalue for="4" value="34380" />
+          <attvalue for="5" value="Jupyter Notebook" />
+          <attvalue for="6" value="false" />
+          <attvalue for="7" value="false" />
+          <attvalue for="8" value="MIT License" />
+          <attvalue for="9" value="'gpt'" />
+          <attvalue for="10" value="8" />
+          <attvalue for="11" value="#dbdb8d" />
+        </attvalues>
+      </node>
+      <node id="xtekky/gpt4free" label="xtekky/gpt4free">
+        <attvalues>
+          <attvalue for="0" value="'chatgpt','chatgpt-4','chatgpt4','gpt','gpt-3','gpt-4','gpt3','gpt4','gpt4-api','openai'" />
+          <attvalue for="1" value="https://github.com/xtekky/gpt4free" />
+          <attvalue for="2" value="63086" />
+          <attvalue for="3" value="486" />
+          <attvalue for="4" value="13508" />
+          <attvalue for="5" value="Python" />
+          <attvalue for="6" value="false" />
+          <attvalue for="7" value="false" />
+          <attvalue for="8" value="GNU General Public License v3.0" />
+          <attvalue for="9" value="'gpt'" />
+          <attvalue for="10" value="9" />
+          <attvalue for="11" value="#9edae5" />
+        </attvalues>
+      </node>
+    </nodes>
+    <edges />
+  </graph>
+</gexf>
