@@ -10,6 +10,7 @@ import { WIKIPEDIA_DATA_URI } from "../lib/consts";
 import { LOGIC_PROGRAMMING_DATA_URI } from "../lib/consts";
 import { VISUAL_PROGRAMMING_DATA_URI } from "../lib/consts";
 import { LLM_DATA_URI } from "../lib/consts";
+import { ARG_DATA_URI } from "../lib/consts";
 import { getErrorMessage } from "../lib/errors";
 import { useNotifications } from "../lib/notifications";
 
@@ -105,7 +106,7 @@ const HomeView: FC = () => {
                       setState({ type: "url", input: window.location.origin + LOGIC_PROGRAMMING_DATA_URI });
                     }}
                   >
-                    Logic Programming data
+                    Logic Programming
                   </a>
                   , or{" "}
                   <a
@@ -115,17 +116,27 @@ const HomeView: FC = () => {
                       setState({ type: "url", input: window.location.origin + VISUAL_PROGRAMMING_DATA_URI });
                     }}
                   >
-                    Visual Programming data
+                    Visual Programming
                   </a>
                   , or{" "}
                   <a
-                    href={VISUAL_PROGRAMMING_DATA_URI}
+                    href={LLM_DATA_URI}
                     onClick={(e) => {
                       e.preventDefault();
                       setState({ type: "url", input: window.location.origin + LLM_DATA_URI });
                     }}
                   >
                     Large Language Models
+                  </a>
+                  , or{" "}
+                  <a
+                    href={ARG_DATA_URI}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setState({ type: "url", input: window.location.origin + ARG_DATA_URI });
+                    }}
+                  >
+                    Argumentation
                   </a>
                   :
                 </label>
