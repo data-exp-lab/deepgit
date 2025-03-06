@@ -1,4 +1,4 @@
-import { createContext } from "react";
+import { Dispatch, SetStateAction, createContext } from "react";
 import Sigma from "sigma";
 
 import { ModalName } from "../views/modals";
@@ -25,6 +25,9 @@ type GraphContextType = {
   isPanelExpanded: boolean;
   setIsPanelExpanded: (isPanelExpanded: boolean) => void;
 
+  showEditionPanel: boolean;
+  setShowEditionPanel: Dispatch<SetStateAction<boolean>>;
+
   navState: NavState;
   computedData: ComputedData;
   hovered: string | Set<string> | undefined;
@@ -45,5 +48,5 @@ type GraphContextType = {
 };
 export const GraphContext = createContext<GraphContextType>(
   // "Fake" initial value (proper value will be given by Provider)
-  null as unknown as GraphContextType,
+  null as unknown as GraphContextType
 );

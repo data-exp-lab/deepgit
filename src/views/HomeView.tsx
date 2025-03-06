@@ -6,7 +6,11 @@ import { useLocation, useNavigate } from "react-router";
 
 import DropInput from "../components/DropInput";
 import Footer from "../components/Footer";
-import { SAMPLE_DATASET_URI } from "../lib/consts";
+import { WIKIPEDIA_DATA_URI } from "../lib/consts";
+import { LOGIC_PROGRAMMING_DATA_URI } from "../lib/consts";
+import { VISUAL_PROGRAMMING_DATA_URI } from "../lib/consts";
+import { LLM_DATA_URI } from "../lib/consts";
+import { ARG_DATA_URI } from "../lib/consts";
 import { getErrorMessage } from "../lib/errors";
 import { useNotifications } from "../lib/notifications";
 
@@ -36,7 +40,7 @@ const HomeView: FC = () => {
     <main className="home-view">
       <div className="title-block">
         <div className="text-center">
-          <img src={import.meta.env.BASE_URL + "/deepgit_logo.png"} alt="DeepGit Logo" className="mb-3" style={{ width: "120px", height: "auto" }} />
+          <img src={import.meta.env.BASE_URL + "deepgit_logo.png"} alt="DeepGit Logo" className="mb-3" style={{ width: "120px", height: "auto" }} />
         </div>
         <h1 className="mb-4">
           <span className="position-relative">
@@ -86,16 +90,57 @@ const HomeView: FC = () => {
                 <label htmlFor="graph-url-input" className="form-label h5">
                   Enter here your graph file URL, or use{" "}
                   <a
-                    href={SAMPLE_DATASET_URI}
+                    href={WIKIPEDIA_DATA_URI}
                     onClick={(e) => {
                       e.preventDefault();
-                      setState({ type: "url", input: window.location.origin + SAMPLE_DATASET_URI });
+                      setState({ type: "url", input: window.location.origin + WIKIPEDIA_DATA_URI });
                     }}
                   >
-                    our sample
+                    Wikipedia data
+                  </a>
+                  ,{" "}
+                  <a
+                    href={LOGIC_PROGRAMMING_DATA_URI}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setState({ type: "url", input: window.location.origin + LOGIC_PROGRAMMING_DATA_URI });
+                    }}
+                  >
+                    Logic Programming
+                  </a>
+                  , or{" "}
+                  <a
+                    href={VISUAL_PROGRAMMING_DATA_URI}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setState({ type: "url", input: window.location.origin + VISUAL_PROGRAMMING_DATA_URI });
+                    }}
+                  >
+                    Visual Programming
+                  </a>
+                  , or{" "}
+                  <a
+                    href={LLM_DATA_URI}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setState({ type: "url", input: window.location.origin + LLM_DATA_URI });
+                    }}
+                  >
+                    Large Language Models
+                  </a>
+                  , or{" "}
+                  <a
+                    href={ARG_DATA_URI}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setState({ type: "url", input: window.location.origin + ARG_DATA_URI });
+                    }}
+                  >
+                    Argumentation
                   </a>
                   :
                 </label>
+
                 <input
                   type="url"
                   className="form-control"
