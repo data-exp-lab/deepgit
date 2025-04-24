@@ -56,7 +56,7 @@ interface Option {
 }
 
 const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
-  const { navState, data, setNavState, openModal, setPanel } = useContext(GraphContext);
+  const { navState, data, setNavState, openModal, setPanel, setShowEditionPanel } = useContext(GraphContext);
   const { fields, fieldsIndex } = data;
   const { filterable, colorable, sizeable, subtitleFields } = navState;
 
@@ -106,6 +106,7 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
               style={{ top: 15, right: 15 }}
               onClick={() => {
                 setNavState({ ...navState, role: "x" });
+                setShowEditionPanel(false); // Add this line to hide the panel
               }}
             >
               <FaTimes />
@@ -113,7 +114,7 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
 
             <h1 className="fs-4 mt-4 mb-4">
               <img
-                src={import.meta.env.BASE_URL + "/deepgit_logo.png"}
+                src={import.meta.env.BASE_URL + "deepgit_logo.png"}
                 alt="DeepGit logo"
                 style={{ height: "1em", filter: "invert(1)" }} // Inverts colors (turns black to white)
                 className="me-1 mb-1"

@@ -27,8 +27,8 @@ import { GraphContext } from "../lib/context";
 import { NavState } from "../lib/navState";
 
 const ReadabilityBlock: FC = () => {
-  const { navState, setNavState } = useContext(GraphContext);
-
+  // const { navState, setNavState } = useContext(GraphContext);
+  const { navState, setNavState, showEditionPanel, setShowEditionPanel } = useContext(GraphContext);
   const [initialNavState] = useState<NavState>(navState);
 
   const minLabelSize = typeof navState.minLabelSize === "number" ? navState.minLabelSize : DEFAULT_LABEL_SIZE;
@@ -63,14 +63,17 @@ const ReadabilityBlock: FC = () => {
             type="button"
             className="btn btn-outline-dark flex-grow-1"
             disabled={navState.role === "d"}
-            onClick={() =>
+            onClick={() => {
+              // Toggle the edition panel
+              setShowEditionPanel(!showEditionPanel);
+              // Also set the role if needed
               setNavState({
                 ...navState,
                 role: "d",
-              })
-            }
+              });
+            }}
           >
-            <FaGear /> Configure this graph for Retina
+            <FaGear /> Configure this graph for DeepGit
           </button>
         )}
       </div>
