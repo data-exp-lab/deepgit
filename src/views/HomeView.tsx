@@ -30,7 +30,14 @@ const HomeView: FC = () => {
           className="mb-3"
           style={{ width: "150px", height: "auto" }}
         />
-        <h1 className="mb-4">DeepGit</h1>
+        <h1 className="mb-4">
+          <span className="position-relative">
+            DeepGit{" "}
+            <small className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning fs-6">
+              beta
+            </small>
+          </span>
+        </h1>
         <h2 className="h5 mb-4" style={{ maxWidth: "500px", margin: "0 auto" }}>
           Discover and explore domain-specific scientific software using large scale graphs
         </h2>
