@@ -36,20 +36,24 @@ const HomeView: FC = () => {
         </h2>
         <div className="search-bar mb-4 d-flex justify-content-center">
           <div
-            className="input-group"
+            className="input-group align-items-center"
             style={{
               border: "1px solid #ddd",
               borderRadius: "20px",
               overflow: "hidden",
-              width: "800px", /* Fixed width */
+              width: "800px", // Fixed width
               boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-              alignItems: "center",
-              margin: "0 auto",
+              backgroundColor: "#fff", // Unified background
             }}
           >
             <span
-              className="input-group-text border-0 d-flex align-items-center justify-content-center"
-              style={{ padding: "0.75rem", fontSize: "1rem", color: "#6c757d", backgroundColor: "#fff" }}
+              className="input-group-text border-0"
+              style={{
+                padding: "0.75rem",
+                fontSize: "1rem",
+                color: "#6c757d",
+                backgroundColor: "transparent", // Transparent icon background
+              }}
             >
               <FaSearch />
             </span>
@@ -57,12 +61,23 @@ const HomeView: FC = () => {
               type="text"
               className="form-control border-0"
               placeholder="Search scientific software topics..."
-              style={{ boxShadow: "none", fontSize: "1rem", padding: "0.75rem" }}
+              style={{
+                boxShadow: "none",
+                fontSize: "1rem",
+                padding: "0.75rem",
+                backgroundColor: "transparent", // Transparent input background
+              }}
             />
             <button
-              className="btn border-0 d-flex align-items-center justify-content-center"
-              style={{ padding: "0.75rem", fontSize: "1rem", color: "#6c757d", backgroundColor: "#fff", transition: "color 0.3s ease" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#1e90ff")} /* Brighter blue */
+              className="btn border-0"
+              style={{
+                padding: "0.75rem",
+                fontSize: "1rem",
+                color: "#6c757d",
+                backgroundColor: "transparent", // Transparent button background
+                transition: "color 0.3s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#1e90ff")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "#6c757d")}
             >
               <FaArrowRight />
