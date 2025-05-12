@@ -2,11 +2,13 @@
   "name": "deepgit",
   "version": "1.0.0-beta.4",
   "scripts": {
-    "start": "vite preview --port 5173 --host 0.0.0.0",
+    "dev": "vite",
     "build": "vite build",
+    "start": "vite preview --port 5173 --host 0.0.0.0",
     "test": "vitest",
     "clean": "prettier --write src",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "dev:watch": "nodemon --watch src -e js,jsx,ts,tsx,css,json --exec 'vite'"
   },
   "dependencies": {
     "@react-sigma/core": "^4.0.3",
@@ -60,10 +62,11 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.14",
     "globals": "^15.12.0",
+    "nodemon": "^3.0.0",
     "playwright": "^1.49.0",
     "prettier": "^3.4.1",
     "rollup": "^4.34.8",
-    "sass": "^1.77.6",
+    "sass": "^1.69.5",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.16.0",
     "vite": "^6.1.0",

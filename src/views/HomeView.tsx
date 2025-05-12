@@ -81,9 +81,10 @@ const HomeView: FC = () => {
                 padding: "0.75rem",
                 fontSize: "1rem",
                 color: "#6c757d",
-                backgroundColor: "transparent", // Transparent button background
+                backgroundColor: "transparent",
                 transition: "color 0.3s ease",
               }}
+              onClick={() => navigate('/frequency')}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#1e90ff")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "#6c757d")}
             >

@@ -1,5 +1,12 @@
+# Development
+.next
 node_modules
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 *.ipython_checkpoints
 dist
 .DS_Store
 *temp
+*repo_metadata.json
