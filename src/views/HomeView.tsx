@@ -13,6 +13,9 @@ const HomeView: FC = () => {
   const { notify } = useNotifications();
   const error = ((location.state as { error?: unknown } | undefined)?.error || "") + "";
 
+  // Add state for the search term
+  const [searchTerm, setSearchTerm] = useState("");
+
   useEffect(() => {
     if (error)
       notify({
@@ -21,11 +24,21 @@ const HomeView: FC = () => {
       });
   }, [error, notify]);
 
+  // Function to handle search submission
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    if (searchTerm.trim()) {
+      // Navigate to frequency page with the search term
+      navigate('/topics', { state: { searchTerm: searchTerm.trim() } });
+    }
+  };
+
   return (
     <main className="home-view d-flex flex-column justify-content-center" style={{ padding: "0 2rem", minHeight: "100vh", paddingTop: "10vh" }}>
       <div className="title-block text-center">
         <img
-          src={import.meta.env.BASE_URL + "deepgit_logo.png"}
+          src={import.meta.env.BASE_URL + "deepgit_logo.png" || "/placeholder.svg"}
           alt="DeepGit Logo"
           className="mb-3"
           style={{ width: "150px", height: "auto" }}
@@ -41,7 +54,9 @@ const HomeView: FC = () => {
         <h2 className="h5 mb-4" style={{ maxWidth: "500px", margin: "0 auto" }}>
           Discover and explore domain-specific scientific software using large scale graphs
         </h2>
-        <div className="search-bar mb-4 d-flex justify-content-center">
+
+        {/* Wrap the search bar in a form to handle Enter key submission */}
+        <form onSubmit={handleSearch} className="search-bar mb-4 d-flex justify-content-center">
           <div
             className="input-group align-items-center"
             style={{
@@ -74,8 +89,11 @@ const HomeView: FC = () => {
                 padding: "0.75rem",
                 backgroundColor: "transparent", // Transparent input background
               }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
             <button
+              type="submit"
               className="btn border-0"
               style={{
                 padding: "0.75rem",
@@ -84,14 +102,15 @@ const HomeView: FC = () => {
                 backgroundColor: "transparent",
                 transition: "color 0.3s ease",
               }}
-              onClick={() => navigate('/frequency')}
+              disabled={!searchTerm.trim()}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#1e90ff")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "#6c757d")}
             >
               <FaArrowRight />
             </button>
           </div>
-        </div>
+        </form>
+
         <div className="tags d-flex flex-wrap justify-content-center mb-4" style={{ maxWidth: "600px", margin: "0 auto" }}>
           {[
             "visual programming",
@@ -112,6 +131,10 @@ const HomeView: FC = () => {
                 color: "#212529",
                 transition: "background-color 0.3s ease, box-shadow 0.3s ease",
               }}
+              onClick={() => {
+                setSearchTerm(tag);
+                navigate('/topics', { state: { searchTerm: tag } });
+              }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#f8f9fa";
                 e.currentTarget.style.boxShadow = "0 2px 6px rgba(0, 0, 0, 0.15)";
@@ -125,23 +148,8 @@ const HomeView: FC = () => {
             </button>
           ))}
         </div>
-        {/* <div className="links d-flex justify-content-center">
-          <a href="#" className="mx-2">
-            About DeepGit
-          </a>
-          <a href="#" className="mx-2">
-            Explore Graphs
-          </a>
-          <a href="#" className="mx-2">
-            Documentation
-          </a>
-          <a href="#" className="mx-2">
-            GitHub Repository
-          </a>
-        </div> */}
       </div>
       <div className="footer p-2">
-        {/* <hr className="mb-2" /> */}
         <Footer />
       </div>
     </main>
