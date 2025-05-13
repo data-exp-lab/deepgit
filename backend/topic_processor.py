@@ -1,10 +1,8 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import psutil
-import socket
-import signal
-import sys
-import time
+import duckdb
+import json
+from collections import Counter
 
 app = Flask(__name__)
 # Configure CORS to allow all origins and methods
@@ -25,34 +23,43 @@ def process_topics():
         else:  # GET request
             search_term = request.args.get('searchTerm', '').lower()
 
-        # Updated topic data to match frontend mock data
-        all_topics = [
-            {"name": "visual-programming", "count": 342},
-            {"name": "graph-theory", "count": 289},
-            {"name": "network-analysis", "count": 256},
-            {"name": "scientific-computing", "count": 198},
-            {"name": "python", "count": 187},
-            {"name": "javascript", "count": 165},
-            {"name": "d3", "count": 142},
-            {"name": "typescript", "count": 128},
-            {"name": "react", "count": 112},
-            {"name": "machine-learning", "count": 98},
-            {"name": "data-science", "count": 87},
-            {"name": "visualization", "count": 76},
-            {"name": "neo4j", "count": 65},
-            {"name": "graphql", "count": 54},
-            {"name": "sigma-js", "count": 43},
-        ]
+        # Step 1: Load JSON into a DuckDB temp table
+        con = duckdb.connect(database=':memory:')
+        con.execute("""
+            CREATE TEMP TABLE repo AS 
+            SELECT * FROM read_json_auto('../public/data/repo_metadata.json');
+        """)
         
-        filtered_topics = [
-            topic for topic in all_topics 
-            if search_term in topic["name"].lower()
-        ]
+        # Step 2: Get nameWithOwner and topics into a pandas DataFrame
+        query = "SELECT nameWithOwner, topics FROM repo"
+        df = con.execute(query).fetchdf()
+        
+        # Step 3: Normalize topics into list of names
+        def extract_names(item_ls):
+            if item_ls is not None and len(item_ls) > 0:
+                return [item["name"] for item in item_ls if "name" in item]
+            return []
+        
+        df["topics"] = df["topics"].apply(extract_names)
+        
+        # Step 4: Filter repos based on search term in topics
+        filtered_df = df[df["topics"].apply(lambda x: search_term in [t.lower() for t in x])]
+        
+        # Step 5: Count all co-occurring topics
+        all_topics = [topic for topics in filtered_df["topics"] for topic in topics]
+        topic_counts = Counter(all_topics)
+        
+        # Optional: Remove the searched topic itself
+        topic_counts.pop(search_term, None)
+        
+        # Step 6: Convert to list of dicts and sort
+        topics = [{"name": name, "count": count} for name, count in topic_counts.items()]
+        topics = sorted(topics, key=lambda x: x["count"], reverse=True)
         
         return jsonify({
             "success": True,
-            "data": filtered_topics,
-            "total": len(filtered_topics)
+            "data": topics,
+            "total": len(topics)
         })
     
     except Exception as e:
@@ -66,12 +73,7 @@ def process_topics():
 def home():
     return "Hello World!"
 
-def signal_handler(sig, frame):
-    print('\nShutting down the server...')
-    sys.exit(0)
-
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT, signal_handler)
     print("Starting Flask server...")
     port = 5002
     
