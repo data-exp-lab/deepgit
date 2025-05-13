@@ -118,10 +118,10 @@ const HomeView: FC = () => {
 
         <div className="tags d-flex flex-wrap justify-content-center mb-4" style={{ maxWidth: "600px", margin: "0 auto" }}>
           {[
-            "visual programming",
-            "machine learning",
-            "logic programming",
-            "large language models",
+            "visual-programming",
+            "machine-learning",
+            "logic-programming",
+            "large-language-models",
           ].map((tag) => (
             <button
               key={tag}

@@ -1,32 +1,12 @@
 import React, { FC, useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { FaArrowLeft, FaPlus, FaTimes, FaFilter, FaMagic, FaEdit, FaCheck, FaExclamationCircle, FaThumbsUp } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa";
 import { MultiRangeSlider } from "../components/MultiRangeSlider";
 import * as d3 from "d3";  // Make sure to install @types/d3 and d3
 
 // import { getErrorMessage } from "../lib/errors";
 import { useNotifications } from "../lib/notifications";
-import { FrequencySelector } from "../components/FrequencySelector";
 import { TopicRefiner } from "../components/TopicRefiner";
-
-// Mock data - replace with actual API calls in your implementation
-const mockTopicData = [
-    { name: "data-visualization", count: 342 },
-    { name: "graph-theory", count: 289 },
-    { name: "network-analysis", count: 256 },
-    { name: "scientific-computing", count: 198 },
-    { name: "python", count: 187 },
-    { name: "javascript", count: 165 },
-    { name: "d3", count: 142 },
-    { name: "typescript", count: 128 },
-    { name: "react", count: 112 },
-    { name: "machine-learning", count: 98 },
-    { name: "data-science", count: 87 },
-    { name: "visualization", count: 76 },
-    { name: "neo4j", count: 65 },
-    { name: "graphql", count: 54 },
-    { name: "sigma-js", count: 43 },
-];
 
 // Topic Histogram Component
 interface TopicHistogramProps {
@@ -145,7 +125,6 @@ const TopicHistogram: FC = () => {
     // Get both search term and user topic from location state
     const searchTerm = (location.state as { searchTerm?: string } | undefined)?.searchTerm || "";
     const userTopic = (location.state as { userTopic?: string } | undefined)?.userTopic || "";
-    console.log("userTopic", userTopic);
 
     // Add state for storing the user topic
     const [originalTopic, setOriginalTopic] = useState(userTopic);
@@ -161,7 +140,7 @@ const TopicHistogram: FC = () => {
 
     // State for frequency range
     const [frequencyRange, setFrequencyRange] = useState({ min: 0, max: 100 });
-    const maxCount = Math.max(...extractedTopics.map(item => item.count), 1);
+    const maxCount = Math.max(...extractedTopics.map(item => item.count || 0), 1);
 
     // Update frequency range when maxCount changes
     useEffect(() => {
@@ -199,17 +178,50 @@ const TopicHistogram: FC = () => {
         }
     }, [searchTerm, userTopic, navigate, notify]);
 
-    // Effect to simulate topic extraction when search term changes
+    // Effect to handle topic extraction when search term changes
     useEffect(() => {
-        if (searchTerm) {
-            setIsLoading(true);
-            // Simulate API call to extract topics
-            setTimeout(() => {
-                setExtractedTopics(mockTopicData);
+        // Add a check for extractedTopics length to prevent refetching
+        if (!userTopic || extractedTopics.length > 0) return;
+
+        setIsLoading(true);
+
+        fetch('http://127.0.0.1:5002/process-topics', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                topic: userTopic,
+                searchTerm: searchTerm
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.data.length === 0) {
+                    notify({
+                        message: "No topics found for this search. Try a different topic.",
+                        type: "warning"
+                    });
+                }
+                setExtractedTopics(data.data || []);
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                notify({
+                    message: "Failed to fetch topics. Please try again.",
+                    type: "error"
+                });
+                setExtractedTopics([]);
+            })
+            .finally(() => {
                 setIsLoading(false);
-            }, 1000);
-        }
-    }, [searchTerm]);
+            });
+    }, [userTopic]);
 
     // Effect to update selected topics based on frequency range
     useEffect(() => {
@@ -266,8 +278,6 @@ const TopicHistogram: FC = () => {
 
     // Function to handle form submission for the final step
     const handleSubmit = () => {
-        console.log("Final topics submitted:", finalTopics);
-        // Navigate to graph view with the selected topics
         navigate('/graph', { state: { topics: finalTopics } });
     };
 
