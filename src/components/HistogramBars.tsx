@@ -103,8 +103,18 @@ export const HistogramBars: FC<HistogramBarsProps> = ({ data, range, highlighted
     }, [data, range, highlightedTopic]);
 
     return (
-        <div style={{ width: '100%', height: '400px', padding: '10px' }}>
-            <svg ref={svgRef} style={{ width: '100%', height: '100%' }}></svg>
+        <div style={{
+            width: '100%',
+            height: '400px',
+            padding: '10px',
+            overflowX: 'hidden',  // Hide horizontal scrollbar
+            overflowY: 'auto'     // Enable vertical scrolling when needed
+        }}>
+            <svg ref={svgRef} style={{
+                width: '100%',
+                minHeight: '100%', // Change height to minHeight
+                height: 'auto'     // Allow SVG to grow based on content
+            }}></svg>
         </div>
     );
 }; 

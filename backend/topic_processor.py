@@ -3,6 +3,8 @@ from flask_cors import CORS
 import duckdb
 import json
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 app = Flask(__name__)
 # Configure CORS to allow all origins and methods
@@ -23,8 +25,9 @@ def process_topics():
         else:  # GET request
             search_term = request.args.get('searchTerm', '').lower()
 
-        # Step 1: Load JSON into a DuckDB temp table
+        # Step 1: Load JSON into a DuckDB temp table with parallel processing enabled
         con = duckdb.connect(database=':memory:')
+        con.execute("SET threads TO 16;")  # Adjust number based on your CPU cores
         con.execute("""
             CREATE TEMP TABLE repo AS 
             SELECT * FROM read_json_auto('../public/data/repo_metadata.json');
@@ -49,11 +52,11 @@ def process_topics():
         all_topics = [topic for topics in filtered_df["topics"] for topic in topics]
         topic_counts = Counter(all_topics)
         
-        # Optional: Remove the searched topic itself
+        # Remove the searched topic itself
         topic_counts.pop(search_term, None)
         
-        # Step 6: Convert to list of dicts and sort
-        topics = [{"name": name, "count": count} for name, count in topic_counts.items()]
+        # Step 6: Convert to list of dicts and sort, only including topics with count > 1
+        topics = [{"name": name, "count": count} for name, count in topic_counts.items() if count > 2]
         topics = sorted(topics, key=lambda x: x["count"], reverse=True)
         
         return jsonify({
