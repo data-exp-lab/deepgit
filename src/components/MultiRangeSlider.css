@@ -1,0 +1,93 @@
+.slider-container {
+    position: relative;
+    width: 100%;
+    height: 50px;
+}
+
+.slider {
+    position: relative;
+    width: 100%;
+    height: 5px;
+}
+
+.slider__track,
+.slider__range {
+    position: absolute;
+    height: 5px;
+    border-radius: 3px;
+}
+
+.slider__track {
+    background-color: #ced4da;
+    width: 100%;
+    z-index: 1;
+}
+
+.slider__range {
+    background-color: #0d6efd;
+    z-index: 2;
+}
+
+.slider__left-value,
+.slider__right-value {
+    position: absolute;
+    top: 20px;
+    color: #495057;
+}
+
+.slider__left-value {
+    left: 0;
+}
+
+.slider__right-value {
+    right: 0;
+}
+
+/* Removing the default appearance */
+.thumb,
+.thumb::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.thumb {
+    pointer-events: none;
+    position: absolute;
+    height: 0;
+    width: 100%;
+    outline: none;
+}
+
+.thumb--left {
+    z-index: 3;
+}
+
+.thumb--right {
+    z-index: 4;
+}
+
+/* For Chrome browsers */
+.thumb::-webkit-slider-thumb {
+    background-color: #ffffff;
+    border: 2px solid #0d6efd;
+    border-radius: 50%;
+    cursor: pointer;
+    height: 18px;
+    width: 18px;
+    margin-top: 4px;
+    pointer-events: all;
+    position: relative;
+}
+
+/* For Firefox browsers */
+.thumb::-moz-range-thumb {
+    background-color: #ffffff;
+    border: 2px solid #0d6efd;
+    border-radius: 50%;
+    cursor: pointer;
+    height: 18px;
+    width: 18px;
+    margin-top: 4px;
+    pointer-events: all;
+    position: relative;
+}

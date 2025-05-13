@@ -29,8 +29,13 @@ const HomeView: FC = () => {
     if (e) e.preventDefault();
 
     if (searchTerm.trim()) {
-      // Navigate to frequency page with the search term
-      navigate('/topics', { state: { searchTerm: searchTerm.trim() } });
+      // Navigate to frequency page with both search term and topic
+      navigate('/topics', {
+        state: {
+          searchTerm: searchTerm.trim(),
+          userTopic: searchTerm.trim() // Add the user topic
+        }
+      });
     }
   };
 
@@ -133,7 +138,12 @@ const HomeView: FC = () => {
               }}
               onClick={() => {
                 setSearchTerm(tag);
-                navigate('/topics', { state: { searchTerm: tag } });
+                navigate('/topics', {
+                  state: {
+                    searchTerm: tag,
+                    userTopic: tag
+                  }
+                });
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#f8f9fa";

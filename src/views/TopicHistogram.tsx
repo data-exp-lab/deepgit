@@ -1,9 +1,13 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { FaArrowLeft, FaPlus, FaTimes, FaFilter, FaMagic, FaEdit, FaCheck, FaExclamationCircle, FaThumbsUp } from "react-icons/fa";
+import { MultiRangeSlider } from "../components/MultiRangeSlider";
+import * as d3 from "d3";  // Make sure to install @types/d3 and d3
 
 // import { getErrorMessage } from "../lib/errors";
 import { useNotifications } from "../lib/notifications";
+import { FrequencySelector } from "../components/FrequencySelector";
+import { TopicRefiner } from "../components/TopicRefiner";
 
 // Mock data - replace with actual API calls in your implementation
 const mockTopicData = [
@@ -27,62 +31,108 @@ const mockTopicData = [
 // Topic Histogram Component
 interface TopicHistogramProps {
     data: Array<{ name: string; count: number }>;
-    threshold: number;
+    range: { min: number; max: number };
 }
 
 // Rename to HistogramBars to avoid conflict
-const HistogramBars: FC<TopicHistogramProps> = ({ data, threshold }) => {
-    // Find the maximum count for scaling
-    const maxCount = Math.max(...data.map(item => item.count), 1);
+const HistogramBars: FC<TopicHistogramProps & { highlightedTopic?: string }> = ({ data, range, highlightedTopic }) => {
+    const svgRef = useRef<SVGSVGElement>(null);
+
+    useEffect(() => {
+        if (!svgRef.current || !data.length) return;
+
+        // Clear previous content
+        d3.select(svgRef.current).selectAll("*").remove();
+
+        // Set dimensions with more bottom margin for labels
+        const margin = { top: 30, right: 20, bottom: 100, left: 40 };
+        const width = svgRef.current.clientWidth - margin.left - margin.right;
+        const height = 300 - margin.top - margin.bottom;
+
+        // Create SVG
+        const svg = d3.select(svgRef.current)
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Create scales
+        const x = d3.scaleBand()
+            .range([0, width])
+            .padding(0.1)
+            .domain(data.map(d => d.name));
+
+        const y = d3.scaleLinear()
+            .range([height, 0])
+            .domain([0, d3.max(data, d => d.count) || 0]);
+
+        // Create and add bars
+        svg.selectAll(".bar")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("x", d => x(d.name) || 0)
+            .attr("width", x.bandwidth())
+            .attr("y", d => y(d.count))
+            .attr("height", d => height - y(d.count))
+            .attr("fill", d => {
+                if (highlightedTopic === d.name) return '#ffc107'; // Highlight color
+                return (d.count >= range.min && d.count <= range.max) ? '#0d6efd' : '#e9ecef';
+            })
+            .attr("opacity", d => highlightedTopic && highlightedTopic !== d.name ? 0.5 : 1)
+            .on("mouseover", (event, d) => {
+                // Show tooltip
+                const tooltip = svg.append("g")
+                    .attr("class", "tooltip")
+                    .attr("transform", `translate(${x(d.name) || 0},${y(d.count) - 20})`);
+
+                tooltip.append("text")
+                    .attr("x", x.bandwidth() / 2)
+                    .attr("y", 0)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "12px")
+                    .text(`${d.name}: ${d.count}`);
+            })
+            .on("mouseout", () => {
+                // Remove tooltip
+                svg.selectAll(".tooltip").remove();
+            });
+
+        // Add count labels on top of bars
+        svg.selectAll(".count-label")
+            .data(data)
+            .enter()
+            .append("text")
+            .attr("class", "count-label")
+            .attr("x", d => (x(d.name) || 0) + x.bandwidth() / 2)
+            .attr("y", d => y(d.count) - 5)
+            .attr("text-anchor", "middle")
+            .style("font-size", "12px")
+            .style("fill", "#6c757d")
+            .text(d => d.count);
+
+        // Add y-axis
+        svg.append("g")
+            .call(d3.axisLeft(y).ticks(5));
+
+        // Add x-axis with rotated labels
+        svg.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x))
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .style("font-size", "14px")
+            .style("font-weight", "500")
+            .attr("dx", "-1em")
+            .attr("dy", ".15em")
+            .attr("transform", "rotate(-45)");
+
+    }, [data, range, highlightedTopic]);
 
     return (
-        <div className="w-100 h-100 d-flex flex-column">
-            <div className="flex-grow-1 d-flex align-items-end">
-                {data.map((item, index) => {
-                    const height = `${(item.count / maxCount) * 100}%`;
-                    const isSelected = item.count >= threshold;
-
-                    return (
-                        <div key={index} className="d-flex flex-column align-items-center flex-grow-1" style={{ minWidth: "40px" }}>
-                            <div
-                                className={`mx-1 rounded-top ${isSelected ? "bg-primary" : "bg-light"}`}
-                                style={{ height, width: "30px", transition: "all 0.3s ease" }}
-                            ></div>
-                            <div className="w-100 text-center mt-2">
-                                <div className="small text-muted fw-bold">{item.count}</div>
-                                <div
-                                    className="small text-truncate"
-                                    style={{
-                                        maxWidth: "100%",
-                                        transform: "rotate(-45deg)",
-                                        transformOrigin: "left top",
-                                        whiteSpace: "nowrap",
-                                        paddingLeft: "5px"
-                                    }}
-                                >
-                                    {item.name}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Threshold line */}
-            <div className="position-relative" style={{ height: 0 }}>
-                <div
-                    className="position-absolute w-100 border-top border-danger border-2 d-flex align-items-center justify-content-end"
-                    style={{
-                        bottom: `${(threshold / maxCount) * 100}%`,
-                        transform: "translateY(-100%)",
-                        borderStyle: "dashed"
-                    }}
-                >
-                    <span className="bg-white text-danger small px-1 rounded" style={{ marginTop: "-12px", marginRight: "10px" }}>
-                        Threshold: {threshold}
-                    </span>
-                </div>
-            </div>
+        <div style={{ width: '100%', height: '400px', padding: '10px' }}>
+            <svg ref={svgRef} style={{ width: '100%', height: '100%' }}></svg>
         </div>
     );
 };
@@ -92,8 +142,13 @@ const TopicHistogram: FC = () => {
     const location = useLocation();
     const { notify } = useNotifications();
 
-    // Get the search term from location state
+    // Get both search term and user topic from location state
     const searchTerm = (location.state as { searchTerm?: string } | undefined)?.searchTerm || "";
+    const userTopic = (location.state as { userTopic?: string } | undefined)?.userTopic || "";
+    console.log("userTopic", userTopic);
+
+    // Add state for storing the user topic
+    const [originalTopic, setOriginalTopic] = useState(userTopic);
 
     // State for the current step in the wizard
     const [currentStep, setCurrentStep] = useState(1);
@@ -104,8 +159,14 @@ const TopicHistogram: FC = () => {
     // State for selected topics
     const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
-    // State for frequency threshold
-    const [frequencyThreshold, setFrequencyThreshold] = useState(50);
+    // State for frequency range
+    const [frequencyRange, setFrequencyRange] = useState({ min: 0, max: 100 });
+    const maxCount = Math.max(...extractedTopics.map(item => item.count), 1);
+
+    // Update frequency range when maxCount changes
+    useEffect(() => {
+        setFrequencyRange({ min: 0, max: maxCount });
+    }, [maxCount]);
 
     // State for LLM suggestions
     const [llmSuggestions, setLlmSuggestions] = useState<string[]>([]);
@@ -122,16 +183,21 @@ const TopicHistogram: FC = () => {
     // State for LLM processing
     const [isLlmProcessing, setIsLlmProcessing] = useState(false);
 
-    // Effect to check if search term is provided
+    // State for highlighted topic
+    const [highlightedTopic, setHighlightedTopic] = useState<string | undefined>();
+
+    // Effect to check if search term and topic are provided
     useEffect(() => {
-        if (!searchTerm) {
+        if (!searchTerm || !userTopic) {
             notify({
                 message: "No search term provided. Please enter a topic to search.",
                 type: "warning"
             });
             navigate('/');
+        } else {
+            setOriginalTopic(userTopic);
         }
-    }, [searchTerm, navigate, notify]);
+    }, [searchTerm, userTopic, navigate, notify]);
 
     // Effect to simulate topic extraction when search term changes
     useEffect(() => {
@@ -145,16 +211,16 @@ const TopicHistogram: FC = () => {
         }
     }, [searchTerm]);
 
-    // Effect to update selected topics based on frequency threshold
+    // Effect to update selected topics based on frequency range
     useEffect(() => {
         if (extractedTopics.length > 0) {
             setSelectedTopics(
                 extractedTopics
-                    .filter(topic => topic.count >= frequencyThreshold)
+                    .filter(topic => topic.count >= frequencyRange.min && topic.count <= frequencyRange.max)
                     .map(topic => topic.name)
             );
         }
-    }, [frequencyThreshold, extractedTopics]);
+    }, [frequencyRange, extractedTopics]);
 
     // Function to handle LLM processing
     const handleLlmProcess = () => {
@@ -222,59 +288,68 @@ const TopicHistogram: FC = () => {
 
     // Function to go back to home
     const goBackToHome = () => {
-        navigate('/');
+        window.location.href = '/';  // Direct browser navigation
+        // Alternative: window.location.replace('/');
     };
 
     return (
         <main className="container py-4">
-            {/* Header with back button */}
-            <div className="d-flex align-items-center mb-4">
-                <button
-                    className="btn btn-outline-secondary me-3"
-                    onClick={goBackToHome}
-                    style={{ borderRadius: "50%", width: "40px", height: "40px", padding: "0" }}
-                >
-                    <FaArrowLeft className="m-auto" />
-                </button>
-                <h1 className="mb-0">Topic Selection</h1>
-            </div>
+            {/* Header with back button, title, and step indicator all in one line */}
+            <div className="d-flex align-items-center justify-content-between mb-4">
+                {/* Left side with back button and title */}
+                <div className="d-flex align-items-center">
+                    <button
+                        className="btn btn-outline-secondary me-3"
+                        onClick={goBackToHome}
+                        style={{ borderRadius: "50%", width: "40px", height: "40px", padding: "0" }}
+                    >
+                        <FaArrowLeft className="m-auto" />
+                    </button>
+                    <h1 className="mb-0">Topic-Centric Filtering</h1>
+                </div>
 
-            {/* Progress indicator */}
-            <div className="mb-4">
-                <div className="d-flex justify-content-between align-items-center">
-                    <div className="d-flex align-items-center">
+                {/* Right side with step indicator */}
+                <div className="d-flex align-items-center gap-4">
+                    {/* Step numbers */}
+                    <div className="d-flex align-items-center gap-2">
                         <div className={`rounded-circle d-flex align-items-center justify-content-center ${currentStep >= 1 ? "bg-primary text-white" : "bg-light"
-                            }`} style={{ width: "40px", height: "40px" }}>
+                            }`} style={{ width: "32px", height: "32px" }}>
                             1
                         </div>
-                        <div className={`mx-2 ${currentStep > 1 ? "bg-primary" : "bg-light"}`} style={{ height: "2px", width: "50px" }}></div>
                         <div className={`rounded-circle d-flex align-items-center justify-content-center ${currentStep >= 2 ? "bg-primary text-white" : "bg-light"
-                            }`} style={{ width: "40px", height: "40px" }}>
+                            }`} style={{ width: "32px", height: "32px" }}>
                             2
                         </div>
                     </div>
-                    <div className="text-muted small">
+
+                    {/* Step counter */}
+                    <div className="text-muted">
                         Step {currentStep} of 2
-                    </div>
-                </div>
-                <div className="d-flex justify-content-between mt-2 small" style={{ maxWidth: "200px" }}>
-                    <div className={currentStep === 1 ? "fw-bold text-primary" : "text-muted"}>
-                        Select by Frequency
-                    </div>
-                    <div className={currentStep === 2 ? "fw-bold text-primary" : "text-muted"}>
-                        Refine Topics
                     </div>
                 </div>
             </div>
 
+            {/* Step labels */}
+            {/* <div className="d-flex gap-4 mb-4">
+                <span className={currentStep === 1 ? "text-primary" : "text-muted"}>
+                    Select by Frequency
+                </span>
+                <span className={currentStep === 2 ? "text-primary" : "text-muted"}>
+                    Refine Topics
+                </span>
+            </div> */}
+
             {/* Step 1: Topic Frequency Selection */}
             {currentStep === 1 && (
-                <div className="card shadow-sm">
-                    <div className="card-body">
+                <div className="card shadow-sm" style={{ minHeight: '800px', display: 'flex', flexDirection: 'column' }}>
+                    <div className="card-body d-flex flex-column">
                         <h2 className="card-title mb-3">Select Topics by Frequency</h2>
                         <p className="text-muted mb-4">
-                            Adjust the frequency threshold to select topics related to "{searchTerm}".
-                            Topics with higher frequency are more common in related repositories.
+                            Adjust the frequency range to select topics related to{" "}
+                            <span className="badge bg-primary" style={{ fontSize: '1rem' }}>
+                                {originalTopic}
+                            </span>
+                            &nbsp;Topics with higher frequency are more common in related repositories.
                         </p>
 
                         {isLoading ? (
@@ -284,47 +359,57 @@ const TopicHistogram: FC = () => {
                                 </div>
                             </div>
                         ) : (
-                            <>
+                            <div className="flex-grow-1">
                                 <div className="mb-4">
-                                    <label className="form-label d-flex justify-content-between">
-                                        <span>Frequency Threshold</span>
-                                        <span>{frequencyThreshold}</span>
-                                    </label>
-                                    <input
-                                        type="range"
-                                        className="form-range"
-                                        min="0"
-                                        max={Math.max(...extractedTopics.map(t => t.count))}
-                                        value={frequencyThreshold}
-                                        onChange={(e) => setFrequencyThreshold(parseInt(e.target.value))}
+                                    <label className="form-label">Frequency Range</label>
+                                    <div style={{ width: '80%' }}>
+                                        <MultiRangeSlider
+                                            min={0}
+                                            max={maxCount}
+                                            onChange={({ min, max }) => setFrequencyRange({ min, max })}
+                                            value={frequencyRange}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="mb-3">
+                                    <HistogramBars
+                                        data={extractedTopics}
+                                        range={frequencyRange}
+                                        highlightedTopic={highlightedTopic}
                                     />
                                 </div>
 
-                                <div className="mb-4" style={{ height: "300px" }}>
-                                    {/* Topic Histogram Component */}
-                                    <HistogramBars data={extractedTopics} threshold={frequencyThreshold} />
-                                </div>
-
-                                <div className="mb-4">
-                                    <h3 className="h5 mb-3">Selected Topics ({selectedTopics.length})</h3>
+                                <div>
+                                    <h3 className="h5 mb-2">Selected Topics ({selectedTopics.length})</h3>
                                     <div className="d-flex flex-wrap gap-2">
                                         {selectedTopics.map(topic => (
                                             <span
                                                 key={topic}
-                                                className="badge bg-primary rounded-pill py-2 px-3"
+                                                className="badge rounded-pill py-2 px-3"
+                                                style={{
+                                                    fontSize: '1rem',
+                                                    backgroundColor: highlightedTopic === topic ? '#ffc107' : '#198754',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s ease'
+                                                }}
+                                                onMouseEnter={() => setHighlightedTopic(topic)}
+                                                onMouseLeave={() => setHighlightedTopic(undefined)}
                                             >
                                                 {topic}
                                             </span>
                                         ))}
                                         {selectedTopics.length === 0 && (
-                                            <p className="text-muted fst-italic">No topics selected. Lower the threshold to select topics.</p>
+                                            <p className="text-muted fst-italic">
+                                                No topics selected. Adjust the frequency range to select topics.
+                                            </p>
                                         )}
                                     </div>
                                 </div>
-                            </>
+                            </div>
                         )}
 
-                        <div className="d-flex justify-content-between">
+                        <div className="d-flex justify-content-between mt-auto pt-4">
                             <button
                                 className="btn btn-outline-secondary"
                                 onClick={goBackToHome}
@@ -345,149 +430,19 @@ const TopicHistogram: FC = () => {
 
             {/* Step 2: Topic Refinement with LLM */}
             {currentStep === 2 && (
-                <div className="card shadow-sm">
-                    <div className="card-body">
-                        <h2 className="card-title mb-3">Refine Your Topics</h2>
-                        <p className="text-muted mb-4">
-                            Use AI suggestions to refine your topics or manually add/remove topics.
-                        </p>
-
-                        <div className="row g-4 mb-4">
-                            {/* LLM Suggestions */}
-                            <div className="col-md-6">
-                                <div className="border rounded p-3 h-100">
-                                    <div className="d-flex justify-content-between align-items-center mb-3">
-                                        <h3 className="h5 mb-0 d-flex align-items-center">
-                                            <FaMagic className="text-warning me-2" />
-                                            AI Suggestions
-                                        </h3>
-                                        <button
-                                            className={`btn btn-sm ${isLlmProcessing ? "btn-light disabled" : "btn-outline-primary"}`}
-                                            onClick={handleLlmProcess}
-                                            disabled={isLlmProcessing}
-                                        >
-                                            {isLlmProcessing ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                    Processing...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <FaFilter className="me-1" /> Get Suggestions
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-
-                                    {llmSuggestions.length > 0 ? (
-                                        <div className="list-group" style={{ maxHeight: "250px", overflowY: "auto" }}>
-                                            {llmSuggestions.map(suggestion => (
-                                                <div
-                                                    key={suggestion}
-                                                    className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                                                >
-                                                    <span>{suggestion}</span>
-                                                    <button
-                                                        className="btn btn-sm text-success"
-                                                        onClick={() => selectLlmSuggestion(suggestion)}
-                                                        disabled={finalTopics.includes(suggestion)}
-                                                    >
-                                                        {finalTopics.includes(suggestion) ? (
-                                                            <FaCheck />
-                                                        ) : (
-                                                            <FaPlus />
-                                                        )}
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="d-flex flex-column align-items-center justify-content-center text-muted" style={{ height: "200px" }}>
-                                            {isLlmProcessing ? (
-                                                <p>Analyzing topics...</p>
-                                            ) : (
-                                                <>
-                                                    <FaExclamationCircle className="mb-2" style={{ fontSize: "1.5rem" }} />
-                                                    <p>Click "Get Suggestions" to receive AI recommendations</p>
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Manual Topic Management */}
-                            <div className="col-md-6">
-                                <div className="border rounded p-3 h-100">
-                                    <h3 className="h5 mb-3 d-flex align-items-center">
-                                        <FaEdit className="text-primary me-2" />
-                                        Customize Topics
-                                    </h3>
-
-                                    <div className="mb-3">
-                                        <div className="input-group">
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                placeholder="Add a custom topic"
-                                                value={newTopic}
-                                                onChange={(e) => setNewTopic(e.target.value)}
-                                                onKeyPress={(e) => e.key === 'Enter' && addNewTopic()}
-                                            />
-                                            <button
-                                                className="btn btn-primary"
-                                                onClick={addNewTopic}
-                                                disabled={!newTopic}
-                                            >
-                                                <FaPlus />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ maxHeight: "250px", overflowY: "auto" }}>
-                                        <h4 className="h6 mb-2">Final Topics ({finalTopics.length})</h4>
-                                        {finalTopics.length > 0 ? (
-                                            <div className="list-group">
-                                                {finalTopics.map(topic => (
-                                                    <div
-                                                        key={topic}
-                                                        className="list-group-item d-flex justify-content-between align-items-center"
-                                                    >
-                                                        <span>{topic}</span>
-                                                        <button
-                                                            className="btn btn-sm text-danger"
-                                                            onClick={() => removeTopic(topic)}
-                                                        >
-                                                            <FaTimes />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-muted fst-italic">No topics selected yet.</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="d-flex justify-content-between">
-                            <button
-                                className="btn btn-outline-secondary"
-                                onClick={prevStep}
-                            >
-                                Back
-                            </button>
-                            <button
-                                className={`btn ${finalTopics.length > 0 ? "btn-success" : "btn-light disabled"}`}
-                                onClick={handleSubmit}
-                                disabled={finalTopics.length === 0}
-                            >
-                                <FaThumbsUp className="me-1" /> Submit Topics
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <TopicRefiner
+                    isLlmProcessing={isLlmProcessing}
+                    handleLlmProcess={handleLlmProcess}
+                    llmSuggestions={llmSuggestions}
+                    finalTopics={finalTopics}
+                    selectLlmSuggestion={selectLlmSuggestion}
+                    newTopic={newTopic}
+                    setNewTopic={setNewTopic}
+                    addNewTopic={addNewTopic}
+                    removeTopic={removeTopic}
+                    prevStep={prevStep}
+                    handleSubmit={handleSubmit}
+                />
             )}
         </main>
     );
