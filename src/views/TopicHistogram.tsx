@@ -147,22 +147,10 @@ const TopicHistogram: FC = () => {
         setFrequencyRange({ min: 0, max: maxCount });
     }, [maxCount]);
 
-    // State for LLM suggestions
-    const [llmSuggestions, setLlmSuggestions] = useState<string[]>([]);
-
     // State for final topics
     const [finalTopics, setFinalTopics] = useState<string[]>([]);
-
-    // State for new topic being added
     const [newTopic, setNewTopic] = useState("");
-
-    // State for loading indicators
     const [isLoading, setIsLoading] = useState(false);
-
-    // State for LLM processing
-    const [isLlmProcessing, setIsLlmProcessing] = useState(false);
-
-    // State for highlighted topic
     const [highlightedTopic, setHighlightedTopic] = useState<string | undefined>();
 
     // Effect to check if search term and topic are provided
@@ -234,48 +222,6 @@ const TopicHistogram: FC = () => {
         }
     }, [frequencyRange, extractedTopics]);
 
-    // Function to handle LLM processing
-    const handleLlmProcess = () => {
-        setIsLlmProcessing(true);
-        // Simulate LLM processing
-        setTimeout(() => {
-            // This would be replaced with actual LLM API call
-            const suggestedTopics = selectedTopics.filter((_, i) => i % 2 === 0);
-            suggestedTopics.push("knowledge-graphs", "graph-databases");
-            setLlmSuggestions(suggestedTopics);
-            setIsLlmProcessing(false);
-        }, 1500);
-    };
-
-    // Function to handle topic selection toggle
-    const toggleTopic = (topic: string) => {
-        if (selectedTopics.includes(topic)) {
-            setSelectedTopics(selectedTopics.filter(t => t !== topic));
-        } else {
-            setSelectedTopics([...selectedTopics, topic]);
-        }
-    };
-
-    // Function to handle LLM suggestion selection
-    const selectLlmSuggestion = (suggestion: string) => {
-        if (!finalTopics.includes(suggestion)) {
-            setFinalTopics([...finalTopics, suggestion]);
-        }
-    };
-
-    // Function to add a new topic
-    const addNewTopic = () => {
-        if (newTopic && !finalTopics.includes(newTopic)) {
-            setFinalTopics([...finalTopics, newTopic]);
-            setNewTopic("");
-        }
-    };
-
-    // Function to remove a topic
-    const removeTopic = (topic: string) => {
-        setFinalTopics(finalTopics.filter(t => t !== topic));
-    };
-
     // Function to handle form submission for the final step
     const handleSubmit = () => {
         navigate('/graph', { state: { topics: finalTopics } });
@@ -287,7 +233,6 @@ const TopicHistogram: FC = () => {
             // When moving from step 1 to 2, initialize final topics with selected topics
             setFinalTopics(selectedTopics);
         }
-
         setCurrentStep(prev => Math.min(prev + 1, 2));
     };
 
@@ -467,19 +412,12 @@ const TopicHistogram: FC = () => {
                 </div>
             )}
 
-            {/* Step 2: Topic Refinement with LLM */}
+            {/* Step 2: Topic Refinement */}
             {currentStep === 2 && (
                 <div className="card-body d-flex flex-column">
                     <TopicRefiner
-                        isLlmProcessing={isLlmProcessing}
-                        handleLlmProcess={handleLlmProcess}
-                        llmSuggestions={llmSuggestions}
                         finalTopics={finalTopics}
-                        selectLlmSuggestion={selectLlmSuggestion}
-                        newTopic={newTopic}
-                        setNewTopic={setNewTopic}
-                        addNewTopic={addNewTopic}
-                        removeTopic={removeTopic}
+                        setFinalTopics={setFinalTopics}
                         prevStep={prevStep}
                         handleSubmit={handleSubmit}
                     />

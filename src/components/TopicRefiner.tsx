@@ -3,7 +3,6 @@
 import React, { FC, useState } from "react";
 import {
     Sparkles,
-    Filter,
     Check,
     Plus,
     AlertCircle,
@@ -39,9 +38,10 @@ const AI_MODELS: AIModel[] = [
 
 interface TopicRefinerProps {
     isLlmProcessing: boolean;
-    handleLlmProcess: () => void;
     llmSuggestions: string[];
-    finalTopics: string[];
+    setLlmSuggestions: (suggestions: string[]) => void;
+    onRequestSuggestions: (model: string, prompt: string, apiKey: string, topics: string[]) => Promise<void>;
+    selectedTopics: string[];
     selectLlmSuggestion: (suggestion: string) => void;
     newTopic: string;
     setNewTopic: (topic: string) => void;
@@ -53,11 +53,12 @@ interface TopicRefinerProps {
 
 export const TopicRefiner: FC<TopicRefinerProps> = ({
     isLlmProcessing,
-    handleLlmProcess,
-    llmSuggestions,
-    finalTopics,
+    llmSuggestions = [],
+    setLlmSuggestions,
+    onRequestSuggestions,
+    selectedTopics = [],
     selectLlmSuggestion,
-    newTopic,
+    newTopic = "",
     setNewTopic,
     addNewTopic,
     removeTopic,
@@ -70,6 +71,50 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
     );
     const [selectedModel, setSelectedModel] = useState('gpt-4');
     const [apiKey, setApiKey] = useState('');
+
+    const handleGetSuggestions = async () => {
+        if (!apiKey) {
+            alert('Please enter an API key');
+            return;
+        }
+
+        if (selectedTopics.length === 0) {
+            alert('Please select at least one topic before requesting suggestions');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://127.0.0.1:5002/ai-process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: selectedModel,
+                    prompt: customPrompt,
+                    topics: selectedTopics
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.suggestions) {
+                setLlmSuggestions(data.suggestions);
+            }
+
+            if (showPromptModal) {
+                setShowPromptModal(false);
+            }
+        } catch (error) {
+            console.error('Error getting suggestions:', error);
+            alert("Failed to get AI suggestions. Please try again.");
+        }
+    };
 
     return (
         <>
@@ -92,28 +137,10 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                                             <button
                                                 className="btn btn-outline-secondary"
                                                 onClick={() => setShowPromptModal(true)}
-                                                title="Customize AI Prompt"
+                                                title="AI Settings"
                                             >
-                                                <Settings size={16} />
-                                            </button>
-                                            <button
-                                                className={`btn ${isLlmProcessing ? 'btn-secondary' : 'btn-outline-primary'}`}
-                                                onClick={handleLlmProcess}
-                                                disabled={isLlmProcessing}
-                                            >
-                                                {isLlmProcessing ? (
-                                                    <>
-                                                        <div className="spinner-border spinner-border-sm me-2" role="status">
-                                                            <span className="visually-hidden">Loading...</span>
-                                                        </div>
-                                                        Processing...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Filter size={16} className="me-2" />
-                                                        Get Suggestions
-                                                    </>
-                                                )}
+                                                <Settings size={16} className="me-2" />
+                                                AI Setup & Run
                                             </button>
                                         </div>
                                     </div>
@@ -124,12 +151,11 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                                                 <div key={suggestion} className="list-group-item d-flex justify-content-between align-items-center">
                                                     <span>{suggestion}</span>
                                                     <button
-                                                        className={`btn btn-sm ${finalTopics.includes(suggestion) ? 'btn-success' : 'btn-outline-primary'
-                                                            }`}
+                                                        className={`btn btn-sm ${selectedTopics.includes(suggestion) ? 'btn-success' : 'btn-outline-primary'}`}
                                                         onClick={() => selectLlmSuggestion(suggestion)}
-                                                        disabled={finalTopics.includes(suggestion)}
+                                                        disabled={selectedTopics.includes(suggestion)}
                                                     >
-                                                        {finalTopics.includes(suggestion) ? (
+                                                        {selectedTopics.includes(suggestion) ? (
                                                             <Check size={16} />
                                                         ) : (
                                                             <Plus size={16} />
@@ -145,7 +171,7 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                                             ) : (
                                                 <>
                                                     <AlertCircle size={32} className="mb-3" />
-                                                    <p>Click "Get Suggestions" to receive AI recommendations</p>
+                                                    <p>Configure AI settings to receive suggestions</p>
                                                 </>
                                             )}
                                         </div>
@@ -184,10 +210,10 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                                     </div>
 
                                     <div>
-                                        <h4 className="h6 mb-3">Final Topics ({finalTopics.length})</h4>
+                                        <h4 className="h6 mb-3">Selected Topics ({selectedTopics.length})</h4>
                                         <div className="list-group" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                                            {finalTopics.length > 0 ? (
-                                                finalTopics.map((topic) => (
+                                            {selectedTopics.length > 0 ? (
+                                                selectedTopics.map((topic) => (
                                                     <div key={topic} className="list-group-item d-flex justify-content-between align-items-center">
                                                         <span>{topic}</span>
                                                         <button
@@ -217,7 +243,7 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                         <button
                             className="btn btn-success d-flex align-items-center"
                             onClick={handleSubmit}
-                            disabled={finalTopics.length === 0}
+                            disabled={selectedTopics.length === 0}
                         >
                             <ThumbsUp size={16} className="me-2" />
                             Submit Topics
@@ -331,12 +357,10 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                                 <button
                                     type="button"
                                     className="btn btn-primary"
-                                    onClick={() => {
-                                        // Here you would typically update the settings in your parent component
-                                        setShowPromptModal(false)
-                                    }}
+                                    onClick={handleGetSuggestions}
+                                    disabled={!apiKey}
                                 >
-                                    Save Changes
+                                    Save Changes & Get Suggestions
                                 </button>
                             </div>
                         </div>

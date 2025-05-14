@@ -10,3 +10,4 @@ dist
 .DS_Store
 *temp
 *repo_metadata.json
+__pycache__

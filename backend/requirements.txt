@@ -1,0 +1,7 @@
+flask
+flask-cors
+duckdb
+google-generativeai
+openai
+fastapi
+uvicorn 
