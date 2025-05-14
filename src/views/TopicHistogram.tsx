@@ -25,9 +25,9 @@ const HistogramBars: FC<TopicHistogramProps & { highlightedTopic?: string }> = (
         d3.select(svgRef.current).selectAll("*").remove();
 
         // Set dimensions with more bottom margin for labels
-        const margin = { top: 30, right: 20, bottom: 100, left: 40 };
+        const margin = { top: 15, right: 20, bottom: 80, left: 40 };
         const width = svgRef.current.clientWidth - margin.left - margin.right;
-        const height = 300 - margin.top - margin.bottom;
+        const height = 250 - margin.top - margin.bottom;
 
         // Create SVG
         const svg = d3.select(svgRef.current)
@@ -111,7 +111,7 @@ const HistogramBars: FC<TopicHistogramProps & { highlightedTopic?: string }> = (
     }, [data, range, highlightedTopic]);
 
     return (
-        <div style={{ width: '100%', height: '400px', padding: '10px' }}>
+        <div style={{ width: '100%', height: '350px', padding: '0' }}>
             <svg ref={svgRef} style={{ width: '100%', height: '100%' }}></svg>
         </div>
     );
@@ -306,7 +306,7 @@ const TopicHistogram: FC = () => {
         <main className="container py-4">
             {/* Header with back button, title, and step indicator all in one line */}
             <div className="d-flex align-items-center justify-content-between mb-4">
-                {/* Left side with back button and title */}
+                {/* Left side with back button and titles */}
                 <div className="d-flex align-items-center">
                     <button
                         className="btn btn-outline-secondary me-3"
@@ -315,19 +315,40 @@ const TopicHistogram: FC = () => {
                     >
                         <FaArrowLeft className="m-auto" />
                     </button>
-                    <h1 className="mb-0">Topic-Centric Filtering</h1>
+                    <div>
+                        <h1 className="mb-0">Topic-Centric Filtering</h1>
+                        {currentStep === 1 && (
+                            <h2 className="h5 text-muted mb-0 mt-1">Select Topics by Frequency</h2>
+                        )}
+                        {currentStep === 2 && (
+                            <h2 className="h5 text-muted mb-0 mt-1">Refine Your Topics</h2>
+                        )}
+                    </div>
                 </div>
 
                 {/* Right side with step indicator */}
                 <div className="d-flex align-items-center gap-4">
-                    {/* Step numbers */}
-                    <div className="d-flex align-items-center gap-2">
-                        <div className={`rounded-circle d-flex align-items-center justify-content-center ${currentStep >= 1 ? "bg-primary text-white" : "bg-light"
-                            }`} style={{ width: "32px", height: "32px" }}>
+                    {/* Step numbers with connecting line */}
+                    <div className="d-flex align-items-center gap-2 position-relative">
+                        <div
+                            className={`rounded-circle d-flex align-items-center justify-content-center text-dark ${currentStep >= 1 ? "bg-primary text-white" : "bg-secondary-subtle"}`}
+                            style={{ width: "32px", height: "32px", zIndex: 1 }}
+                        >
                             1
                         </div>
-                        <div className={`rounded-circle d-flex align-items-center justify-content-center ${currentStep >= 2 ? "bg-primary text-white" : "bg-light"
-                            }`} style={{ width: "32px", height: "32px" }}>
+                        {/* Connecting line */}
+                        <div
+                            style={{
+                                width: "40px",
+                                height: "2px",
+                                backgroundColor: currentStep >= 2 ? "#0d6efd" : "#adb5bd",
+                                transition: "background-color 0.3s ease"
+                            }}
+                        />
+                        <div
+                            className={`rounded-circle d-flex align-items-center justify-content-center text-dark ${currentStep >= 2 ? "bg-primary text-white" : "bg-secondary-subtle"}`}
+                            style={{ width: "32px", height: "32px", zIndex: 1 }}
+                        >
                             2
                         </div>
                     </div>
@@ -353,7 +374,6 @@ const TopicHistogram: FC = () => {
             {currentStep === 1 && (
                 <div className="card shadow-sm" style={{ minHeight: '800px', display: 'flex', flexDirection: 'column' }}>
                     <div className="card-body d-flex flex-column">
-                        <h2 className="card-title mb-3">Select Topics by Frequency</h2>
                         <p className="text-muted mb-4">
                             Adjust the frequency range to select topics related to{" "}
                             <span className="badge bg-primary" style={{ fontSize: '1rem' }}>
@@ -392,7 +412,16 @@ const TopicHistogram: FC = () => {
 
                                 <div>
                                     <h3 className="h5 mb-2">Selected Topics ({selectedTopics.length})</h3>
-                                    <div className="d-flex flex-wrap gap-2">
+                                    <div
+                                        className="d-flex flex-wrap gap-2"
+                                        style={{
+                                            maxHeight: '150px',
+                                            overflowY: 'auto',
+                                            padding: '8px',
+                                            border: '1px solid #dee2e6',
+                                            borderRadius: '8px'
+                                        }}
+                                    >
                                         {selectedTopics.map(topic => (
                                             <span
                                                 key={topic}
@@ -440,19 +469,21 @@ const TopicHistogram: FC = () => {
 
             {/* Step 2: Topic Refinement with LLM */}
             {currentStep === 2 && (
-                <TopicRefiner
-                    isLlmProcessing={isLlmProcessing}
-                    handleLlmProcess={handleLlmProcess}
-                    llmSuggestions={llmSuggestions}
-                    finalTopics={finalTopics}
-                    selectLlmSuggestion={selectLlmSuggestion}
-                    newTopic={newTopic}
-                    setNewTopic={setNewTopic}
-                    addNewTopic={addNewTopic}
-                    removeTopic={removeTopic}
-                    prevStep={prevStep}
-                    handleSubmit={handleSubmit}
-                />
+                <div className="card-body d-flex flex-column">
+                    <TopicRefiner
+                        isLlmProcessing={isLlmProcessing}
+                        handleLlmProcess={handleLlmProcess}
+                        llmSuggestions={llmSuggestions}
+                        finalTopics={finalTopics}
+                        selectLlmSuggestion={selectLlmSuggestion}
+                        newTopic={newTopic}
+                        setNewTopic={setNewTopic}
+                        addNewTopic={addNewTopic}
+                        removeTopic={removeTopic}
+                        prevStep={prevStep}
+                        handleSubmit={handleSubmit}
+                    />
+                </div>
             )}
         </main>
     );

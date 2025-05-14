@@ -5,6 +5,8 @@ import json
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+import os
+from pathlib import Path
 
 app = Flask(__name__)
 # Configure CORS to allow all origins and methods
@@ -16,6 +18,21 @@ CORS(app, resources={
     }
 })
 
+# Add this function to handle cache operations
+def get_cached_topics(search_term):
+    cache_file = Path('../public/data/cached_topics') / f"{search_term}.json"
+    if cache_file.exists():
+        with open(cache_file, 'r') as f:
+            return json.load(f)
+    return None
+
+def save_cached_topics(search_term, topics_data):
+    cache_dir = Path('../public/data/cached_topics')
+    cache_dir.mkdir(exist_ok=True)
+    cache_file = cache_dir / f"{search_term}.json"
+    with open(cache_file, 'w') as f:
+        json.dump(topics_data, f)
+
 @app.route('/process-topics', methods=['GET', 'POST'])
 def process_topics():
     try:
@@ -25,6 +42,17 @@ def process_topics():
         else:  # GET request
             search_term = request.args.get('searchTerm', '').lower()
 
+        # Check if we have cached results
+        cached_result = get_cached_topics(search_term)
+        if cached_result:
+            return jsonify({
+                "success": True,
+                "data": cached_result,
+                "total": len(cached_result),
+                "cached": True
+            })
+
+        # If not cached, proceed with the original processing
         # Step 1: Load JSON into a DuckDB temp table with parallel processing enabled
         con = duckdb.connect(database=':memory:')
         con.execute("SET threads TO 16;")  # Adjust number based on your CPU cores
@@ -59,10 +87,14 @@ def process_topics():
         topics = [{"name": name, "count": count} for name, count in topic_counts.items() if count > 2]
         topics = sorted(topics, key=lambda x: x["count"], reverse=True)
         
+        # Before returning, cache the results
+        save_cached_topics(search_term, topics)
+        
         return jsonify({
             "success": True,
             "data": topics,
-            "total": len(topics)
+            "total": len(topics),
+            "cached": False
         })
     
     except Exception as e:

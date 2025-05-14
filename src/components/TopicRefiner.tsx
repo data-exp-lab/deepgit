@@ -75,7 +75,7 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
         <>
             <div className="card shadow-sm">
                 <div className="card-body">
-                    <h2 className="card-title mb-3">Refine Your Topics</h2>
+                    {/* <h2 className="card-title mb-3">Refine Your Topics</h2> */}
                     <p className="text-muted mb-4">Use AI suggestions to refine your topics or manually add/remove topics.</p>
 
                     <div className="row g-4">

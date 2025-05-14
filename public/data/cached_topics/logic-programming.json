@@ -1,0 +1,310 @@
+[
+    {
+        "name": "prolog",
+        "count": 65
+    },
+    {
+        "name": "logic",
+        "count": 23
+    },
+    {
+        "name": "datalog",
+        "count": 22
+    },
+    {
+        "name": "python",
+        "count": 18
+    },
+    {
+        "name": "functional-programming",
+        "count": 16
+    },
+    {
+        "name": "artificial-intelligence",
+        "count": 14
+    },
+    {
+        "name": "minikanren",
+        "count": 13
+    },
+    {
+        "name": "haskell",
+        "count": 12
+    },
+    {
+        "name": "programming-language",
+        "count": 11
+    },
+    {
+        "name": "language",
+        "count": 10
+    },
+    {
+        "name": "javascript",
+        "count": 9
+    },
+    {
+        "name": "answer-set-programming",
+        "count": 9
+    },
+    {
+        "name": "java",
+        "count": 8
+    },
+    {
+        "name": "swi-prolog",
+        "count": 7
+    },
+    {
+        "name": "rust",
+        "count": 7
+    },
+    {
+        "name": "constraints",
+        "count": 6
+    },
+    {
+        "name": "unification",
+        "count": 6
+    },
+    {
+        "name": "declarative-programming",
+        "count": 6
+    },
+    {
+        "name": "interpreter",
+        "count": 6
+    },
+    {
+        "name": "smt",
+        "count": 6
+    },
+    {
+        "name": "machine-learning",
+        "count": 6
+    },
+    {
+        "name": "sat-solver",
+        "count": 6
+    },
+    {
+        "name": "c",
+        "count": 6
+    },
+    {
+        "name": "prolog-programming-language",
+        "count": 5
+    },
+    {
+        "name": "prolog-implementation",
+        "count": 5
+    },
+    {
+        "name": "probabilistic-programming",
+        "count": 5
+    },
+    {
+        "name": "object-oriented-programming",
+        "count": 5
+    },
+    {
+        "name": "go",
+        "count": 4
+    },
+    {
+        "name": "clojure",
+        "count": 4
+    },
+    {
+        "name": "query-language",
+        "count": 4
+    },
+    {
+        "name": "oop",
+        "count": 4
+    },
+    {
+        "name": "dsl",
+        "count": 4
+    },
+    {
+        "name": "backtracking",
+        "count": 4
+    },
+    {
+        "name": "kanren",
+        "count": 4
+    },
+    {
+        "name": "solver",
+        "count": 4
+    },
+    {
+        "name": "compiler",
+        "count": 4
+    },
+    {
+        "name": "deep-learning",
+        "count": 4
+    },
+    {
+        "name": "microkanren",
+        "count": 4
+    },
+    {
+        "name": "metaprogramming",
+        "count": 4
+    },
+    {
+        "name": "first-order-logic",
+        "count": 4
+    },
+    {
+        "name": "scheme",
+        "count": 4
+    },
+    {
+        "name": "logica-de-programacao",
+        "count": 4
+    },
+    {
+        "name": "csharp",
+        "count": 4
+    },
+    {
+        "name": "game",
+        "count": 4
+    },
+    {
+        "name": "planning",
+        "count": 4
+    },
+    {
+        "name": "python3",
+        "count": 4
+    },
+    {
+        "name": "cpp",
+        "count": 4
+    },
+    {
+        "name": "swipl",
+        "count": 4
+    },
+    {
+        "name": "typescript",
+        "count": 4
+    },
+    {
+        "name": "logical-programming",
+        "count": 4
+    },
+    {
+        "name": "souffle",
+        "count": 3
+    },
+    {
+        "name": "knowledge-representation",
+        "count": 3
+    },
+    {
+        "name": "knowledge-base",
+        "count": 3
+    },
+    {
+        "name": "arrays",
+        "count": 3
+    },
+    {
+        "name": "natural-language-processing",
+        "count": 3
+    },
+    {
+        "name": "exercises",
+        "count": 3
+    },
+    {
+        "name": "ocaml",
+        "count": 3
+    },
+    {
+        "name": "differentiable-programming",
+        "count": 3
+    },
+    {
+        "name": "constraint-logic-programming",
+        "count": 3
+    },
+    {
+        "name": "kotlin",
+        "count": 3
+    },
+    {
+        "name": "rule-engine",
+        "count": 3
+    },
+    {
+        "name": "programming-languages",
+        "count": 3
+    },
+    {
+        "name": "inductive-logic-programming",
+        "count": 3
+    },
+    {
+        "name": "expert-system",
+        "count": 3
+    },
+    {
+        "name": "dcg",
+        "count": 3
+    },
+    {
+        "name": "probabilistic-logic-programming",
+        "count": 3
+    },
+    {
+        "name": "scala",
+        "count": 3
+    },
+    {
+        "name": "programming",
+        "count": 3
+    },
+    {
+        "name": "constraint-programming",
+        "count": 3
+    },
+    {
+        "name": "linux",
+        "count": 3
+    },
+    {
+        "name": "picosat",
+        "count": 3
+    },
+    {
+        "name": "concurrent-programming",
+        "count": 3
+    },
+    {
+        "name": "programming-paradigms",
+        "count": 3
+    },
+    {
+        "name": "verilog",
+        "count": 3
+    },
+    {
+        "name": "logic-gates",
+        "count": 3
+    },
+    {
+        "name": "education",
+        "count": 3
+    },
+    {
+        "name": "ai",
+        "count": 3
+    }
+]
