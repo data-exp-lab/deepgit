@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from app.services.topic_service import TopicService
-from app.services.ai_service import AITopicProcessor
+from services.topic_service import TopicService
+from services.ai_service import AITopicProcessor
 
 app = Flask(__name__)
 CORS(app, resources={
