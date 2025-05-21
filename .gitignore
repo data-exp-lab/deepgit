@@ -11,3 +11,4 @@ dist
 *temp
 *repo_metadata.json
 __pycache__
+*.duckdb
