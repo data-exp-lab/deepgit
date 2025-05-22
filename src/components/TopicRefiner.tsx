@@ -84,7 +84,7 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
         }
 
         try {
-            const response = await fetch('http://127.0.0.1:5002/ai-process', {
+            const response = await fetch('/api/ai-process', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

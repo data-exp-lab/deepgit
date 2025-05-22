@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from app.services.topic_service import TopicService
-from app.services.ai_service import AITopicProcessor
+from services.topic_service import TopicService
+from services.ai_service import AITopicProcessor
 
 app = Flask(__name__)
 CORS(app, resources={
@@ -15,7 +15,7 @@ CORS(app, resources={
 topic_service = TopicService()
 ai_processor = AITopicProcessor()
 
-@app.route('/process-topics', methods=['GET', 'POST'])
+@app.route('/api/process-topics', methods=['GET', 'POST'])
 def process_topics():
     try:
         if request.method == 'POST':
@@ -33,7 +33,7 @@ def process_topics():
             "message": "An error occurred while processing the request"
         }), 500
 
-@app.route('/ai-process', methods=['GET', 'POST'])
+@app.route('/api/ai-process', methods=['GET', 'POST'])
 def ai_process():
     try:
         if request.method == 'POST':

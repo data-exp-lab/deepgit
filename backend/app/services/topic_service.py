@@ -1,6 +1,6 @@
 from collections import Counter
 import duckdb
-from app.utils.cache import get_cached_topics, save_cached_topics
+from utils.cache import get_cached_topics, save_cached_topics
 import os
 
 class TopicService:
@@ -13,7 +13,7 @@ class TopicService:
     }
 
     def __init__(self):
-        db_path = '../public/data/github_meta.duckdb'
+        db_path = '/home/user/projects/deepgit/public/data/github_meta.duckdb'
         
         # Check if database exists
         if os.path.exists(db_path):

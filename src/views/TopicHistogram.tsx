@@ -173,7 +173,7 @@ const TopicHistogram: FC = () => {
 
         setIsLoading(true);
 
-        fetch('http://127.0.0.1:5002/process-topics', {
+        fetch('/api/process-topics', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
