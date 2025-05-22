@@ -13,7 +13,7 @@ class TopicService:
     }
 
     def __init__(self):
-        db_path = '../../public/data/github_meta.duckdb'
+        db_path = '/home/user/projects/deepgit/public/data/github_meta.duckdb'
         
         # Check if database exists
         if os.path.exists(db_path):
