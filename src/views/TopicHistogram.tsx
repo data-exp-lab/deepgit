@@ -7,6 +7,7 @@ import * as d3 from "d3";  // Make sure to install @types/d3 and d3
 // import { getErrorMessage } from "../lib/errors";
 import { useNotifications } from "../lib/notifications";
 import { TopicRefiner } from "../components/TopicRefiner";
+import { API_ENDPOINTS } from '../lib/config';
 
 // Topic Histogram Component
 interface TopicHistogramProps {
@@ -173,7 +174,7 @@ const TopicHistogram: FC = () => {
 
         setIsLoading(true);
 
-        fetch('/api/process-topics', {
+        fetch(API_ENDPOINTS.PROCESS_TOPICS, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -13,13 +13,14 @@ class TopicService:
     }
 
     def __init__(self):
-        db_path = '/home/user/projects/deepgit/public/data/github_meta.duckdb'
+        db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'public', 'data', 'github_meta.duckdb')
         
         # Check if database exists
         if os.path.exists(db_path):
             # Connect in read-only mode to avoid locking issues
             self.con = duckdb.connect(database=db_path, read_only=True)
-            self.con.execute("SET threads TO 8;")
+            self.con.execute("SET threads TO 2;")
+            self.con.execute("SET memory_limit TO '0.5GB';")
         else:
             raise FileNotFoundError(
                 f"Database not found at {db_path}. Please ensure the database file exists before running the application."

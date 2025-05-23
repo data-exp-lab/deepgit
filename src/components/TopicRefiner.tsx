@@ -11,6 +11,7 @@ import {
     ThumbsUp,
     Settings
 } from "lucide-react";
+import { API_ENDPOINTS } from '../lib/config';
 
 interface AIModel {
     id: string;
@@ -84,7 +85,7 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
         }
 
         try {
-            const response = await fetch('/api/ai-process', {
+            const response = await fetch(API_ENDPOINTS.AI_PROCESS, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
