@@ -1,5 +1,5 @@
 // Backend API configuration
-export const API_BASE_URL = 'http://127.0.0.1:5002';
+export const API_BASE_URL = 'http://localhost:5002';
 
 // API endpoints
 export const API_ENDPOINTS = {
