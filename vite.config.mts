@@ -13,7 +13,8 @@ const copySpecificFiles = () => ({
       'logo.svg',
       'deepgit_logo.png',
       'dxl_logo.png',
-      'ossci_logo.jpg'
+      'ossci_logo.jpg',
+      'favicon.ico'
     ];
 
     for (const file of filesToCopy) {
