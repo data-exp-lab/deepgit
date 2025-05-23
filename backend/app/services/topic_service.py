@@ -2,6 +2,7 @@ from collections import Counter
 import duckdb
 from utils.cache import get_cached_topics, save_cached_topics
 import os
+import psutil
 
 class TopicService:
     # Define the allowed terms for caching
@@ -19,8 +20,19 @@ class TopicService:
         if os.path.exists(db_path):
             # Connect in read-only mode to avoid locking issues
             self.con = duckdb.connect(database=db_path, read_only=True)
-            self.con.execute("SET threads TO 2;")
-            self.con.execute("SET memory_limit TO '0.5GB';")
+            
+            # Set conservative memory limits based on available system memory
+            available_memory = psutil.virtual_memory().available
+            memory_limit = min(available_memory * 0.3, 0.5 * 1024 * 1024 * 1024)  # Use 30% of available memory, max 0.5GB
+            self.con.execute(f"SET memory_limit TO '{int(memory_limit)}B'")
+            
+            # Set conservative thread count
+            cpu_count = psutil.cpu_count(logical=False) or 1
+            thread_count = max(1, min(cpu_count, 2))  # Use at most 2 threads
+            self.con.execute(f"SET threads TO {thread_count}")
+            
+            # Enable streaming for large queries
+            self.con.execute("SET enable_streaming TO true")
         else:
             raise FileNotFoundError(
                 f"Database not found at {db_path}. Please ensure the database file exists before running the application."
@@ -41,31 +53,28 @@ class TopicService:
                         "cached": True
                     }
 
-            # Get data from normalized tables in DuckDB
+            # Use a more efficient query that filters early
             query = """
-                SELECT r.nameWithOwner, t.topic
-                FROM repos r
-                JOIN repo_topics t ON r.nameWithOwner = t.repo
+                WITH filtered_repos AS (
+                    SELECT DISTINCT r.nameWithOwner
+                    FROM repos r
+                    JOIN repo_topics t ON r.nameWithOwner = t.repo
+                    WHERE LOWER(t.topic) = ?
+                )
+                SELECT t.topic, COUNT(*) as count
+                FROM filtered_repos fr
+                JOIN repo_topics t ON fr.nameWithOwner = t.repo
+                WHERE LOWER(t.topic) != ?
+                GROUP BY t.topic
+                HAVING COUNT(*) > 2
+                ORDER BY count DESC
             """
-            df = self.con.execute(query).fetchdf()
-
-            # Group topics by repo into a list
-            grouped = df.groupby("nameWithOwner")["topic"].apply(list).reset_index()
-            grouped.columns = ["nameWithOwner", "topics"]
-
-            # Filter repos based on search term in topics
-            filtered_df = grouped[grouped["topics"].apply(lambda x: search_term in [t.lower() for t in x])]
-
-            # Count all co-occurring topics
-            all_topics = [topic for topics in filtered_df["topics"] for topic in topics]
-            topic_counts = Counter([t.lower() for t in all_topics])
-
-            # Remove the searched topic itself
-            topic_counts.pop(search_term, None)
-
-            # Format results and sort, only including topics with count > 2
-            topics = [{"name": name, "count": count} for name, count in topic_counts.items() if count > 2]
-            topics = sorted(topics, key=lambda x: x["count"], reverse=True)
+            
+            # Execute query with streaming
+            result = self.con.execute(query, [search_term, search_term]).fetchall()
+            
+            # Convert results to the expected format
+            topics = [{"name": name.lower(), "count": count} for name, count in result]
 
             # Only cache results for allowed terms
             if search_term in self.CACHEABLE_TERMS:
@@ -83,4 +92,8 @@ class TopicService:
                 "success": False,
                 "error": str(e),
                 "message": "An error occurred while processing the request"
-            } 
+            }
+        finally:
+            # Force garbage collection after each request
+            import gc
+            gc.collect() 
