@@ -8,3 +8,4 @@ uvicorn
 kaggle>=1.5.16
 numpy
 pandas
+psutil
