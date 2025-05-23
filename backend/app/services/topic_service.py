@@ -32,7 +32,7 @@ class TopicService:
             self.con.execute(f"SET threads TO {thread_count}")
             
             # Enable streaming for large queries
-            self.con.execute("SET enable_streaming TO true")
+            # self.con.execute("SET enable_streaming TO true")
         else:
             raise FileNotFoundError(
                 f"Database not found at {db_path}. Please ensure the database file exists before running the application."
