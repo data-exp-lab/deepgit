@@ -307,10 +307,14 @@ const TopicHistogram: FC = () => {
     // Function to move to the next step
     const nextStep = () => {
         if (currentStep === 1) {
-            // When moving from step 1 to 2, initialize final topics with selected topics
             setFinalTopics(selectedTopics);
         }
         setCurrentStep(prev => Math.min(prev + 1, 2));
+        // Scroll to the main content/card after step change
+        setTimeout(() => {
+            const main = document.querySelector('main');
+            if (main) main.scrollIntoView({ behavior: 'smooth' });
+        }, 0);
     };
 
     // Function to move to the previous step
@@ -442,80 +446,81 @@ const TopicHistogram: FC = () => {
             )}
 
             {/* Header container to match card width */}
-            <div className="mx-auto" style={{ maxWidth: currentStep === 1 ? '90%' : '900px' }}>
-                {/* Header with back button, title, and step indicator all in one line */}
-                <div className="d-flex align-items-center justify-content-between mb-4">
-                    {/* Left side with back button and titles */}
-                    <div className="d-flex align-items-center">
-                        <button
-                            className="btn btn-outline-secondary me-3"
-                            onClick={goBackToHome}
-                            style={{ borderRadius: "50%", width: "40px", height: "40px", padding: "0" }}
-                        >
-                            <FaArrowLeft className="m-auto" />
-                        </button>
-                        <div>
-                            <h1 className="mb-0">Topic-Centric Filtering</h1>
-                            {currentStep === 1 && (
-                                <h2 className="h5 text-muted mb-0 mt-1">Select Topics by Frequency</h2>
-                            )}
-                            {currentStep === 2 && (
-                                <h2 className="h5 text-muted mb-0 mt-1">Refine Your Topics</h2>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Right side with step indicator */}
-                    <div className="d-flex align-items-center gap-4">
-                        {/* Step numbers with connecting line */}
-                        <div className="d-flex align-items-center gap-2 position-relative">
-                            <div
-                                className={`rounded-circle d-flex align-items-center justify-content-center text-dark ${currentStep >= 1 ? "bg-primary text-white" : "bg-secondary-subtle"}`}
-                                style={{ width: "32px", height: "32px", zIndex: 1 }}
+            {currentStep === 1 && (
+                <div className="mx-auto" style={{ maxWidth: '90%' }}>
+                    <div className="d-flex align-items-center justify-content-between mb-4">
+                        {/* Left side with back button and titles */}
+                        <div className="d-flex align-items-center">
+                            <button
+                                className="btn btn-outline-secondary me-3"
+                                onClick={goBackToHome}
+                                style={{ borderRadius: "50%", width: "40px", height: "40px", padding: "0" }}
                             >
-                                1
+                                <FaArrowLeft className="m-auto" />
+                            </button>
+                            <div>
+                                <h1 className="mb-0">Topic-Centric Filtering</h1>
+                                {currentStep === 1 && (
+                                    <h2 className="h5 text-muted mb-0 mt-1">Select Topics by Frequency</h2>
+                                )}
+                                {currentStep === 2 && (
+                                    <h2 className="h5 text-muted mb-0 mt-1">Refine Your Topics</h2>
+                                )}
                             </div>
-                            {/* Connecting line */}
-                            <div
+                        </div>
+
+                        {/* Right side with step indicator */}
+                        <div className="d-flex align-items-center gap-4">
+                            {/* Step numbers with connecting line */}
+                            <div className="d-flex align-items-center gap-2 position-relative">
+                                <div
+                                    className={`rounded-circle d-flex align-items-center justify-content-center text-dark ${currentStep >= 1 ? "bg-primary text-white" : "bg-secondary-subtle"}`}
+                                    style={{ width: "32px", height: "32px", zIndex: 1 }}
+                                >
+                                    1
+                                </div>
+                                {/* Connecting line */}
+                                <div
+                                    style={{
+                                        width: "40px",
+                                        height: "2px",
+                                        backgroundColor: currentStep >= 2 ? "#0d6efd" : "#adb5bd",
+                                        transition: "background-color 0.3s ease"
+                                    }}
+                                />
+                                <div
+                                    className={`rounded-circle d-flex align-items-center justify-content-center text-dark ${currentStep >= 2 ? "bg-primary text-white" : "bg-secondary-subtle"}`}
+                                    style={{ width: "32px", height: "32px", zIndex: 1 }}
+                                >
+                                    2
+                                </div>
+                            </div>
+
+                            {/* Step counter */}
+                            <div className="text-muted">
+                                Step {currentStep} of 2
+                            </div>
+
+                            <button
+                                className="btn btn-outline-secondary"
+                                onClick={() => setShowApiKeyModal(true)}
                                 style={{
+                                    borderRadius: "50%",
                                     width: "40px",
-                                    height: "2px",
-                                    backgroundColor: currentStep >= 2 ? "#0d6efd" : "#adb5bd",
-                                    transition: "background-color 0.3s ease"
+                                    height: "40px",
+                                    padding: "0",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
                                 }}
-                            />
-                            <div
-                                className={`rounded-circle d-flex align-items-center justify-content-center text-dark ${currentStep >= 2 ? "bg-primary text-white" : "bg-secondary-subtle"}`}
-                                style={{ width: "32px", height: "32px", zIndex: 1 }}
+                                title={apiKey ? 'Change Gemini API Key' : 'Set Gemini API Key'}
                             >
-                                2
-                            </div>
+                                <FaCog className="m-auto" />
+                            </button>
                         </div>
-
-                        {/* Step counter */}
-                        <div className="text-muted">
-                            Step {currentStep} of 2
-                        </div>
-
-                        <button
-                            className="btn btn-outline-secondary"
-                            onClick={() => setShowApiKeyModal(true)}
-                            style={{
-                                borderRadius: "50%",
-                                width: "40px",
-                                height: "40px",
-                                padding: "0",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center"
-                            }}
-                            title={apiKey ? 'Change Gemini API Key' : 'Set Gemini API Key'}
-                        >
-                            <FaCog className="m-auto" />
-                        </button>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Step labels */}
             {/* <div className="d-flex gap-4 mb-4">
@@ -688,16 +693,27 @@ const TopicHistogram: FC = () => {
 
             {/* Step 2: Topic Refinement */}
             {currentStep === 2 && (
-                <div className="card shadow-sm mx-auto" style={{ maxWidth: '900px' }}>
-                    <div className="card-body d-flex flex-column">
-                        <TopicRefiner
-                            finalTopics={finalTopics}
-                            setFinalTopics={setFinalTopics}
-                            prevStep={prevStep}
-                            handleSubmit={handleSubmit}
-                        />
-                    </div>
-                </div>
+                <TopicRefiner
+                    isLlmProcessing={false}
+                    llmSuggestions={[]}
+                    setLlmSuggestions={() => { }}
+                    onRequestSuggestions={async (model, prompt, apiKey, topics) => {
+                        // TODO: Implement AI suggestions
+                        console.log('Requesting suggestions with:', { model, prompt, apiKey, topics });
+                    }}
+                    selectedTopics={selectedTopics}
+                    selectLlmSuggestion={(suggestion) => {
+                        if (!selectedTopics.includes(suggestion)) {
+                            setSelectedTopics([...selectedTopics, suggestion]);
+                        }
+                    }}
+                    newTopic=""
+                    setNewTopic={() => { }}
+                    addNewTopic={() => { }}
+                    prevStep={prevStep}
+                    handleSubmit={handleSubmit}
+                    searchTerm={searchTerm}
+                />
             )}
         </main>
     );

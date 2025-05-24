@@ -1,17 +1,16 @@
 "use client"
 
-import React, { FC, useState } from "react";
+import React, { FC, useState, useEffect } from "react";
 import {
     Sparkles,
     Check,
     Plus,
-    AlertCircle,
     Edit,
-    X,
     ThumbsUp,
     Settings
 } from "lucide-react";
 import { API_ENDPOINTS } from '../lib/config';
+import { FaArrowLeft } from "react-icons/fa";
 
 interface AIModel {
     id: string;
@@ -47,9 +46,9 @@ interface TopicRefinerProps {
     newTopic: string;
     setNewTopic: (topic: string) => void;
     addNewTopic: () => void;
-    removeTopic: (topic: string) => void;
     prevStep: () => void;
     handleSubmit: () => void;
+    searchTerm: string;
 }
 
 export const TopicRefiner: FC<TopicRefinerProps> = ({
@@ -62,23 +61,32 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
     newTopic = "",
     setNewTopic,
     addNewTopic,
-    removeTopic,
     prevStep,
-    handleSubmit
+    handleSubmit,
+    searchTerm
 }) => {
     const [showPromptModal, setShowPromptModal] = useState(false);
+    const [showWelcomeModal, setShowWelcomeModal] = useState(true);
     const [customPrompt, setCustomPrompt] = useState(
         "Please analyze these topics and suggest related or more specific topics that might be relevant."
     );
     const [selectedModel, setSelectedModel] = useState('gpt-4');
     const [apiKey, setApiKey] = useState('');
 
+    useEffect(() => {
+        // Disable scroll on mount
+        document.body.style.overflow = "hidden";
+        return () => {
+            // Restore scroll on unmount
+            document.body.style.overflow = "";
+        };
+    }, []);
+
     const handleGetSuggestions = async () => {
         if (!apiKey) {
             alert('Please enter an API key');
             return;
         }
-
         if (selectedTopics.length === 0) {
             alert('Please select at least one topic before requesting suggestions');
             return;
@@ -87,48 +95,91 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
         try {
             const response = await fetch(API_ENDPOINTS.AI_PROCESS, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: selectedModel,
-                    prompt: customPrompt,
-                    topics: selectedTopics
+                    selectedModel,
+                    customPrompt,
+                    apiKey,
+                    searchTerm,
+                    selectedTopics
                 })
             });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
             const data = await response.json();
-
-            if (data.suggestions) {
-                setLlmSuggestions(data.suggestions);
+            if (data.success && data.result) {
+                setLlmSuggestions(data.result);
+            } else {
+                alert('Failed to get AI suggestions.');
             }
-
-            if (showPromptModal) {
-                setShowPromptModal(false);
-            }
+            setShowPromptModal(false);
         } catch (error) {
-            console.error('Error getting suggestions:', error);
-            alert("Failed to get AI suggestions. Please try again.");
+            alert('Failed to get AI suggestions. Please try again.');
         }
     };
 
     return (
-        <>
-            <div className="card shadow-sm">
+        <main className="container-fluid py-4" style={{ height: '100vh', overflowY: 'auto' }}>
+            {/* Navigation/Header Row */}
+            <div className="mx-auto" style={{ maxWidth: '90%' }}>
+                <div className="d-flex align-items-center justify-content-between mb-4">
+                    {/* Left side with back button and titles */}
+                    <div className="d-flex align-items-center">
+                        <button
+                            className="btn btn-outline-secondary me-3"
+                            style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0 }}
+                            onClick={() => {
+                                if (showWelcomeModal) {
+                                    setShowWelcomeModal(false);
+                                } else {
+                                    prevStep();
+                                }
+                            }}
+                        >
+                            <FaArrowLeft />
+                        </button>
+                        <div>
+                            <h1 className="mb-0">Topic-Centric Filtering</h1>
+                            <h2 className="h5 text-muted mb-0 mt-1">Refine Your Topics</h2>
+                        </div>
+                    </div>
+                    {/* Right side with step indicator */}
+                    <div className="d-flex align-items-center gap-4">
+                        <div className="d-flex align-items-center gap-2 position-relative">
+                            <div
+                                className={"rounded-circle d-flex align-items-center justify-content-center text-dark bg-primary text-white"}
+                                style={{ width: "32px", height: "32px", zIndex: 1 }}
+                            >
+                                1
+                            </div>
+                            <div
+                                style={{
+                                    width: "40px",
+                                    height: "2px",
+                                    backgroundColor: "#0d6efd",
+                                    transition: "background-color 0.3s ease"
+                                }}
+                            />
+                            <div
+                                className={"rounded-circle d-flex align-items-center justify-content-center text-dark bg-primary text-white"}
+                                style={{ width: "32px", height: "32px", zIndex: 1 }}
+                            >
+                                2
+                            </div>
+                        </div>
+                        <div className="text-muted">
+                            Step 2 of 2
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="card shadow-sm mx-auto" style={{ maxWidth: '90%' }}>
                 <div className="card-body">
-                    {/* <h2 className="card-title mb-3">Refine Your Topics</h2> */}
                     <p className="text-muted mb-4">Use AI suggestions to refine your topics or manually add/remove topics.</p>
 
                     <div className="row g-4">
                         {/* LLM Suggestions */}
                         <div className="col-md-6">
-                            <div className="card h-100">
-                                <div className="card-body">
+                            <div className="card h-100" style={{ minHeight: 420 }}>
+                                <div className="card-body" style={{ minHeight: 420, maxHeight: 420 }}>
                                     <div className="d-flex justify-content-between align-items-center mb-4">
                                         <h3 className="h5 mb-0 d-flex align-items-center">
                                             <Sparkles className="text-warning me-2" size={20} />
@@ -145,36 +196,49 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                                             </button>
                                         </div>
                                     </div>
-
-                                    {llmSuggestions.length > 0 ? (
-                                        <div className="list-group" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                                            {llmSuggestions.map((suggestion) => (
-                                                <div key={suggestion} className="list-group-item d-flex justify-content-between align-items-center">
-                                                    <span>{suggestion}</span>
-                                                    <button
-                                                        className={`btn btn-sm ${selectedTopics.includes(suggestion) ? 'btn-success' : 'btn-outline-primary'}`}
-                                                        onClick={() => selectLlmSuggestion(suggestion)}
-                                                        disabled={selectedTopics.includes(suggestion)}
-                                                    >
-                                                        {selectedTopics.includes(suggestion) ? (
+                                    {/* Show selected topics first */}
+                                    {selectedTopics.length > 0 && llmSuggestions.length === 0 && (
+                                        <div className="d-flex flex-column h-100" style={{ minHeight: 250, justifyContent: 'flex-start' }}>
+                                            <div className="list-group w-100 mb-0" style={{ flex: 1, overflowY: 'auto', maxHeight: 300, marginBottom: 0, paddingBottom: 0 }}>
+                                                {selectedTopics.map((topic) => (
+                                                    <div key={topic} className="list-group-item d-flex justify-content-between align-items-center">
+                                                        <span>{topic}</span>
+                                                        <button
+                                                            className="btn btn-sm btn-outline-secondary"
+                                                            disabled
+                                                        >
                                                             <Check size={16} />
-                                                        ) : (
-                                                            <Plus size={16} />
-                                                        )}
-                                                    </button>
-                                                </div>
-                                            ))}
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* Show AI suggestions (excluding selected topics) */}
+                                    {llmSuggestions.length > 0 ? (
+                                        <div>
+                                            <h6 className="text-muted mb-2">New Suggestions</h6>
+                                            <div className="list-group" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                                {llmSuggestions
+                                                    .filter(suggestion => !selectedTopics.includes(suggestion))
+                                                    .map((suggestion) => (
+                                                        <div key={suggestion} className="list-group-item d-flex justify-content-between align-items-center">
+                                                            <span>{suggestion}</span>
+                                                            <button
+                                                                className="btn btn-sm btn-outline-primary"
+                                                                onClick={() => selectLlmSuggestion(suggestion)}
+                                                            >
+                                                                <Plus size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                            </div>
                                         </div>
                                     ) : (
-                                        <div className="text-center text-muted py-5">
+                                        <div className="text-center py-5">
                                             {isLlmProcessing ? (
                                                 <p className="text-primary">Analyzing topics...</p>
-                                            ) : (
-                                                <>
-                                                    <AlertCircle size={32} className="mb-3" />
-                                                    <p>Configure AI settings to receive suggestions</p>
-                                                </>
-                                            )}
+                                            ) : null}
                                         </div>
                                     )}
                                 </div>
@@ -183,8 +247,8 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
 
                         {/* Manual Topic Management */}
                         <div className="col-md-6">
-                            <div className="card h-100">
-                                <div className="card-body">
+                            <div className="card h-100" style={{ minHeight: 180 }}>
+                                <div className="card-body" style={{ minHeight: 180, maxHeight: 180, overflowY: 'auto' }}>
                                     <h3 className="h5 mb-4 d-flex align-items-center">
                                         <Edit size={20} className="text-primary me-2" />
                                         Customize Topics
@@ -209,38 +273,12 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                                             </button>
                                         </div>
                                     </div>
-
-                                    <div>
-                                        <h4 className="h6 mb-3">Selected Topics ({selectedTopics.length})</h4>
-                                        <div className="list-group" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                                            {selectedTopics.length > 0 ? (
-                                                selectedTopics.map((topic) => (
-                                                    <div key={topic} className="list-group-item d-flex justify-content-between align-items-center">
-                                                        <span>{topic}</span>
-                                                        <button
-                                                            className="btn btn-sm btn-outline-danger"
-                                                            onClick={() => removeTopic(topic)}
-                                                        >
-                                                            <X size={16} />
-                                                        </button>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <p className="text-muted text-center py-4 fst-italic">
-                                                    No topics selected yet.
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="d-flex justify-content-between mt-4">
-                        <button className="btn btn-outline-secondary" onClick={prevStep}>
-                            Back
-                        </button>
+                    <div className="d-flex justify-content-end mt-4">
                         <button
                             className="btn btn-success d-flex align-items-center"
                             onClick={handleSubmit}
@@ -252,6 +290,47 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                     </div>
                 </div>
             </div>
+
+            {/* Welcome Modal */}
+            {showWelcomeModal && (
+                <div className="modal show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title d-flex align-items-center">
+                                    <Sparkles className="text-warning me-2" size={20} />
+                                    Welcome to Topic Refinement
+                                </h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setShowWelcomeModal(false)}
+                                    aria-label="Close"
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="alert alert-info mb-0">
+                                    <p className="mb-0">
+                                        Your selected topics have been loaded. Please use AI to further refine them with your search term: <span className="badge bg-primary" style={{ fontSize: '1rem' }}>{searchTerm}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                {/* <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                        setShowWelcomeModal(false);
+                                        setShowPromptModal(true);
+                                    }}
+                                >
+                                    Configure AI Settings
+                                </button> */}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Prompt Customization Modal */}
             {showPromptModal && (
@@ -368,6 +447,6 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                     </div>
                 </div>
             )}
-        </>
+        </main>
     );
 }; 
