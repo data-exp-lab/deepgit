@@ -103,11 +103,9 @@ def explain_topic():
             ), 400
 
         # Create a prompt for the AI to explain the topic
-        prompt = f"""Explain '{topic}' in the context of '{search_term}' following this structure:
-1. If it's an abbreviation, what it stands for and its common meaning in software development
-2. How it's typically defined in technical documentation or Wikipedia
-3. Its specific relevance to {search_term} and why developers use this term in repositories
-Keep it concise but informative (1-2 sentences)."""
+        prompt = f"""Explain '{topic}' in the context of '{search_term}'. 
+                    If it's an abbreviation, what it stands for in '{search_term}'
+                    Keep it concise but informative (1-2 sentences)."""
 
         try:
             # Create an event loop and run the async function

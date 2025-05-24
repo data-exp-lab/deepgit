@@ -385,30 +385,30 @@ const TopicHistogram: FC = () => {
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">Google API Key Required</h5>
+                                <h5 className="modal-title">Google Gemini API Key Required</h5>
                                 <button
                                     type="button"
                                     className="btn-close"
                                     onClick={() => {
                                         setShowApiKeyModal(false);
-                                        setSelectedTopicForExplanation(null); // Clear the selected topic if user cancels
+                                        setSelectedTopicForExplanation(null);
                                     }}
                                     aria-label="Close"
                                 />
                             </div>
                             <div className="modal-body">
                                 <div className="mb-3">
-                                    <label htmlFor="apiKey" className="form-label">Google API Key</label>
+                                    <label htmlFor="apiKey" className="form-label">Google Gemini API Key</label>
                                     <input
                                         type="password"
                                         className="form-control"
                                         id="apiKey"
                                         value={apiKey}
                                         onChange={(e) => setApiKey(e.target.value)}
-                                        placeholder="Enter your Google API key"
+                                        placeholder="Enter your Google Gemini API key"
                                     />
                                     <div className="form-text">
-                                        Your API key is required to get topic explanations. It is stored locally in your browser and is never shared with our servers.
+                                        Your Google Gemini API key is required to get topic explanations. It is stored locally in your browser and is never shared with our servers.
                                         <br />
                                         <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer">
                                             Get your API key from Google AI Studio
@@ -422,7 +422,7 @@ const TopicHistogram: FC = () => {
                                     className="btn btn-secondary"
                                     onClick={() => {
                                         setShowApiKeyModal(false);
-                                        setSelectedTopicForExplanation(null); // Clear the selected topic if user cancels
+                                        setSelectedTopicForExplanation(null);
                                     }}
                                 >
                                     Cancel
@@ -507,7 +507,7 @@ const TopicHistogram: FC = () => {
                             alignItems: "center",
                             justifyContent: "center"
                         }}
-                        title={apiKey ? 'Change API Key' : 'Set API Key'}
+                        title={apiKey ? 'Change Gemini API Key' : 'Set Gemini API Key'}
                     >
                         <FaCog className="m-auto" />
                     </button>
