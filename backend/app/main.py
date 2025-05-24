@@ -89,7 +89,7 @@ def ai_process():
                 intersection.append(ai_item)
 
         # print("Selected topics:", selected_topics)
-        # print("Intersection:", intersection)
+        print("Intersection:", intersection)
         return jsonify({"success": True, "result": intersection})
 
     except Exception as e:
