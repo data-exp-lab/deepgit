@@ -19,20 +19,12 @@ interface AIModel {
 
 const AI_MODELS: AIModel[] = [
     {
-        id: 'gpt-4',
-        name: 'OpenAI GPT-4'
-    },
-    {
         id: 'gpt-3.5-turbo',
-        name: 'OpenAI GPT-3.5'
+        name: 'OpenAI GPT-3.5 Turbo'
     },
     {
-        id: 'gemini-pro',
-        name: 'Google Gemini Pro'
-    },
-    {
-        id: 'gemini-ultra',
-        name: 'Google Gemini Ultra'
+        id: 'gemini-2.0-flash',
+        name: 'Google Gemini 2.0 Flash'
     }
 ];
 
@@ -68,7 +60,7 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
     const [showPromptModal, setShowPromptModal] = useState(false);
     const [showWelcomeModal, setShowWelcomeModal] = useState(true);
     const [customPrompt, setCustomPrompt] = useState(
-        "Please analyze these topics and suggest related or more specific topics that might be relevant."
+        "Select the top K most relevant topics from the list of {Current topics} based on their relevance to the {Search Term}."
     );
     const [selectedModel, setSelectedModel] = useState('gpt-4');
     const [apiKey, setApiKey] = useState('');
@@ -254,6 +246,26 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                                         Customize Topics
                                     </h3>
 
+                                    {/* AI Suggestions (in right column) */}
+                                    {llmSuggestions.length > 0 && (
+                                        <div className="mb-4">
+                                            <h6 className="text-muted mb-2">AI Suggestions (in right column)</h6>
+                                            <div className="list-group" style={{ maxHeight: "200px", overflowY: "auto" }}>
+                                                {llmSuggestions.filter(suggestion => !selectedTopics.includes(suggestion)).map((suggestion) => (
+                                                    <div key={suggestion} className="list-group-item d-flex justify-content-between align-items-center">
+                                                        <span>{suggestion}</span>
+                                                        <button
+                                                            className="btn btn-sm btn-outline-primary"
+                                                            onClick={() => selectLlmSuggestion(suggestion)}
+                                                        >
+                                                            <Plus size={16} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="mb-4">
                                         <div className="input-group">
                                             <input
@@ -422,7 +434,7 @@ export const TopicRefiner: FC<TopicRefinerProps> = ({
                                     />
                                     <small className="text-muted">
                                         Customize how the AI should analyze and suggest topics. Be specific about what kind of suggestions
-                                        you're looking for.
+                                        you're looking for and you should include search term and current topics in the prompt.
                                     </small>
                                 </div>
                             </div>

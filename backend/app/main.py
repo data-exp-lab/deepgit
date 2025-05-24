@@ -47,28 +47,30 @@ def ai_process():
     try:
         if request.method == "POST":
             data = request.get_json()
-            # print(data)  # Debug log
+            # print("Received data from frontend:", data)  # Debug print
 
         # Extract parameters using frontend names
         model = data.get("selectedModel", "gpt-3.5-turbo")
-        api_token = data.get("apiKey", "")
+        api_key = data.get("apiKey", "")
         prompt = data.get("customPrompt", "")
         selected_topics = data.get("selectedTopics", [])
-
-        # print(f"Selected topics: {selected_topics}")  # Debug log
-        # print(f"Using model: {model}")  # Debug log
-        # print(f"Prompt length: {len(prompt)}")  # Debug log
+        search_term = data.get("searchTerm", "")
 
         # Use the AI processor to analyze the topics
-        # print("About to call AI processor...")  # Debug log
-        ai_result = ai_processor.process_topics(
-            model=model,
-            api_token=api_token,
-            prompt=prompt,
-            selected_topics=selected_topics,
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        ai_result = loop.run_until_complete(
+            ai_processor.process_topics(
+                model=model,
+                api_key=api_key,
+                prompt=prompt,
+                topics=selected_topics,
+                search_term=search_term
+            )
         )
+        loop.close()
         # print(f"AI processing complete. Result length: {len(str(ai_result))}")  # Debug log
-
+        print(ai_result)
         return jsonify({"success": True, "result": ai_result})
 
     except Exception as e:

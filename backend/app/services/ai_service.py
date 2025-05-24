@@ -43,14 +43,10 @@ class AITopicProcessor:
                 raise HTTPException(status_code=500, detail=f"Error initializing Gemini: {str(e)}")
 
     async def process_with_openai(
-        self, prompt: str, topics: List[str], model: str
+        self, prompt: str, topics: List[str], model: str, search_term: str
     ) -> List[str]:
         try:
-            full_prompt = f"""Current topics: {", ".join(topics)}
-
-{prompt}
-
-Please provide suggestions as a simple list, one per line. Keep each suggestion concise."""
+            full_prompt = f"""Search term: {search_term}\nCurrent topics: {', '.join(topics)}\n\n{prompt}\n\nPlease provide suggestions as a simple list, one per line. Keep each suggestion concise."""
 
             response = self.openai_client.chat.completions.create(
                 model=model,
@@ -69,16 +65,12 @@ Please provide suggestions as a simple list, one per line. Keep each suggestion 
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")
 
-    async def process_with_gemini(self, prompt: str, topics: List[str]) -> List[str]:
+    async def process_with_gemini(self, prompt: str, topics: List[str], search_term: str) -> List[str]:
         try:
             if not self.gemini_client:
                 raise HTTPException(status_code=500, detail="Gemini client not initialized")
 
-            full_prompt = f"""Current topics: {", ".join(topics)}
-
-{prompt}
-
-Please provide suggestions as a simple list, one per line. Keep each suggestion concise."""
+            full_prompt = f"""Search term: {search_term}\nCurrent topics: {', '.join(topics)}\n\n{prompt}\n\n Please provide suggestions as a simple list, one per line. Keep each suggestion concise."""
 
             response = self.gemini_client.generate_content(full_prompt)
 
@@ -97,24 +89,26 @@ Please provide suggestions as a simple list, one per line. Keep each suggestion 
             raise HTTPException(status_code=500, detail=f"Gemini API error: {str(e)}")
 
     async def process_topics(
-        self, model: str, api_key: str, prompt: str, topics: List[str]
+        self, model: str, api_key: str, prompt: str, topics: List[str], search_term: str
     ) -> List[str]:
         """
         Process topics using the specified AI model and return suggestions.
         """
         # Enhanced debug logging
-        logger.debug("\n=== Incoming Request Validation ===")
-        logger.debug(f"Model: {model if model else 'NOT PROVIDED'}")
-        logger.debug(f"API Key: {'[PROVIDED]' if api_key else 'NOT PROVIDED'}")
-        logger.debug(f"Prompt: {prompt if prompt else 'NOT PROVIDED'}")
-        logger.debug(f"Topics: {topics if topics else 'NOT PROVIDED'}")
-        logger.debug(f"Topics length: {len(topics) if topics else 0}")
-        logger.debug("Request data types:")
-        logger.debug(f"- Model type: {type(model)}")
-        logger.debug(f"- API Key type: {type(api_key)}")
-        logger.debug(f"- Prompt type: {type(prompt)}")
-        logger.debug(f"- Topics type: {type(topics)}")
-        logger.debug("=" * 50)
+        # logger.debug("\n=== Incoming Request Validation ===")
+        # logger.debug(f"Model: {model if model else 'NOT PROVIDED'}")
+        # logger.debug(f"API Key: {'[PROVIDED]' if api_key else 'NOT PROVIDED'}")
+        # logger.debug(f"Prompt: {prompt if prompt else 'NOT PROVIDED'}")
+        # logger.debug(f"Topics: {topics if topics else 'NOT PROVIDED'}")
+        # logger.debug(f"Search Term: {search_term if search_term else 'NOT PROVIDED'}")
+        # logger.debug(f"Topics length: {len(topics) if topics else 0}")
+        # logger.debug("Request data types:")
+        # logger.debug(f"- Model type: {type(model)}")
+        # logger.debug(f"- API Key type: {type(api_key)}")
+        # logger.debug(f"- Prompt type: {type(prompt)}")
+        # logger.debug(f"- Topics type: {type(topics)}")
+        # logger.debug(f"- Search Term type: {type(search_term)}")
+        # logger.debug("=" * 50)
 
         # More detailed input validation
         validation_errors = []
@@ -128,6 +122,8 @@ Please provide suggestions as a simple list, one per line. Keep each suggestion 
             validation_errors.append("Topics list cannot be empty")
         if not prompt or not isinstance(prompt, str):
             validation_errors.append("Invalid or missing prompt")
+        if not search_term or not isinstance(search_term, str):
+            validation_errors.append("Invalid or missing search term")
 
         if validation_errors:
             error_message = "; ".join(validation_errors)
@@ -150,9 +146,9 @@ Please provide suggestions as a simple list, one per line. Keep each suggestion 
 
             # Process with appropriate model
             if model.startswith("gpt"):
-                return await self.process_with_openai(prompt, topics, model)
+                return await self.process_with_openai(prompt, topics, model, search_term)
             elif model.startswith("gemini"):
-                return await self.process_with_gemini(prompt, topics)
+                return await self.process_with_gemini(prompt, topics, search_term)
             else:
                 raise HTTPException(
                     status_code=400, detail=f"Unsupported model: {model}"
