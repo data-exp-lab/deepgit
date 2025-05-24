@@ -46,8 +46,8 @@ class AITopicProcessor:
         self, prompt: str, topics: List[str], model: str, search_term: str
     ) -> List[str]:
         try:
-            full_prompt = f"""Search term: {search_term}\nCurrent topics: {', '.join(topics)}\n\n{prompt}\n\nPlease provide suggestions as a simple list, one per line. Keep each suggestion concise."""
-
+            full_prompt = f"""Search term: {search_term}\nCurrent topics: {', '.join(topics)}\n\n{prompt}\n\You only return a list of the k topics. K can be any number."""
+            # print(full_prompt)
             response = self.openai_client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": full_prompt}],
@@ -70,7 +70,7 @@ class AITopicProcessor:
             if not self.gemini_client:
                 raise HTTPException(status_code=500, detail="Gemini client not initialized")
 
-            full_prompt = f"""Search term: {search_term}\nCurrent topics: {', '.join(topics)}\n\n{prompt}\n\n Please provide suggestions as a simple list, one per line. Keep each suggestion concise."""
+            full_prompt = f"""Search term: {search_term}\nCurrent topics: {', '.join(topics)}\n\n{prompt}\n\n You only return a list of the k topics. K can be any number. No other text."""
 
             response = self.gemini_client.generate_content(full_prompt)
 

@@ -202,6 +202,10 @@ const TopicHistogram: FC = () => {
     // Add API key input modal - initialize to false instead of !apiKey
     const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
+    // Add state for AI suggestions
+    const [llmSuggestionsState, setLlmSuggestionsState] = useState<string[]>([]);
+    const [isLlmProcessing, setIsLlmProcessing] = useState(false);
+
     // Function to handle topic click
     const handleTopicClick = (topic: string) => {
         if (!apiKey) {
@@ -379,6 +383,49 @@ const TopicHistogram: FC = () => {
     const closeExplanationModal = () => {
         setSelectedTopicForExplanation(null);
         setTopicExplanation("");
+    };
+
+    // Function to handle AI suggestions request
+    const handleRequestSuggestions = async (model: string, prompt: string, apiKey: string, topics: string[]) => {
+        setIsLlmProcessing(true);
+        try {
+            console.log('Requesting AI suggestions with:', { model, prompt, apiKey, topics });
+            const response = await fetch(API_ENDPOINTS.AI_PROCESS, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    selectedModel: model,
+                    customPrompt: prompt,
+                    apiKey: apiKey,
+                    selectedTopics: topics,
+                    searchTerm: searchTerm
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Received AI suggestions:', data);
+
+            if (data.success && Array.isArray(data.result)) {
+                setLlmSuggestionsState(data.result);
+            } else {
+                throw new Error('Invalid response format from AI service');
+            }
+        } catch (error) {
+            console.error('Error getting AI suggestions:', error);
+            notify({
+                message: "Failed to get AI suggestions. Please try again.",
+                type: "error"
+            });
+            setLlmSuggestionsState([]);
+        } finally {
+            setIsLlmProcessing(false);
+        }
     };
 
     return (
@@ -694,13 +741,10 @@ const TopicHistogram: FC = () => {
             {/* Step 2: Topic Refinement */}
             {currentStep === 2 && (
                 <TopicRefiner
-                    isLlmProcessing={false}
-                    llmSuggestions={[]}
-                    setLlmSuggestions={() => { }}
-                    onRequestSuggestions={async (model, prompt, apiKey, topics) => {
-                        // TODO: Implement AI suggestions
-                        console.log('Requesting suggestions with:', { model, prompt, apiKey, topics });
-                    }}
+                    isLlmProcessing={isLlmProcessing}
+                    llmSuggestions={llmSuggestionsState}
+                    setLlmSuggestions={setLlmSuggestionsState}
+                    onRequestSuggestions={handleRequestSuggestions}
                     selectedTopics={selectedTopics}
                     selectLlmSuggestion={(suggestion) => {
                         if (!selectedTopics.includes(suggestion)) {
@@ -715,6 +759,7 @@ const TopicHistogram: FC = () => {
                     searchTerm={searchTerm}
                 />
             )}
+            {/* {console.log(onRequestSuggestions)} */}
         </main>
     );
 };

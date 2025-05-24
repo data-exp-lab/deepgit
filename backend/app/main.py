@@ -4,6 +4,7 @@ from services.topic_service import TopicService
 from services.ai_service import AITopicProcessor
 import os
 import asyncio
+import re
 
 app = Flask(__name__)
 CORS(
@@ -70,8 +71,26 @@ def ai_process():
         )
         loop.close()
         # print(f"AI processing complete. Result length: {len(str(ai_result))}")  # Debug log
-        print(ai_result)
-        return jsonify({"success": True, "result": ai_result})
+
+        # Ensure both lists are lowercase or normalized if needed
+        def extract_topic_name(s):
+            # Try to extract the topic name before the first colon or dash, and strip formatting
+            # Handles cases like '**visual-programming-editor:** ...' or 'visual-programming-editor: ...'
+            match = re.match(r'[*]*([a-zA-Z0-9\-]+)[*]*[:：]', s.strip())
+            if match:
+                return match.group(1)
+            # Fallback: if the string is just the topic name
+            return s.strip().strip('*')
+
+        intersection = []
+        for ai_item in ai_result:
+            topic_name = extract_topic_name(ai_item)
+            if topic_name in selected_topics:
+                intersection.append(ai_item)
+
+        # print("Selected topics:", selected_topics)
+        # print("Intersection:", intersection)
+        return jsonify({"success": True, "result": intersection})
 
     except Exception as e:
         # print(f"Error occurred: {str(e)}")  # Debug log
