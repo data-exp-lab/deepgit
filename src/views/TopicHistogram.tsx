@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaCog } from "react-icons/fa";
 import { MultiRangeSlider } from "../components/MultiRangeSlider";
 import * as d3 from "d3";  // Make sure to install @types/d3 and d3
 
@@ -22,6 +22,13 @@ const HistogramBars: FC<TopicHistogramProps & { highlightedTopic?: string }> = (
     useEffect(() => {
         if (!svgRef.current || !data.length) return;
 
+        // Filter data to only include topics within the range (plus a small buffer)
+        const buffer = Math.max(5, Math.floor((range.max - range.min) * 0.1)); // 10% buffer or at least 5
+        const filteredData = data.filter(d =>
+            d.count >= Math.max(0, range.min - buffer) &&
+            d.count <= range.max + buffer
+        ).sort((a, b) => a.count - b.count);
+
         // Clear previous content
         d3.select(svgRef.current).selectAll("*").remove();
 
@@ -37,19 +44,30 @@ const HistogramBars: FC<TopicHistogramProps & { highlightedTopic?: string }> = (
             .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        // Create scales
+        // Create scales using filtered data
         const x = d3.scaleBand()
             .range([0, width])
             .padding(0.1)
-            .domain(data.map(d => d.name));
+            .domain(filteredData.map(d => d.name));
 
         const y = d3.scaleLinear()
             .range([height, 0])
-            .domain([0, d3.max(data, d => d.count) || 0]);
+            .domain([0, d3.max(filteredData, d => d.count) || 0]);
 
-        // Create and add bars
+        // Add background highlight for selected range
+        const minX = x(filteredData.find(d => d.count >= range.min)?.name || "") || 0;
+        const maxX = x(filteredData.findLast(d => d.count <= range.max)?.name || "") || 0;
+        svg.append("rect")
+            .attr("x", minX)
+            .attr("width", maxX - minX + x.bandwidth())
+            .attr("y", 0)
+            .attr("height", height)
+            .attr("fill", "#e9ecef")
+            .attr("opacity", 0.3);
+
+        // Create and add bars using filtered data
         svg.selectAll(".bar")
-            .data(data)
+            .data(filteredData)
             .enter()
             .append("rect")
             .attr("class", "bar")
@@ -59,7 +77,7 @@ const HistogramBars: FC<TopicHistogramProps & { highlightedTopic?: string }> = (
             .attr("height", d => height - y(d.count))
             .attr("fill", d => {
                 if (highlightedTopic === d.name) return '#ffc107'; // Highlight color
-                return (d.count >= range.min && d.count <= range.max) ? '#0d6efd' : '#e9ecef';
+                return (d.count >= range.min && d.count <= range.max) ? '#0d6efd' : '#adb5bd';
             })
             .attr("opacity", d => highlightedTopic && highlightedTopic !== d.name ? 0.5 : 1)
             .on("mouseover", (event, d) => {
@@ -82,7 +100,7 @@ const HistogramBars: FC<TopicHistogramProps & { highlightedTopic?: string }> = (
 
         // Add count labels on top of bars
         svg.selectAll(".count-label")
-            .data(data)
+            .data(filteredData)
             .enter()
             .append("text")
             .attr("class", "count-label")
@@ -107,12 +125,29 @@ const HistogramBars: FC<TopicHistogramProps & { highlightedTopic?: string }> = (
             .style("font-weight", "500")
             .attr("dx", "-1em")
             .attr("dy", ".15em")
-            .attr("transform", "rotate(-45)");
+            .attr("transform", "rotate(-45)")
+            .style("display", (d, i) => {
+                // If we have 30 or more items, only show every nth label
+                if (filteredData.length >= 30) {
+                    const n = Math.ceil(filteredData.length / 30); // Calculate how many items to skip
+                    return i % n === 0 ? "block" : "none";
+                }
+                return "block";
+            });
+
+        // Add range indicator text below the histogram
+        svg.append("text")
+            .attr("x", width / 2)
+            .attr("y", height + margin.bottom + 80)
+            .attr("text-anchor", "middle")
+            .style("font-size", "12px")
+            .style("fill", "#6c757d")
+            .text(`Showing topics with frequency ${range.min} - ${range.max} (plus buffer)`);
 
     }, [data, range, highlightedTopic]);
 
     return (
-        <div style={{ width: '100%', height: '350px', padding: '0' }}>
+        <div style={{ width: '100%', height: '400px', padding: '0' }}>
             <svg ref={svgRef} style={{ width: '100%', height: '100%' }}></svg>
         </div>
     );
@@ -141,6 +176,7 @@ const TopicHistogram: FC = () => {
 
     // State for frequency range
     const [frequencyRange, setFrequencyRange] = useState({ min: 0, max: 100 });
+    const [hasAdjustedRange, setHasAdjustedRange] = useState(false);
     const maxCount = Math.max(...extractedTopics.map(item => item.count || 0), 1);
 
     // Update frequency range when maxCount changes
@@ -153,6 +189,46 @@ const TopicHistogram: FC = () => {
     const [newTopic, setNewTopic] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [highlightedTopic, setHighlightedTopic] = useState<string | undefined>();
+    const [selectedTopicForExplanation, setSelectedTopicForExplanation] = useState<string | null>(null);
+    const [topicExplanation, setTopicExplanation] = useState<string>("");
+    const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
+
+    // State for API key
+    const [apiKey, setApiKey] = useState<string>(() => {
+        // Try to get from localStorage first
+        return localStorage.getItem('GOOGLE_API_KEY') || '';
+    });
+
+    // Add API key input modal - initialize to false instead of !apiKey
+    const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+
+    // Function to handle topic click
+    const handleTopicClick = (topic: string) => {
+        if (!apiKey) {
+            // Show API key modal if no key is set
+            setShowApiKeyModal(true);
+            return;
+        }
+
+        // Show explanation modal immediately with loading state
+        setSelectedTopicForExplanation(topic);
+        setTopicExplanation("");  // Clear previous explanation
+        setIsLoadingExplanation(true);  // Set loading state
+        // Then fetch the explanation
+        fetchTopicExplanation(topic);
+    };
+
+    // Function to save API key and fetch explanation if a topic was clicked
+    const saveApiKey = (key: string) => {
+        setApiKey(key);
+        localStorage.setItem('GOOGLE_API_KEY', key);
+        setShowApiKeyModal(false);
+
+        // If there was a topic waiting for explanation, fetch it now
+        if (selectedTopicForExplanation) {
+            fetchTopicExplanation(selectedTopicForExplanation);
+        }
+    };
 
     // Effect to check if search term and topic are provided
     useEffect(() => {
@@ -248,8 +324,123 @@ const TopicHistogram: FC = () => {
         // Alternative: window.location.replace('/');
     };
 
+    // Function to fetch topic explanation
+    const fetchTopicExplanation = async (topic: string) => {
+        if (!apiKey) {
+            notify({
+                message: "Please set your Google API key first",
+                type: "warning"
+            });
+            setSelectedTopicForExplanation(null);  // Close modal if no API key
+            return;
+        }
+
+        try {
+            const response = await fetch(API_ENDPOINTS.EXPLAIN_TOPIC, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    topic: topic,
+                    searchTerm: searchTerm,
+                    originalTopic: originalTopic,
+                    apiKey: apiKey
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                setTopicExplanation(data.explanation);
+            } else {
+                throw new Error(data.message || 'Failed to get explanation');
+            }
+        } catch (error) {
+            console.error('Error fetching explanation:', error);
+            notify({
+                message: "Failed to get topic explanation. Please try again.",
+                type: "error"
+            });
+            setTopicExplanation("Sorry, I couldn't generate an explanation for this topic at the moment.");
+        } finally {
+            setIsLoadingExplanation(false);
+        }
+    };
+
+    // Function to close the explanation modal
+    const closeExplanationModal = () => {
+        setSelectedTopicForExplanation(null);
+        setTopicExplanation("");
+    };
+
     return (
         <main className="container py-4">
+            {/* API Key Modal */}
+            {showApiKeyModal && (
+                <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Google API Key Required</h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => {
+                                        setShowApiKeyModal(false);
+                                        setSelectedTopicForExplanation(null); // Clear the selected topic if user cancels
+                                    }}
+                                    aria-label="Close"
+                                />
+                            </div>
+                            <div className="modal-body">
+                                <div className="mb-3">
+                                    <label htmlFor="apiKey" className="form-label">Google API Key</label>
+                                    <input
+                                        type="password"
+                                        className="form-control"
+                                        id="apiKey"
+                                        value={apiKey}
+                                        onChange={(e) => setApiKey(e.target.value)}
+                                        placeholder="Enter your Google API key"
+                                    />
+                                    <div className="form-text">
+                                        Your API key is required to get topic explanations. It is stored locally in your browser and is never shared with our servers.
+                                        <br />
+                                        <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer">
+                                            Get your API key from Google AI Studio
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                        setShowApiKeyModal(false);
+                                        setSelectedTopicForExplanation(null); // Clear the selected topic if user cancels
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={() => saveApiKey(apiKey)}
+                                    disabled={!apiKey}
+                                >
+                                    Save & Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header with back button, title, and step indicator all in one line */}
             <div className="d-flex align-items-center justify-content-between mb-4">
                 {/* Left side with back button and titles */}
@@ -303,6 +494,23 @@ const TopicHistogram: FC = () => {
                     <div className="text-muted">
                         Step {currentStep} of 2
                     </div>
+
+                    <button
+                        className="btn btn-outline-secondary"
+                        onClick={() => setShowApiKeyModal(true)}
+                        style={{
+                            borderRadius: "50%",
+                            width: "40px",
+                            height: "40px",
+                            padding: "0",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}
+                        title={apiKey ? 'Change API Key' : 'Set API Key'}
+                    >
+                        <FaCog className="m-auto" />
+                    </button>
                 </div>
             </div>
 
@@ -342,21 +550,32 @@ const TopicHistogram: FC = () => {
                                         <MultiRangeSlider
                                             min={0}
                                             max={maxCount}
-                                            onChange={({ min, max }) => setFrequencyRange({ min, max })}
+                                            onChange={({ min, max }) => {
+                                                setFrequencyRange({ min, max });
+                                                setHasAdjustedRange(true);
+                                            }}
                                             value={frequencyRange}
                                         />
                                     </div>
                                 </div>
 
-                                <div className="mb-3">
-                                    <HistogramBars
-                                        data={extractedTopics}
-                                        range={frequencyRange}
-                                        highlightedTopic={highlightedTopic}
-                                    />
-                                </div>
+                                {hasAdjustedRange && (
+                                    <div>
+                                        <HistogramBars
+                                            data={extractedTopics}
+                                            range={frequencyRange}
+                                            highlightedTopic={highlightedTopic}
+                                        />
+                                    </div>
+                                )}
 
-                                <div>
+                                {!hasAdjustedRange && (
+                                    <div className="text-center text-muted" style={{ height: "350px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                        <p>Adjust the frequency range slider above to view the topic distribution</p>
+                                    </div>
+                                )}
+
+                                <div style={{ marginTop: '-10px' }}>
                                     <h3 className="h5 mb-2">Selected Topics ({selectedTopics.length})</h3>
                                     <div
                                         className="d-flex flex-wrap gap-2"
@@ -380,6 +599,14 @@ const TopicHistogram: FC = () => {
                                                 }}
                                                 onMouseEnter={() => setHighlightedTopic(topic)}
                                                 onMouseLeave={() => setHighlightedTopic(undefined)}
+                                                onClick={() => handleTopicClick(topic)}
+                                                role="button"
+                                                tabIndex={0}
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        handleTopicClick(topic);
+                                                    }
+                                                }}
                                             >
                                                 {topic}
                                             </span>
@@ -391,6 +618,49 @@ const TopicHistogram: FC = () => {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Topic Explanation Modal */}
+                                {selectedTopicForExplanation && (
+                                    <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                                        <div className="modal-dialog modal-dialog-centered">
+                                            <div className="modal-content">
+                                                <div className="modal-header">
+                                                    <h5 className="modal-title">
+                                                        Topic Explanation: {selectedTopicForExplanation}
+                                                    </h5>
+                                                    <button
+                                                        type="button"
+                                                        className="btn-close"
+                                                        onClick={closeExplanationModal}
+                                                        aria-label="Close"
+                                                    />
+                                                </div>
+                                                <div className="modal-body">
+                                                    {isLoadingExplanation ? (
+                                                        <div className="d-flex justify-content-center align-items-center py-4">
+                                                            <div className="spinner-border text-primary" role="status">
+                                                                <span className="visually-hidden">Loading explanation...</span>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-3">
+                                                            <p className="mb-0">{topicExplanation}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="modal-footer">
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-secondary"
+                                                        onClick={closeExplanationModal}
+                                                    >
+                                                        Close
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 

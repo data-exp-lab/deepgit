@@ -12,13 +12,35 @@ class AITopicProcessor:
     def __init__(self):
         self.openai_client = None
         self.gemini_client = None
+        self.available_models = None
 
     def initialize_client(self, model: str, api_key: str):
         if model.startswith("gpt"):
             self.openai_client = OpenAI(api_key=api_key)
         elif model.startswith("gemini"):
             genai.configure(api_key=api_key)
-            self.gemini_client = genai.GenerativeModel(model)
+            # List available models
+            try:
+                models = genai.list_models()
+                self.available_models = [m.name for m in models]
+                logger.debug(f"Available Gemini models: {self.available_models}")
+                
+                # Try to use the requested model first, then fall back to gemini-1.5-flash
+                requested_model = f"models/{model}"
+                if requested_model in self.available_models:
+                    logger.debug(f"Using requested Gemini model: {requested_model}")
+                    self.gemini_client = genai.GenerativeModel(requested_model)
+                else:
+                    # Fall back to gemini-1.5-flash
+                    fallback_model = "models/gemini-1.5-flash"
+                    if fallback_model in self.available_models:
+                        logger.debug(f"Requested model not found, using fallback: {fallback_model}")
+                        self.gemini_client = genai.GenerativeModel(fallback_model)
+                    else:
+                        raise HTTPException(status_code=500, detail=f"Neither requested model {requested_model} nor fallback model {fallback_model} found")
+            except Exception as e:
+                logger.error(f"Error listing Gemini models: {str(e)}")
+                raise HTTPException(status_code=500, detail=f"Error initializing Gemini: {str(e)}")
 
     async def process_with_openai(
         self, prompt: str, topics: List[str], model: str
@@ -49,6 +71,9 @@ Please provide suggestions as a simple list, one per line. Keep each suggestion 
 
     async def process_with_gemini(self, prompt: str, topics: List[str]) -> List[str]:
         try:
+            if not self.gemini_client:
+                raise HTTPException(status_code=500, detail="Gemini client not initialized")
+
             full_prompt = f"""Current topics: {", ".join(topics)}
 
 {prompt}
@@ -68,6 +93,7 @@ Please provide suggestions as a simple list, one per line. Keep each suggestion 
             return []
 
         except Exception as e:
+            logger.error(f"Gemini API error: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Gemini API error: {str(e)}")
 
     async def process_topics(
