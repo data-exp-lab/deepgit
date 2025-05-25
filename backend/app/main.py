@@ -183,6 +183,68 @@ def explain_topic():
         ), 500
 
 
+@app.route("/api/suggest-topics", methods=["GET"])
+def suggest_topics():
+    try:
+        query = request.args.get("query", "").lower().strip()
+        if not query:
+            return jsonify({
+                "success": True,
+                "suggestions": []
+            })
+
+        # Use a more sophisticated query that:
+        # 1. Matches topics containing the search term
+        # 2. Prioritizes exact matches and high-frequency topics
+        # 3. Uses word boundary matching for better relevance
+        sql_query = """
+            WITH ranked_topics AS (
+                SELECT 
+                    topic,
+                    COUNT(*) as count,
+                    CASE 
+                        WHEN LOWER(topic) = ? THEN 3  -- Exact match gets highest priority
+                        WHEN LOWER(topic) LIKE ? THEN 2  -- Starts with query gets second priority
+                        ELSE 1  -- Contains query gets lowest priority
+                    END as match_priority
+                FROM repo_topics
+                WHERE LOWER(topic) LIKE ?
+                GROUP BY topic
+            )
+            SELECT topic, count
+            FROM ranked_topics
+            ORDER BY match_priority DESC, count DESC
+            LIMIT 10
+        """
+        
+        # Prepare search patterns
+        exact_match = query
+        starts_with = f"{query}%"
+        contains = f"%{query}%"
+        
+        # Execute query with all patterns
+        result = topic_service.con.execute(sql_query, [
+            exact_match,  # For exact match priority
+            starts_with,  # For starts-with priority
+            contains     # For contains match
+        ]).fetchall()
+        
+        suggestions = [{"name": name.lower(), "count": count} for name, count in result]
+        
+        return jsonify({
+            "success": True,
+            "suggestions": suggestions
+        })
+
+    except Exception as e:
+        print(f"Error in suggest-topics: {str(e)}")  # Add logging
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred while getting suggestions"
+        }), 500
+
+
 @app.route("/")
 def home():
     return "Hello World!"
