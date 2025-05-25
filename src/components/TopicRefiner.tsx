@@ -1,6 +1,6 @@
 "use client"
 
-import React, { FC, useState, useEffect } from "react";
+import React, { FC, useState, useEffect, useCallback } from "react";
 import {
     Sparkles,
     Plus,
@@ -8,13 +8,21 @@ import {
     ThumbsUp,
     Settings,
     Minus,
-    Check
+    Check,
+    Search
 } from "lucide-react";
 import { FaArrowLeft } from "react-icons/fa";
+import { API_ENDPOINTS } from "../lib/config";
+import debounce from 'lodash/debounce';
 
 interface AIModel {
     id: string;
     name: string;
+}
+
+interface TopicSuggestion {
+    name: string;
+    count: number;
 }
 
 const AI_MODELS: AIModel[] = [
@@ -61,6 +69,11 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [selectedModel, setSelectedModel] = useState('gpt-4');
     const [apiKey, setApiKey] = useState('');
     const [finalizedTopics, setFinalizedTopics] = useState<string[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+    const [inputValue, setInputValue] = useState("");
+    const [canAddTopic, setCanAddTopic] = useState(false);
 
     const moveToRightColumn = (topic: string) => {
         setFinalizedTopics(prev => [...prev, topic]);
@@ -100,20 +113,76 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     };
 
     const handleAddNewTopic = () => {
-        if (!newTopic.trim()) return;  // Don't add empty topics
+        if (!inputValue.trim() || !canAddTopic) return;  // Don't add if empty or not a valid topic
 
+        const trimmedValue = inputValue.trim();
         // Add to selected topics if not already present
-        if (!selectedTopics.includes(newTopic.trim())) {
-            setSelectedTopics([...selectedTopics, newTopic.trim()]);
+        if (!selectedTopics.includes(trimmedValue)) {
+            setSelectedTopics([...selectedTopics, trimmedValue]);
         }
 
         // Add to finalized topics if not already present
-        if (!finalizedTopics.includes(newTopic.trim())) {
-            setFinalizedTopics(prev => [...prev, newTopic.trim()]);
+        if (!finalizedTopics.includes(trimmedValue)) {
+            setFinalizedTopics([...finalizedTopics, trimmedValue]);
         }
 
         // Clear the input
-        setNewTopic("");
+        setInputValue("");
+        setCanAddTopic(false);
+    };
+
+    // Update canAddTopic when input or suggestions change
+    useEffect(() => {
+        const trimmedInput = inputValue.trim().toLowerCase();
+        const isValidTopic = suggestions.some(suggestion =>
+            suggestion.name.toLowerCase() === trimmedInput
+        );
+        setCanAddTopic(isValidTopic);
+    }, [inputValue, suggestions]);
+
+    // Debounced function to fetch suggestions
+    const fetchSuggestions = useCallback(
+        debounce(async (query: string) => {
+            if (!query.trim()) {
+                setSuggestions([]);
+                return;
+            }
+
+            setIsLoadingSuggestions(true);
+            try {
+                const response = await fetch(`${API_ENDPOINTS.SUGGEST_TOPICS}?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                if (data.success) {
+                    setSuggestions(data.suggestions);
+                } else {
+                    throw new Error(data.message || 'Failed to get suggestions');
+                }
+            } catch (error) {
+                console.error('Error fetching suggestions:', error);
+                setSuggestions([]);
+            } finally {
+                setIsLoadingSuggestions(false);
+            }
+        }, 300),
+        []
+    );
+
+    // Update suggestions when inputValue changes
+    useEffect(() => {
+        fetchSuggestions(inputValue);
+    }, [inputValue, fetchSuggestions]);
+
+    const handleSuggestionClick = (suggestion: TopicSuggestion) => {
+        setInputValue(suggestion.name);
+        setCanAddTopic(true);
+        setShowSuggestions(false);
+        // Remove auto-adding to finalized and selected topics
+        // if (!finalizedTopics.includes(suggestion.name)) {
+        //     setFinalizedTopics([...finalizedTopics, suggestion.name]);
+        // }
+        // if (!selectedTopics.includes(suggestion.name)) {
+        //     setSelectedTopics([...selectedTopics, suggestion.name]);
+        // }
     };
 
     return (
@@ -178,8 +247,8 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                     <div className="row g-4">
                         {/* Left column - Available Topics */}
                         <div className="col-md-6">
-                            <div className="card h-100" style={{ minHeight: 420 }}>
-                                <div className="card-body" style={{ minHeight: 420, maxHeight: 420 }}>
+                            <div className="card h-100" style={{ minHeight: 600 }}>
+                                <div className="card-body" style={{ minHeight: 600, maxHeight: 600 }}>
                                     <div className="d-flex justify-content-between align-items-center mb-4">
                                         <h3 className="h5 mb-0 d-flex align-items-center">
                                             <Sparkles className="text-warning me-2" size={20} />
@@ -200,7 +269,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                         </div>
                                     </div>
                                     <div className="d-flex flex-column h-100" style={{ minHeight: 250, justifyContent: 'flex-start' }}>
-                                        <div className="list-group w-100 mb-0" style={{ flex: 1, overflowY: 'auto', maxHeight: 300, marginBottom: 0, paddingBottom: 0 }}>
+                                        <div className="list-group w-100 mb-0" style={{ flex: 1, overflowY: 'auto', maxHeight: 480, marginBottom: 0, paddingBottom: 0 }}>
                                             {selectedTopics.map((topic) => {
                                                 const isAI = llmSuggestions.includes(topic);
                                                 const isAdded = finalizedTopics.includes(topic);
@@ -240,8 +309,8 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
                         {/* Right column - Finalized Topics */}
                         <div className="col-md-6">
-                            <div className="card h-100" style={{ minHeight: 420 }}>
-                                <div className="card-body" style={{ minHeight: 420, maxHeight: 420 }}>
+                            <div className="card h-100" style={{ minHeight: 600 }}>
+                                <div className="card-body" style={{ minHeight: 600, maxHeight: 600 }}>
                                     <h3 className="h5 mb-4 d-flex align-items-center">
                                         <Edit size={20} className="text-primary me-2" />
                                         Finalized Topics
@@ -249,16 +318,29 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                             {finalizedTopics.length} topics
                                         </span>
                                     </h3>
-                                    <div className="mb-4">
+                                    <p className="text-muted mb-3" style={{ fontSize: '0.85rem' }}>
+                                        Search and add topics based on your expertise, only existing GitHub topics are allowed.
+                                    </p>
+                                    <div className="mb-4 position-relative">
                                         <div className="input-group">
+                                            <span className="input-group-text border-end-0 bg-transparent">
+                                                <Search size={16} className="text-muted" />
+                                            </span>
                                             <input
                                                 type="text"
-                                                className="form-control"
+                                                className={`form-control border-start-0 ${!canAddTopic && inputValue.trim() ? 'is-invalid' : ''}`}
                                                 placeholder="Add a custom topic"
-                                                value={newTopic}
-                                                onChange={(e) => setNewTopic(e.target.value)}
+                                                value={inputValue}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/\s+/g, '-');
+                                                    setInputValue(value);
+                                                    setShowSuggestions(true);
+                                                }}
+                                                onFocus={() => setShowSuggestions(true)}
+                                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                                                 onKeyDown={(e) => {
-                                                    if (e.key === "Enter" && newTopic.trim()) {
+                                                    if (e.key === "Enter" && inputValue.trim() && canAddTopic) {
+                                                        e.preventDefault();
                                                         handleAddNewTopic();
                                                     }
                                                 }}
@@ -266,26 +348,111 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                             <button
                                                 className="btn btn-primary"
                                                 onClick={handleAddNewTopic}
-                                                disabled={!newTopic.trim()}
+                                                disabled={!inputValue.trim() || !canAddTopic}
+                                                title={!canAddTopic && inputValue.trim() ? "Topic must be selected from suggestions" : "Add topic"}
                                             >
                                                 <Plus size={16} />
                                             </button>
                                         </div>
+                                        {!canAddTopic && inputValue.trim() && (
+                                            <div className="invalid-feedback d-block mt-1">
+                                                Please select a topic from the suggestions list
+                                            </div>
+                                        )}
+
+                                        {/* Suggestions dropdown */}
+                                        {showSuggestions && (inputValue.trim() || isLoadingSuggestions) && (
+                                            <div
+                                                className="position-absolute bg-white rounded-3 shadow-lg w-100"
+                                                style={{
+                                                    top: "calc(100% + 4px)",
+                                                    left: 0,
+                                                    zIndex: 1000,
+                                                    maxHeight: "200px",
+                                                    overflowY: "auto",
+                                                    border: "1px solid rgba(0,0,0,0.08)",
+                                                    backdropFilter: "blur(8px)",
+                                                    backgroundColor: "rgba(255, 255, 255, 0.98)",
+                                                }}
+                                            >
+                                                {isLoadingSuggestions ? (
+                                                    <div className="p-3 text-center">
+                                                        <div className="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                                            <span className="visually-hidden">Loading...</span>
+                                                        </div>
+                                                        <span className="text-muted">Finding relevant topics...</span>
+                                                    </div>
+                                                ) : suggestions.length > 0 ? (
+                                                    <div className="list-group list-group-flush">
+                                                        {suggestions.map((suggestion, index) => (
+                                                            <button
+                                                                key={suggestion.name}
+                                                                className="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 px-3"
+                                                                onClick={() => handleSuggestionClick(suggestion)}
+                                                                style={{
+                                                                    border: "none",
+                                                                    cursor: "pointer",
+                                                                    transition: "all 0.2s ease",
+                                                                    backgroundColor: "transparent",
+                                                                    borderBottom: index !== suggestions.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none",
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.backgroundColor = "rgba(13, 110, 253, 0.05)";
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.backgroundColor = "transparent";
+                                                                }}
+                                                            >
+                                                                <div className="d-flex align-items-center">
+                                                                    <span className="me-2" style={{ fontSize: "0.95rem" }}>{suggestion.name}</span>
+                                                                    {index === 0 && suggestion.name.toLowerCase() === inputValue.toLowerCase() && (
+                                                                        <span className="badge bg-success rounded-pill" style={{ fontSize: "0.7rem" }}>
+                                                                            Selected
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="d-flex align-items-center">
+                                                                    <span
+                                                                        className="badge rounded-pill px-2 py-1"
+                                                                        style={{
+                                                                            backgroundColor: "rgba(108, 117, 125, 0.1)",
+                                                                            color: "#495057",
+                                                                            fontSize: "0.85rem",
+                                                                            fontWeight: "500"
+                                                                        }}
+                                                                    >
+                                                                        {suggestion.count.toLocaleString()} repos
+                                                                    </span>
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-3 text-center">
+                                                        <div className="text-muted mb-1">
+                                                            <i className="fas fa-search me-2"></i>
+                                                            No matching topics found
+                                                        </div>
+                                                        <small className="text-muted">Please select from existing topics</small>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="list-group" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                                    <div className="list-group" style={{ maxHeight: '480px', overflowY: 'auto' }}>
                                         {finalizedTopics.map((topic) => (
-                                            <div key={topic} className="list-group-item d-flex justify-content-between align-items-center">
-                                                <span className="d-flex align-items-center">
+                                            <div key={topic} className="list-group-item py-2 px-3 d-flex justify-content-between align-items-center">
+                                                <span className="d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
                                                     {topic}
-                                                    {llmSuggestions.includes(topic) && <span className="badge bg-info ms-2">AI</span>}
+                                                    {llmSuggestions.includes(topic) && <span className="badge bg-info ms-2" style={{ fontSize: '0.75rem' }}>AI</span>}
                                                 </span>
                                                 <button
                                                     className="btn btn-sm btn-outline-danger ms-2"
-                                                    style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                                    style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
                                                     onClick={() => moveToLeftColumn(topic)}
                                                     title="Remove from finalized topics"
                                                 >
-                                                    <Minus size={16} />
+                                                    <Minus size={14} />
                                                 </button>
                                             </div>
                                         ))}
