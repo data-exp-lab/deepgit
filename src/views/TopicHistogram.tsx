@@ -749,19 +749,13 @@ const TopicHistogram: FC = () => {
             {/* Step 2: Topic Refinement */}
             {currentStep === 2 && (
                 <TopicRefiner
-                    isLlmProcessing={isLlmProcessing}
                     llmSuggestions={llmSuggestionsState}
                     setLlmSuggestions={setLlmSuggestionsState}
                     onRequestSuggestions={handleRequestSuggestions}
                     selectedTopics={selectedTopics}
-                    selectLlmSuggestion={(suggestion) => {
-                        if (!selectedTopics.includes(suggestion)) {
-                            setSelectedTopics([...selectedTopics, suggestion]);
-                        }
-                    }}
+                    setSelectedTopics={setSelectedTopics}
                     newTopic=""
                     setNewTopic={() => { }}
-                    addNewTopic={() => { }}
                     prevStep={prevStep}
                     handleSubmit={handleSubmit}
                     searchTerm={searchTerm}

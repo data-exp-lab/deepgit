@@ -89,7 +89,7 @@ def ai_process():
                 intersection.append(ai_item)
 
         # print("Selected topics:", selected_topics)
-        print("Intersection:", intersection)
+        # print("Intersection:", intersection)
         return jsonify({"success": True, "result": intersection})
 
     except Exception as e:
@@ -134,7 +134,7 @@ def explain_topic():
         prompt = f"""Explain '{topic}' in the context of '{search_term}'. 
                     If it's an abbreviation, what it stands for in '{search_term}'
                     Keep it concise but informative (1-2 sentences)."""
-        print("Generated prompt:", prompt)
+        # print("Generated prompt:", prompt)
 
         try:
             # Create an event loop and run the async function
@@ -154,7 +154,7 @@ def explain_topic():
             )
             loop.close()
 
-            print("Received explanation:", explanation)
+            # print("Received explanation:", explanation)
             if explanation and len(explanation) > 0:
                 return jsonify({"success": True, "explanation": explanation[0]})
             else:
@@ -189,7 +189,7 @@ def home():
 
 
 if __name__ == "__main__":
-    print("Starting Flask server...")
+    # print("Starting Flask server...")
     port = 5002
-    print(f"Server running on: http://127.0.0.1:{port}")
+    # print(f"Server running on: http://127.0.0.1:{port}")
     app.run(host="127.0.0.1", port=port, debug=True)

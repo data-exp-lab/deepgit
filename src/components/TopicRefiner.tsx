@@ -10,7 +10,6 @@ import {
     Minus,
     Check
 } from "lucide-react";
-import { API_ENDPOINTS } from '../lib/config';
 import { FaArrowLeft } from "react-icons/fa";
 
 interface AIModel {
@@ -33,24 +32,26 @@ interface TopicRefinerProps {
     llmSuggestions: string[];
     setLlmSuggestions: (suggestions: string[]) => void;
     selectedTopics: string[];
+    setSelectedTopics: (topics: string[]) => void;
     newTopic: string;
     setNewTopic: (topic: string) => void;
-    addNewTopic: () => void;
     prevStep: () => void;
     handleSubmit: () => void;
     searchTerm: string;
+    onRequestSuggestions: (model: string, prompt: string, apiKey: string, topics: string[]) => Promise<void>;
 }
 
 export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     llmSuggestions = [],
     setLlmSuggestions,
     selectedTopics = [],
+    setSelectedTopics,
     newTopic = "",
     setNewTopic,
-    addNewTopic,
     prevStep,
     handleSubmit,
-    searchTerm
+    searchTerm,
+    onRequestSuggestions
 }) => {
     const [showPromptModal, setShowPromptModal] = useState(false);
     const [showWelcomeModal, setShowWelcomeModal] = useState(true);
@@ -91,27 +92,28 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         }
 
         try {
-            const response = await fetch(API_ENDPOINTS.AI_PROCESS, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    selectedModel,
-                    customPrompt,
-                    apiKey,
-                    searchTerm,
-                    selectedTopics
-                })
-            });
-            const data = await response.json();
-            if (data.success && data.result) {
-                setLlmSuggestions(data.result);
-            } else {
-                alert('Failed to get AI suggestions.');
-            }
+            await onRequestSuggestions(selectedModel, customPrompt, apiKey, selectedTopics);
             setShowPromptModal(false);
         } catch {
             alert('Failed to get AI suggestions. Please try again.');
         }
+    };
+
+    const handleAddNewTopic = () => {
+        if (!newTopic.trim()) return;  // Don't add empty topics
+
+        // Add to selected topics if not already present
+        if (!selectedTopics.includes(newTopic.trim())) {
+            setSelectedTopics([...selectedTopics, newTopic.trim()]);
+        }
+
+        // Add to finalized topics if not already present
+        if (!finalizedTopics.includes(newTopic.trim())) {
+            setFinalizedTopics(prev => [...prev, newTopic.trim()]);
+        }
+
+        // Clear the input
+        setNewTopic("");
     };
 
     return (
@@ -255,12 +257,16 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                                 placeholder="Add a custom topic"
                                                 value={newTopic}
                                                 onChange={(e) => setNewTopic(e.target.value)}
-                                                onKeyDown={(e) => e.key === "Enter" && addNewTopic()}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter" && newTopic.trim()) {
+                                                        handleAddNewTopic();
+                                                    }
+                                                }}
                                             />
                                             <button
                                                 className="btn btn-primary"
-                                                onClick={addNewTopic}
-                                                disabled={!newTopic}
+                                                onClick={handleAddNewTopic}
+                                                disabled={!newTopic.trim()}
                                             >
                                                 <Plus size={16} />
                                             </button>
