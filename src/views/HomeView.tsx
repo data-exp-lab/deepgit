@@ -1,4 +1,3 @@
-import cx from "classnames";
 import React, { FC, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { FaArrowRight, FaSearch } from "react-icons/fa";
@@ -57,7 +56,7 @@ const HomeView: FC = () => {
           </span>
         </h1>
         <h2 className="h5 mb-4" style={{ maxWidth: "500px", margin: "0 auto" }}>
-          Discover and explore domain-specific scientific software using large scale graphs
+          Discover and explore research software using large scale graphs
         </h2>
 
         {/* Wrap the search bar in a form to handle Enter key submission */}
@@ -87,7 +86,7 @@ const HomeView: FC = () => {
             <input
               type="text"
               className="form-control border-0"
-              placeholder="Search scientific software topics..."
+              placeholder="Type topic (spaces become dashes)"
               style={{
                 boxShadow: "none",
                 fontSize: "1rem",
@@ -95,7 +94,7 @@ const HomeView: FC = () => {
                 backgroundColor: "transparent", // Transparent input background
               }}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value.replace(/\s+/g, '-'))}
             />
             <button
               type="submit"

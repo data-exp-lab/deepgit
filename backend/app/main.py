@@ -141,7 +141,7 @@ def explain_topic():
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-            print("Initializing AI processor with Gemini model")
+            # print("Initializing AI processor with Gemini model")
             # Use Gemini for explanations
             explanation = loop.run_until_complete(
                 ai_processor.process_topics(

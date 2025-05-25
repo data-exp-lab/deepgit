@@ -214,8 +214,8 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                                             <button
                                                                 className="btn btn-sm btn-success"
                                                                 style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                                                                onClick={() => moveToLeftColumn(topic)}
-                                                                title="Remove from finalized topics"
+                                                                disabled
+                                                                title="Topic added"
                                                             >
                                                                 <Check size={16} />
                                                             </button>
