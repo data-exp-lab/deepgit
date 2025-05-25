@@ -175,14 +175,16 @@ const TopicHistogram: FC = () => {
     const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
     // State for frequency range
-    const [frequencyRange, setFrequencyRange] = useState({ min: 0, max: 100 });
+    const [frequencyRange, setFrequencyRange] = useState({ min: 0, max: 1 });
     const [hasAdjustedRange, setHasAdjustedRange] = useState(false);
     const maxCount = Math.max(...extractedTopics.map(item => item.count || 0), 1);
 
-    // Update frequency range when maxCount changes
+    // Update frequency range when maxCount changes, but only if it hasn't been adjusted yet
     useEffect(() => {
-        setFrequencyRange({ min: 0, max: maxCount });
-    }, [maxCount]);
+        if (!hasAdjustedRange) {
+            setFrequencyRange({ min: 0, max: 1 });  // Keep it at 0-1 until user adjusts
+        }
+    }, [maxCount, hasAdjustedRange]);
 
     // State for final topics
     const [finalTopics, setFinalTopics] = useState<string[]>([]);
@@ -208,12 +210,17 @@ const TopicHistogram: FC = () => {
 
     // Function to handle topic click
     const handleTopicClick = (topic: string) => {
+        console.log('Topic clicked:', topic);
+        console.log('Current API key:', apiKey ? 'Present' : 'Missing');
+
         if (!apiKey) {
+            console.log('No API key, showing modal');
             // Show API key modal if no key is set
             setShowApiKeyModal(true);
             return;
         }
 
+        console.log('Starting explanation fetch for topic:', topic);
         // Show explanation modal immediately with loading state
         setSelectedTopicForExplanation(topic);
         setTopicExplanation("");  // Clear previous explanation
@@ -334,7 +341,9 @@ const TopicHistogram: FC = () => {
 
     // Function to fetch topic explanation
     const fetchTopicExplanation = async (topic: string) => {
+        console.log('Fetching explanation for topic:', topic);
         if (!apiKey) {
+            console.log('No API key in fetchTopicExplanation');
             notify({
                 message: "Please set your Google API key first",
                 type: "warning"
@@ -344,6 +353,7 @@ const TopicHistogram: FC = () => {
         }
 
         try {
+            console.log('Making API request to:', API_ENDPOINTS.EXPLAIN_TOPIC);
             const response = await fetch(API_ENDPOINTS.EXPLAIN_TOPIC, {
                 method: 'POST',
                 headers: {
@@ -357,11 +367,13 @@ const TopicHistogram: FC = () => {
                 })
             });
 
+            console.log('Response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
+            console.log('Response data:', data);
             if (data.success) {
                 setTopicExplanation(data.explanation);
             } else {

@@ -5,20 +5,31 @@ interface MultiRangeSliderProps {
     min: number;
     max: number;
     onChange: (values: { min: number; max: number }) => void;
-    value: { min: number; max: number };
+    value?: { min: number; max: number };
 }
 
 export const MultiRangeSlider: React.FC<MultiRangeSliderProps> = ({
     min,
     max,
     onChange,
-    value
+    value = { min: 0, max: 1 }
 }) => {
     const [minVal, setMinVal] = useState(value.min);
     const [maxVal, setMaxVal] = useState(value.max);
     const minValRef = useRef(value.min);
     const maxValRef = useRef(value.max);
     const range = useRef<HTMLDivElement>(null);
+    const isUpdatingRef = useRef(false);
+
+    // Update internal state when value prop changes
+    useEffect(() => {
+        if (!isUpdatingRef.current) {
+            setMinVal(value.min);
+            setMaxVal(value.max);
+            minValRef.current = value.min;
+            maxValRef.current = value.max;
+        }
+    }, [value.min, value.max]);
 
     // Convert to percentage
     const getPercent = useCallback(
@@ -49,8 +60,25 @@ export const MultiRangeSlider: React.FC<MultiRangeSliderProps> = ({
 
     // Get min and max values when their state changes
     useEffect(() => {
-        onChange({ min: minVal, max: maxVal });
+        if (isUpdatingRef.current) {
+            isUpdatingRef.current = false;
+            onChange({ min: minVal, max: maxVal });
+        }
     }, [minVal, maxVal, onChange]);
+
+    const handleMinChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = Math.min(Number(event.target.value), maxVal - 1);
+        isUpdatingRef.current = true;
+        setMinVal(value);
+        minValRef.current = value;
+    };
+
+    const handleMaxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value = Math.max(Number(event.target.value), minVal + 1);
+        isUpdatingRef.current = true;
+        setMaxVal(value);
+        maxValRef.current = value;
+    };
 
     return (
         <div className="slider-container">
@@ -59,11 +87,7 @@ export const MultiRangeSlider: React.FC<MultiRangeSliderProps> = ({
                 min={min}
                 max={max}
                 value={minVal}
-                onChange={(event) => {
-                    const value = Math.min(Number(event.target.value), maxVal - 1);
-                    setMinVal(value);
-                    minValRef.current = value;
-                }}
+                onChange={handleMinChange}
                 className="thumb thumb--left"
                 style={{ zIndex: minVal > max - 100 ? "5" : undefined }}
             />
@@ -72,11 +96,7 @@ export const MultiRangeSlider: React.FC<MultiRangeSliderProps> = ({
                 min={min}
                 max={max}
                 value={maxVal}
-                onChange={(event) => {
-                    const value = Math.max(Number(event.target.value), minVal + 1);
-                    setMaxVal(value);
-                    maxValRef.current = value;
-                }}
+                onChange={handleMaxChange}
                 className="thumb thumb--right"
             />
 

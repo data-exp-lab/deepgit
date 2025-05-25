@@ -101,6 +101,7 @@ def ai_process():
 def explain_topic():
     try:
         data = request.get_json()
+        print("Received explain-topic request with data:", {k: v for k, v in data.items() if k != 'apiKey'})  # Log data without API key
         
         topic = data.get("topic", "")
         search_term = data.get("searchTerm", "")
@@ -108,6 +109,11 @@ def explain_topic():
         api_key = data.get("apiKey", "")
 
         if not topic or not search_term or not original_topic:
+            print("Missing required parameters:", {
+                "topic": bool(topic),
+                "search_term": bool(search_term),
+                "original_topic": bool(original_topic)
+            })
             return jsonify(
                 {
                     "success": False,
@@ -116,6 +122,7 @@ def explain_topic():
             ), 400
 
         if not api_key:
+            print("Missing API key")
             return jsonify(
                 {
                     "success": False,
@@ -127,12 +134,14 @@ def explain_topic():
         prompt = f"""Explain '{topic}' in the context of '{search_term}'. 
                     If it's an abbreviation, what it stands for in '{search_term}'
                     Keep it concise but informative (1-2 sentences)."""
+        print("Generated prompt:", prompt)
 
         try:
             # Create an event loop and run the async function
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
+            print("Initializing AI processor with Gemini model")
             # Use Gemini for explanations
             explanation = loop.run_until_complete(
                 ai_processor.process_topics(
@@ -140,21 +149,31 @@ def explain_topic():
                     api_key=api_key,  # Use the API key from the request
                     prompt=prompt,
                     topics=[topic],
+                    search_term=search_term  # Add the missing search_term parameter
                 )
             )
             loop.close()
 
+            print("Received explanation:", explanation)
             if explanation and len(explanation) > 0:
                 return jsonify({"success": True, "explanation": explanation[0]})
             else:
+                print("No explanation generated")
                 return jsonify(
                     {"success": False, "message": "Failed to generate explanation"}
                 ), 500
 
         except Exception as ai_error:
-            raise ai_error
+            print("AI processing error:", str(ai_error))
+            # Return a more detailed error response
+            return jsonify({
+                "success": False,
+                "error": str(ai_error),
+                "message": "Error during AI processing"
+            }), 500
 
     except Exception as e:
+        print("Top-level error in explain-topic:", str(e))
         return jsonify(
             {
                 "success": False,
