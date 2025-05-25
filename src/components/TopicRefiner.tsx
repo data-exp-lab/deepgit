@@ -72,11 +72,13 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     useEffect(() => {
         // Disable scroll on mount
         document.body.style.overflow = "hidden";
+        // Clear AI suggestions when component mounts
+        setLlmSuggestions([]);
         return () => {
             // Restore scroll on unmount
             document.body.style.overflow = "";
         };
-    }, []);
+    }, []); // Empty dependency array means this runs once on mount
 
     const handleGetSuggestions = async () => {
         if (!apiKey) {
@@ -180,6 +182,9 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                         <h3 className="h5 mb-0 d-flex align-items-center">
                                             <Sparkles className="text-warning me-2" size={20} />
                                             Available Topics
+                                            <span className="badge bg-secondary ms-2" style={{ fontSize: '0.9rem' }}>
+                                                {selectedTopics.length} topics
+                                            </span>
                                         </h3>
                                         <div className="d-flex gap-2">
                                             <button
@@ -238,6 +243,9 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     <h3 className="h5 mb-4 d-flex align-items-center">
                                         <Edit size={20} className="text-primary me-2" />
                                         Finalized Topics
+                                        <span className="badge bg-secondary ms-2" style={{ fontSize: '0.9rem' }}>
+                                            {finalizedTopics.length} topics
+                                        </span>
                                     </h3>
                                     <div className="mb-4">
                                         <div className="input-group">
