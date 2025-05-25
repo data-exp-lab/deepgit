@@ -196,10 +196,7 @@ const TopicHistogram: FC = () => {
     const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
 
     // State for API key
-    const [apiKey, setApiKey] = useState<string>(() => {
-        // Try to get from localStorage first
-        return localStorage.getItem('GOOGLE_API_KEY') || '';
-    });
+    const [apiKey, setApiKey] = useState<string>('');
 
     // Add API key input modal - initialize to false instead of !apiKey
     const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -232,7 +229,6 @@ const TopicHistogram: FC = () => {
     // Function to save API key and fetch explanation if a topic was clicked
     const saveApiKey = (key: string) => {
         setApiKey(key);
-        localStorage.setItem('GOOGLE_API_KEY', key);
         setShowApiKeyModal(false);
 
         // If there was a topic waiting for explanation, fetch it now
