@@ -7,8 +7,8 @@ import {
     Edit,
     ThumbsUp,
     Settings,
-    Check,
-    Minus
+    Minus,
+    Check
 } from "lucide-react";
 import { API_ENDPOINTS } from '../lib/config';
 import { FaArrowLeft } from "react-icons/fa";
@@ -33,28 +33,24 @@ interface TopicRefinerProps {
     llmSuggestions: string[];
     setLlmSuggestions: (suggestions: string[]) => void;
     selectedTopics: string[];
-    selectLlmSuggestion: (suggestion: string) => void;
     newTopic: string;
     setNewTopic: (topic: string) => void;
     addNewTopic: () => void;
     prevStep: () => void;
     handleSubmit: () => void;
     searchTerm: string;
-    removeLlmSuggestion: (suggestion: string) => void;
 }
 
 export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     llmSuggestions = [],
     setLlmSuggestions,
     selectedTopics = [],
-    selectLlmSuggestion,
     newTopic = "",
     setNewTopic,
     addNewTopic,
     prevStep,
     handleSubmit,
-    searchTerm,
-    removeLlmSuggestion
+    searchTerm
 }) => {
     const [showPromptModal, setShowPromptModal] = useState(false);
     const [showWelcomeModal, setShowWelcomeModal] = useState(true);
@@ -63,6 +59,15 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     );
     const [selectedModel, setSelectedModel] = useState('gpt-4');
     const [apiKey, setApiKey] = useState('');
+    const [finalizedTopics, setFinalizedTopics] = useState<string[]>([]);
+
+    const moveToRightColumn = (topic: string) => {
+        setFinalizedTopics(prev => [...prev, topic]);
+    };
+
+    const moveToLeftColumn = (topic: string) => {
+        setFinalizedTopics(prev => prev.filter(t => t !== topic));
+    };
 
     useEffect(() => {
         // Disable scroll on mount
@@ -167,14 +172,14 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                     <p className="text-muted mb-4">Use AI suggestions to refine your topics or manually add/remove topics.</p>
 
                     <div className="row g-4">
-                        {/* Left column - Selected Topics */}
+                        {/* Left column - Available Topics */}
                         <div className="col-md-6">
                             <div className="card h-100" style={{ minHeight: 420 }}>
                                 <div className="card-body" style={{ minHeight: 420, maxHeight: 420 }}>
                                     <div className="d-flex justify-content-between align-items-center mb-4">
                                         <h3 className="h5 mb-0 d-flex align-items-center">
                                             <Sparkles className="text-warning me-2" size={20} />
-                                            AI Suggested Topics
+                                            Available Topics
                                         </h3>
                                         <div className="d-flex gap-2">
                                             <button
@@ -191,26 +196,28 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                         <div className="list-group w-100 mb-0" style={{ flex: 1, overflowY: 'auto', maxHeight: 300, marginBottom: 0, paddingBottom: 0 }}>
                                             {selectedTopics.map((topic) => {
                                                 const isAI = llmSuggestions.includes(topic);
+                                                const isAdded = finalizedTopics.includes(topic);
                                                 return (
                                                     <div key={topic} className="list-group-item d-flex justify-content-between align-items-center">
                                                         <span>
                                                             {topic}
                                                             {isAI && <span className="badge bg-info ms-2">AI</span>}
                                                         </span>
-                                                        {isAI ? (
+                                                        {isAdded ? (
                                                             <button
-                                                                className="btn btn-sm btn-outline-success"
+                                                                className="btn btn-sm btn-success"
                                                                 style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                                                                disabled
-                                                                title="Already added to AI suggestions"
+                                                                onClick={() => moveToLeftColumn(topic)}
+                                                                title="Remove from finalized topics"
                                                             >
                                                                 <Check size={16} />
                                                             </button>
                                                         ) : (
                                                             <button
                                                                 className="btn btn-sm btn-outline-primary"
-                                                                onClick={() => selectLlmSuggestion(topic)}
-                                                                title="Add to AI suggestions"
+                                                                style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                                                onClick={() => moveToRightColumn(topic)}
+                                                                title="Add to finalized topics"
                                                             >
                                                                 <Plus size={16} />
                                                             </button>
@@ -224,13 +231,13 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                             </div>
                         </div>
 
-                        {/* Right column - AI Suggestions Reference */}
+                        {/* Right column - Finalized Topics */}
                         <div className="col-md-6">
                             <div className="card h-100" style={{ minHeight: 420 }}>
                                 <div className="card-body" style={{ minHeight: 420, maxHeight: 420 }}>
                                     <h3 className="h5 mb-4 d-flex align-items-center">
                                         <Edit size={20} className="text-primary me-2" />
-                                        User Finalized Topics
+                                        Finalized Topics
                                     </h3>
                                     <div className="mb-4">
                                         <div className="input-group">
@@ -251,28 +258,24 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                             </button>
                                         </div>
                                     </div>
-                                    {llmSuggestions.length > 0 && (
-                                        <div className="mb-4">
-                                            <div className="list-group" style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                                                {llmSuggestions.map((suggestion) => (
-                                                    <div key={suggestion} className="list-group-item d-flex justify-content-between align-items-center">
-                                                        <span className="d-flex align-items-center">
-                                                            {suggestion}
-                                                            <span className="badge bg-info ms-2">AI</span>
-                                                        </span>
-                                                        <button
-                                                            className="btn btn-sm btn-outline-danger ms-2"
-                                                            style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                                                            onClick={() => removeLlmSuggestion(suggestion)}
-                                                            title="Remove from finalized topics"
-                                                        >
-                                                            <Minus size={16} />
-                                                        </button>
-                                                    </div>
-                                                ))}
+                                    <div className="list-group" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                                        {finalizedTopics.map((topic) => (
+                                            <div key={topic} className="list-group-item d-flex justify-content-between align-items-center">
+                                                <span className="d-flex align-items-center">
+                                                    {topic}
+                                                    {llmSuggestions.includes(topic) && <span className="badge bg-info ms-2">AI</span>}
+                                                </span>
+                                                <button
+                                                    className="btn btn-sm btn-outline-danger ms-2"
+                                                    style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                                    onClick={() => moveToLeftColumn(topic)}
+                                                    title="Remove from finalized topics"
+                                                >
+                                                    <Minus size={16} />
+                                                </button>
                                             </div>
-                                        </div>
-                                    )}
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -281,8 +284,11 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                     <div className="d-flex justify-content-end mt-4">
                         <button
                             className="btn btn-success d-flex align-items-center"
-                            onClick={handleSubmit}
-                            disabled={selectedTopics.length === 0}
+                            onClick={() => {
+                                // Pass finalized topics to parent component
+                                handleSubmit();
+                            }}
+                            disabled={finalizedTopics.length === 0}
                         >
                             <ThumbsUp size={16} className="me-2" />
                             Submit Topics
