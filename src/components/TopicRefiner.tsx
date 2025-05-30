@@ -49,6 +49,13 @@ interface TopicRefinerProps {
     onRequestSuggestions: (model: string, prompt: string, apiKey: string, topics: string[]) => Promise<void>;
 }
 
+// Track which model suggested each topic
+type ModelType = 'openai' | 'gemini';
+interface TopicWithModel {
+    topic: string;
+    model: ModelType;
+}
+
 export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     llmSuggestions = [],
     setLlmSuggestions,
@@ -74,6 +81,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [canAddTopic, setCanAddTopic] = useState(false);
+    const [suggestionsByModel, setSuggestionsByModel] = useState<TopicWithModel[]>([]);
 
     const moveToRightColumn = (topic: string) => {
         setFinalizedTopics(prev => [...prev, topic]);
@@ -105,9 +113,36 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         }
 
         try {
+            const currentModel: ModelType = selectedModel === 'gpt-3.5-turbo' ? 'openai' : 'gemini';
+
+            // Get suggestions from the API
             await onRequestSuggestions(selectedModel, customPrompt, apiKey, selectedTopics);
+
+            if (!llmSuggestions || llmSuggestions.length === 0) {
+                console.warn(`No suggestions received from ${currentModel}`);
+                return;
+            }
+
+            // Update suggestions, keeping existing ones from the other model
+            setSuggestionsByModel(prev => {
+                // Remove any existing suggestions from the current model
+                const otherModelSuggestions = prev.filter(s => s.model !== currentModel);
+                // Add the new suggestions with the current model
+                const newSuggestions: TopicWithModel[] = llmSuggestions.map(topic => ({
+                    topic,
+                    model: currentModel
+                }));
+                const updatedSuggestions = [...otherModelSuggestions, ...newSuggestions];
+                console.log('Updated suggestions:', updatedSuggestions);
+                return updatedSuggestions;
+            });
+
+            // Don't update parent component - we'll manage suggestions internally
+            // setLlmSuggestions(allTopics);
+
             setShowPromptModal(false);
-        } catch {
+        } catch (error) {
+            console.error('Error getting suggestions:', error);
             alert('Failed to get AI suggestions. Please try again.');
         }
     };
@@ -184,6 +219,32 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         //     setSelectedTopics([...selectedTopics, suggestion.name]);
         // }
     };
+
+    // Helper function to render model badges
+    const renderModelBadges = (topic: string) => {
+        const normalizedTopic = topic.toLowerCase().trim();
+        const topicSuggestions = suggestionsByModel.filter(
+            s => s.topic.toLowerCase().trim() === normalizedTopic
+        );
+        console.log(`Rendering badges for ${topic}:`, topicSuggestions);
+        return topicSuggestions.map(suggestion => (
+            <span
+                key={`${suggestion.topic}-${suggestion.model}`}
+                className={`badge ms-1 ${suggestion.model === 'openai' ? 'bg-primary' : 'bg-success'}`}
+                style={{ fontSize: '0.75rem' }}
+            >
+                {suggestion.model === 'openai' ? 'OpenAI' : 'Gemini'}
+            </span>
+        ));
+    };
+
+    // Add effect to initialize state when component mounts
+    useEffect(() => {
+        // Only clear our internal state
+        setSuggestionsByModel([]);
+        // Don't clear parent state
+        // setLlmSuggestions([]);
+    }, []);
 
     return (
         <main className="container-fluid py-4" style={{ height: '100vh', overflowY: 'auto' }}>
@@ -271,13 +332,12 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     <div className="d-flex flex-column h-100" style={{ minHeight: 250, justifyContent: 'flex-start' }}>
                                         <div className="list-group w-100 mb-0" style={{ flex: 1, overflowY: 'auto', maxHeight: 480, marginBottom: 0, paddingBottom: 0 }}>
                                             {selectedTopics.map((topic) => {
-                                                const isAI = llmSuggestions.includes(topic);
                                                 const isAdded = finalizedTopics.includes(topic);
                                                 return (
                                                     <div key={topic} className="list-group-item d-flex justify-content-between align-items-center">
                                                         <span>
                                                             {topic}
-                                                            {isAI && <span className="badge bg-info ms-2">AI</span>}
+                                                            {renderModelBadges(topic)}
                                                         </span>
                                                         {isAdded ? (
                                                             <button
@@ -444,7 +504,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                             <div key={topic} className="list-group-item py-2 px-3 d-flex justify-content-between align-items-center">
                                                 <span className="d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
                                                     {topic}
-                                                    {llmSuggestions.includes(topic) && <span className="badge bg-info ms-2" style={{ fontSize: '0.75rem' }}>AI</span>}
+                                                    {renderModelBadges(topic)}
                                                 </span>
                                                 <button
                                                     className="btn btn-sm btn-outline-danger ms-2"
