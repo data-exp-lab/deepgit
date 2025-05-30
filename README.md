@@ -1,4 +1,3 @@
-
 <div align="center">
     <img src="./public/deepgit_logo.png" alt="WESE Logo" width="150">
     <h1 align="center">DeepGit</h1>
@@ -12,8 +11,29 @@ DeepGit is a free, open-source web application designed to help researchers and 
   <img src="./public/ossci_logo.jpg" width="120" />
 </p>
 
+# Development
 
+## Prerequisites
+- Node.js (v16 or higher)
+- npm (v8 or higher)
 
+## Getting Started
+
+1. Clone the repository:
+```bash
+git clone https://github.com/data-exp-lab/deepgit.git
+cd deepgit
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev:watch
+```
 # Acknowledgment
 DeepGit is built upon [Retina](https://ouestware.gitlab.io/retina/1.0.0-beta.4/#/) developed by [OuestWare](https://www.ouestware.com/en/)
 

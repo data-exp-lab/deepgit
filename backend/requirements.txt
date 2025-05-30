@@ -1,0 +1,11 @@
+flask
+flask-cors
+duckdb
+google-generativeai
+openai
+fastapi
+uvicorn
+kaggle>=1.5.16
+numpy
+pandas
+psutil

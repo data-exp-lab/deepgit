@@ -1,5 +1,14 @@
+# Development
+.next
 node_modules
-*.ipython_checkpoints
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.ipynb_checkpoints/
 dist
 .DS_Store
 *temp
+*repo_metadata.json
+__pycache__
+*.duckdb

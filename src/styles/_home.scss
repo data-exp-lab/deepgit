@@ -1,7 +1,17 @@
+$primary-color: #007bff;
+$secondary-color: #6c757d;
+$background-color: #f8f9fa;
+$text-color: #212529;
+$border-radius: 8px;
+
 .home-view {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background-color: $background-color;
+  color: $text-color;
+  font-family: 'Arial', sans-serif;
+  padding: 0 1.5rem;
 
   .expanding-block {
     width: 100%;
@@ -9,13 +19,67 @@
 
   .title-block {
     flex-grow: 1;
-
-    padding: 20vh 0.5rem 0.5rem;
-    max-width: 500px;
+    padding: 8vh 1rem 2rem;
+    max-width: 800px;
     margin: 0 auto;
     text-align: center;
 
-    min-height: 85vh;
+    h1 {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 400;
+      margin-bottom: 2rem;
+      color: $secondary-color;
+    }
+
+    .search-bar {
+      max-width: 700px;
+      margin: 0 auto 2rem;
+
+      .input-group {
+        border: 1px solid #ccc;
+        border-radius: $border-radius;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        input {
+          font-size: 1rem;
+          padding: 0.75rem;
+        }
+
+        button {
+          font-size: 1.25rem;
+          color: $primary-color;
+          transition: background-color 0.3s ease, color 0.3s ease;
+
+          &:hover {
+            background-color: $primary-color;
+            color: #fff;
+          }
+        }
+      }
+    }
+
+    .tags {
+      button {
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+
+        &:hover {
+          background-color: #f5f5f5;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+      }
+    }
   }
 
   .gexf-form {
@@ -24,9 +88,12 @@
 
   .footer {
     flex-shrink: 0;
-
-    width: 600px;
-    max-width: 100%;
+    width: 100%;
+    max-width: 800px;
     margin: 0 auto;
+    padding: 1rem 0;
+    text-align: center;
+    border-top: 1px solid #ddd;
+    color: $secondary-color;
   }
 }
