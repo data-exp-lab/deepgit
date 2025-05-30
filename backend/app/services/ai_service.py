@@ -3,6 +3,7 @@ from typing import List
 import google.generativeai as genai
 from openai import OpenAI
 from fastapi import HTTPException
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -44,10 +45,26 @@ class AITopicProcessor:
 
     async def process_with_openai(
         self, prompt: str, topics: List[str], model: str, search_term: str
-    ) -> List[str]:
+    ) -> List[dict]:
         try:
-            full_prompt = f"""Search term: {search_term}\nCurrent topics: {', '.join(topics)}\n\n{prompt}\n\You only return a list of the k topics. K can be any number."""
-            # print(full_prompt)
+            full_prompt = f"""Search term: {search_term}
+Current topics: {', '.join(topics)}
+
+{prompt}
+
+IMPORTANT FORMATTING RULES:
+1. Do NOT use any markdown formatting (no asterisks, no bullet points, no bold/italic)
+2. Do NOT use numbers or bullet points
+3. Each suggestion must be on a new line
+4. Each line must be in the format: "topic: explanation"
+5. Keep explanations to one sentence
+6. Do not add any extra text or formatting
+
+Example format:
+visual-programming-language: A programming language that uses visual elements instead of text
+flow-based-programming: A programming paradigm where programs are built by connecting nodes
+"""
+            
             response = self.openai_client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": full_prompt}],
@@ -56,32 +73,109 @@ class AITopicProcessor:
             )
 
             suggestions = response.choices[0].message.content.strip().split("\n")
-            # Clean up suggestions (remove bullet points, numbers, etc.)
-            suggestions = [
-                s.lstrip("- ").lstrip("* ").lstrip("1234567890. ") for s in suggestions
-            ]
-            return [s for s in suggestions if s]  # Remove empty strings
+            # Process suggestions to extract topic and explanation
+            processed_suggestions = []
+            for s in suggestions:
+                # Clean up markdown formatting and numbers
+                s = s.strip()
+                # Remove numbers and dots at start (e.g., "1. ", "2. ")
+                s = re.sub(r'^\d+\.\s*', '', s)
+                # Remove bullet points and asterisks
+                s = re.sub(r'^[\*\-]\s*', '', s)
+                # Remove any remaining markdown formatting
+                s = re.sub(r'\*\*|\*|__|_', '', s)
+                # Remove any leading/trailing whitespace
+                s = s.strip()
+                
+                if not s:
+                    continue
+                
+                # Split on first colon
+                parts = s.split(":", 1)
+                if len(parts) == 2:
+                    topic = parts[0].strip()
+                    explanation = parts[1].strip()
+                    # Remove any remaining markdown from explanation
+                    explanation = re.sub(r'\*\*|\*|__|_', '', explanation)
+                    processed_suggestions.append({
+                        "topic": topic,
+                        "explanation": explanation
+                    })
+                else:
+                    # If no explanation provided, use the topic as is
+                    processed_suggestions.append({
+                        "topic": s.strip(),
+                        "explanation": f"Suggested as relevant to {search_term}"
+                    })
+            return processed_suggestions
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")
 
-    async def process_with_gemini(self, prompt: str, topics: List[str], search_term: str) -> List[str]:
+    async def process_with_gemini(self, prompt: str, topics: List[str], search_term: str) -> List[dict]:
         try:
             if not self.gemini_client:
                 raise HTTPException(status_code=500, detail="Gemini client not initialized")
 
-            full_prompt = f"""Search term: {search_term}\nCurrent topics: {', '.join(topics)}\n\n{prompt}\n\n You only return a list of the k topics. K can be any number. No other text."""
+            full_prompt = f"""Search term: {search_term}
+Current topics: {', '.join(topics)}
+
+{prompt}
+
+IMPORTANT FORMATTING RULES:
+1. Do NOT use any markdown formatting (no asterisks, no bullet points, no bold/italic)
+2. Do NOT use numbers or bullet points
+3. Each suggestion must be on a new line
+4. Each line must be in the format: "topic: explanation"
+5. Keep explanations to one sentence
+6. Do not add any extra text or formatting
+
+Example format:
+visual-programming-language: A programming language that uses visual elements instead of text
+flow-based-programming: A programming paradigm where programs are built by connecting nodes
+"""
 
             response = self.gemini_client.generate_content(full_prompt)
+            print("Raw response:", response.text)  # Debug print
 
             if response.text:
                 suggestions = response.text.strip().split("\n")
-                # Clean up suggestions (remove bullet points, numbers, etc.)
-                suggestions = [
-                    s.lstrip("- ").lstrip("* ").lstrip("1234567890. ")
-                    for s in suggestions
-                ]
-                return [s for s in suggestions if s]  # Remove empty strings
+                # Process suggestions to extract topic and explanation
+                processed_suggestions = []
+                for s in suggestions:
+                    # Clean up markdown formatting and numbers
+                    s = s.strip()
+                    # Remove numbers and dots at start (e.g., "1. ", "2. ")
+                    s = re.sub(r'^\d+\.\s*', '', s)
+                    # Remove bullet points and asterisks
+                    s = re.sub(r'^[\*\-]\s*', '', s)
+                    # Remove any remaining markdown formatting
+                    s = re.sub(r'\*\*|\*|__|_', '', s)
+                    # Remove any leading/trailing whitespace
+                    s = s.strip()
+                    
+                    if not s:
+                        continue
+                    
+                    # Split on first colon
+                    parts = s.split(":", 1)
+                    if len(parts) == 2:
+                        topic = parts[0].strip()
+                        explanation = parts[1].strip()
+                        # Remove any remaining markdown from explanation
+                        explanation = re.sub(r'\*\*|\*|__|_', '', explanation)
+                        processed_suggestions.append({
+                            "topic": topic,
+                            "explanation": explanation
+                        })
+                    else:
+                        # If no explanation provided, use the topic as is
+                        processed_suggestions.append({
+                            "topic": s.strip(),
+                            "explanation": f"Suggested as relevant to {search_term}"
+                        })
+                print("Processed suggestions:", processed_suggestions)  # Debug print
+                return processed_suggestions
             return []
 
         except Exception as e:
@@ -90,9 +184,9 @@ class AITopicProcessor:
 
     async def process_topics(
         self, model: str, api_key: str, prompt: str, topics: List[str], search_term: str
-    ) -> List[str]:
+    ) -> List[dict]:
         """
-        Process topics using the specified AI model and return suggestions.
+        Process topics using the specified AI model and return suggestions with explanations.
         """
         # Enhanced debug logging
         # logger.debug("\n=== Incoming Request Validation ===")

@@ -396,6 +396,7 @@ const TopicHistogram: FC = () => {
     // Function to handle AI suggestions request
     const handleRequestSuggestions = async (model: string, prompt: string, apiKey: string, topics: string[]) => {
         setIsLlmProcessing(true);
+        setLlmSuggestionsState([]); // Clear previous suggestions immediately
         try {
             console.log('Requesting AI suggestions with:', { model, prompt, apiKey, topics });
             const response = await fetch(API_ENDPOINTS.AI_PROCESS, {
@@ -420,7 +421,41 @@ const TopicHistogram: FC = () => {
             console.log('Received AI suggestions:', data);
 
             if (data.success && Array.isArray(data.result)) {
+                // Update state synchronously
                 setLlmSuggestionsState(data.result);
+
+                // Wait for state to be updated
+                await new Promise<void>(resolve => {
+                    // Use a MutationObserver to detect when the state is actually updated
+                    const observer = new MutationObserver((mutations, obs) => {
+                        obs.disconnect();
+                        resolve();
+                    });
+
+                    // Create a temporary element to observe
+                    const temp = document.createElement('div');
+                    temp.style.display = 'none';
+                    document.body.appendChild(temp);
+
+                    // Start observing
+                    observer.observe(temp, {
+                        attributes: true,
+                        childList: true,
+                        subtree: true
+                    });
+
+                    // Force a re-render
+                    temp.setAttribute('data-update', Date.now().toString());
+
+                    // Clean up after a timeout
+                    setTimeout(() => {
+                        observer.disconnect();
+                        document.body.removeChild(temp);
+                        resolve();
+                    }, 100);
+                });
+
+                console.log('State updated with suggestions:', data.result);
             } else {
                 throw new Error('Invalid response format from AI service');
             }

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { FC, useState, useEffect, useCallback } from "react";
+import React, { FC, useState, useEffect, useCallback, useRef } from "react";
 import {
     Sparkles,
     Plus,
@@ -9,11 +9,13 @@ import {
     Settings,
     Minus,
     Check,
-    Search
+    Search,
+    Loader2
 } from "lucide-react";
 import { FaArrowLeft } from "react-icons/fa";
 import { API_ENDPOINTS } from "../lib/config";
 import debounce from 'lodash/debounce';
+import { Tooltip } from 'bootstrap';
 
 interface AIModel {
     id: string;
@@ -23,6 +25,11 @@ interface AIModel {
 interface TopicSuggestion {
     name: string;
     count: number;
+}
+
+interface AISuggestion {
+    topic: string;
+    explanation: string;
 }
 
 const AI_MODELS: AIModel[] = [
@@ -54,6 +61,7 @@ type ModelType = 'openai' | 'gemini';
 interface TopicWithModel {
     topic: string;
     model: ModelType;
+    explanation: string;
 }
 
 export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
@@ -82,6 +90,8 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [inputValue, setInputValue] = useState("");
     const [canAddTopic, setCanAddTopic] = useState(false);
     const [suggestionsByModel, setSuggestionsByModel] = useState<TopicWithModel[]>([]);
+    const tooltipRefs = useRef<{ [key: string]: Tooltip }>({});
+    const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
 
     const moveToRightColumn = (topic: string) => {
         setFinalizedTopics(prev => [...prev, topic]);
@@ -102,6 +112,44 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         };
     }, []); // Empty dependency array means this runs once on mount
 
+    // Add effect to handle llmSuggestions updates
+    useEffect(() => {
+        if (llmSuggestions && llmSuggestions.length > 0 && isGettingSuggestions) {
+            console.log('Effect detected new suggestions:', llmSuggestions);
+            const currentModel: ModelType = selectedModel === 'gpt-3.5-turbo' ? 'openai' : 'gemini';
+
+            // Process the suggestions
+            const newSuggestions: TopicWithModel[] = llmSuggestions.map(suggestion => {
+                if (typeof suggestion === 'string') {
+                    return {
+                        topic: suggestion,
+                        model: currentModel,
+                        explanation: `Suggested as relevant to ${searchTerm}`
+                    };
+                } else {
+                    const aiSuggestion = suggestion as AISuggestion;
+                    return {
+                        topic: aiSuggestion.topic,
+                        model: currentModel,
+                        explanation: aiSuggestion.explanation || `Suggested as relevant to ${searchTerm}`
+                    };
+                }
+            });
+
+            // Update suggestions, keeping existing ones from the other model
+            setSuggestionsByModel(prev => {
+                const otherModelSuggestions = prev.filter(s => s.model !== currentModel);
+                const updatedSuggestions = [...otherModelSuggestions, ...newSuggestions];
+                console.log('Updated suggestions in effect:', updatedSuggestions);
+                return updatedSuggestions;
+            });
+
+            // Close modal after successful update
+            setShowPromptModal(false);
+            setIsGettingSuggestions(false);
+        }
+    }, [llmSuggestions, selectedModel, searchTerm, isGettingSuggestions]);
+
     const handleGetSuggestions = async () => {
         if (!apiKey) {
             alert('Please enter an API key');
@@ -113,37 +161,35 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         }
 
         try {
+            setIsGettingSuggestions(true);  // Start loading
             const currentModel: ModelType = selectedModel === 'gpt-3.5-turbo' ? 'openai' : 'gemini';
+
+            // Clear previous suggestions for this model
+            setSuggestionsByModel(prev => prev.filter(s => s.model !== currentModel));
 
             // Get suggestions from the API
             await onRequestSuggestions(selectedModel, customPrompt, apiKey, selectedTopics);
 
-            if (!llmSuggestions || llmSuggestions.length === 0) {
-                console.warn(`No suggestions received from ${currentModel}`);
-                return;
+            // Wait for suggestions to be processed by the effect
+            let attempts = 0;
+            const maxAttempts = 50;
+            const checkInterval = 100;
+
+            while (attempts < maxAttempts && isGettingSuggestions) {
+                await new Promise(resolve => setTimeout(resolve, checkInterval));
+                attempts++;
+                console.log(`Waiting for suggestions to be processed... attempt ${attempts}/${maxAttempts}`);
             }
 
-            // Update suggestions, keeping existing ones from the other model
-            setSuggestionsByModel(prev => {
-                // Remove any existing suggestions from the current model
-                const otherModelSuggestions = prev.filter(s => s.model !== currentModel);
-                // Add the new suggestions with the current model
-                const newSuggestions: TopicWithModel[] = llmSuggestions.map(topic => ({
-                    topic,
-                    model: currentModel
-                }));
-                const updatedSuggestions = [...otherModelSuggestions, ...newSuggestions];
-                console.log('Updated suggestions:', updatedSuggestions);
-                return updatedSuggestions;
-            });
-
-            // Don't update parent component - we'll manage suggestions internally
-            // setLlmSuggestions(allTopics);
-
-            setShowPromptModal(false);
+            if (isGettingSuggestions) {
+                // If we're still getting suggestions after timeout, something went wrong
+                console.warn('Timeout waiting for suggestions to be processed');
+                throw new Error('Timeout waiting for suggestions to be processed');
+            }
         } catch (error) {
             console.error('Error getting suggestions:', error);
             alert('Failed to get AI suggestions. Please try again.');
+            setIsGettingSuggestions(false);
         }
     };
 
@@ -220,23 +266,71 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         // }
     };
 
-    // Helper function to render model badges
-    const renderModelBadges = (topic: string) => {
+    // Helper function to render model badges with tooltips
+    const renderModelBadges = (topic: string, isFinalized: boolean = false) => {
         const normalizedTopic = topic.toLowerCase().trim();
         const topicSuggestions = suggestionsByModel.filter(
             s => s.topic.toLowerCase().trim() === normalizedTopic
         );
         console.log(`Rendering badges for ${topic}:`, topicSuggestions);
-        return topicSuggestions.map(suggestion => (
-            <span
-                key={`${suggestion.topic}-${suggestion.model}`}
-                className={`badge ms-1 ${suggestion.model === 'openai' ? 'bg-primary' : 'bg-success'}`}
-                style={{ fontSize: '0.75rem' }}
-            >
-                {suggestion.model === 'openai' ? 'OpenAI' : 'Gemini'}
-            </span>
-        ));
+        return topicSuggestions.map(suggestion => {
+            const tooltipId = `${suggestion.topic}-${suggestion.model}`;
+            return (
+                <span
+                    key={tooltipId}
+                    id={tooltipId}
+                    className={`badge ms-1`}
+                    style={{
+                        fontSize: '0.75rem',
+                        cursor: isFinalized ? 'default' : 'help',
+                        backgroundColor: suggestion.model === 'openai' ? '#10A37F' : '#4285F4',
+                        color: 'white'
+                    }}
+                    {...(!isFinalized && {
+                        'data-bs-toggle': 'tooltip',
+                        'data-bs-placement': 'top',
+                        'title': suggestion.explanation
+                    })}
+                >
+                    {suggestion.model === 'openai' ? 'OpenAI' : 'Gemini'}
+                </span>
+            );
+        });
     };
+
+    // Initialize tooltips when component mounts or suggestions change
+    useEffect(() => {
+        // Cleanup existing tooltips
+        Object.values(tooltipRefs.current).forEach(tooltip => {
+            tooltip.dispose();
+        });
+        tooltipRefs.current = {};
+
+        // Initialize new tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipTriggerList.forEach(tooltipTriggerEl => {
+            const id = tooltipTriggerEl.id;
+            if (id) {
+                try {
+                    const tooltip = new Tooltip(tooltipTriggerEl, {
+                        trigger: 'hover',
+                        html: true
+                    });
+                    tooltipRefs.current[id] = tooltip;
+                } catch (error) {
+                    console.error('Error initializing tooltip:', error);
+                }
+            }
+        });
+
+        // Cleanup tooltips when component unmounts
+        return () => {
+            Object.values(tooltipRefs.current).forEach(tooltip => {
+                tooltip.dispose();
+            });
+            tooltipRefs.current = {};
+        };
+    }, [suggestionsByModel]);
 
     // Add effect to initialize state when component mounts
     useEffect(() => {
@@ -337,7 +431,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                                     <div key={topic} className="list-group-item d-flex justify-content-between align-items-center">
                                                         <span>
                                                             {topic}
-                                                            {renderModelBadges(topic)}
+                                                            {renderModelBadges(topic, false)}
                                                         </span>
                                                         {isAdded ? (
                                                             <button
@@ -499,12 +593,12 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                             </div>
                                         )}
                                     </div>
-                                    <div className="list-group" style={{ maxHeight: '480px', overflowY: 'auto' }}>
+                                    <div className="list-group" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                                         {finalizedTopics.map((topic) => (
                                             <div key={topic} className="list-group-item py-2 px-3 d-flex justify-content-between align-items-center">
                                                 <span className="d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
                                                     {topic}
-                                                    {renderModelBadges(topic)}
+                                                    {renderModelBadges(topic, true)}
                                                 </span>
                                                 <button
                                                     className="btn btn-sm btn-outline-danger ms-2"
@@ -678,16 +772,24 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn btn-secondary"
                                     onClick={() => setShowPromptModal(false)}
+                                    disabled={isGettingSuggestions}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="button"
-                                    className="btn btn-primary"
+                                    className="btn btn-primary d-flex align-items-center gap-2"
                                     onClick={handleGetSuggestions}
-                                    disabled={!apiKey}
+                                    disabled={!apiKey || isGettingSuggestions}
                                 >
-                                    Save Changes & Get Suggestions
+                                    {isGettingSuggestions ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin" />
+                                            Getting Suggestions...
+                                        </>
+                                    ) : (
+                                        'Save Changes & Get Suggestions'
+                                    )}
                                 </button>
                             </div>
                         </div>
