@@ -49,6 +49,8 @@ interface TopicRefinerProps {
     setLlmSuggestions: (suggestions: string[]) => void;
     selectedTopics: string[];
     setSelectedTopics: (topics: string[]) => void;
+    finalizedTopics: string[];
+    setFinalizedTopics: (topics: string[]) => void;
     newTopic: string;
     setNewTopic: (topic: string) => void;
     prevStep: () => void;
@@ -70,6 +72,8 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     setLlmSuggestions,
     selectedTopics = [],
     setSelectedTopics,
+    finalizedTopics = [],
+    setFinalizedTopics,
     prevStep,
     searchTerm,
     onRequestSuggestions
@@ -81,7 +85,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     );
     const [selectedModel, setSelectedModel] = useState('gpt-4');
     const [apiKey, setApiKey] = useState('');
-    const [finalizedTopics, setFinalizedTopics] = useState<string[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -94,11 +97,11 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const moveToRightColumn = (topic: string) => {
-        setFinalizedTopics(prev => [...prev, topic]);
+        setFinalizedTopics([...finalizedTopics, topic]);
     };
 
     const moveToLeftColumn = (topic: string) => {
-        setFinalizedTopics(prev => prev.filter(t => t !== topic));
+        setFinalizedTopics(finalizedTopics.filter(t => t !== topic));
     };
 
     useEffect(() => {
@@ -272,7 +275,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         const topicSuggestions = suggestionsByModel.filter(
             s => s.topic.toLowerCase().trim() === normalizedTopic
         );
-        console.log(`Rendering badges for ${topic}:`, topicSuggestions);
+        // console.log(`Rendering badges for ${topic}:`, topicSuggestions);
         return topicSuggestions.map(suggestion => {
             const tooltipId = `${suggestion.topic}-${suggestion.model}`;
             return (

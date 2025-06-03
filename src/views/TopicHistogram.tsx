@@ -158,37 +158,113 @@ const TopicHistogram: FC = () => {
     const location = useLocation();
     const { notify } = useNotifications();
 
-    // Get both search term and user topic from location state
-    const searchTerm = (location.state as { searchTerm?: string } | undefined)?.searchTerm || "";
-    const userTopic = (location.state as { userTopic?: string } | undefined)?.userTopic || "";
+    // Get search term and frequency range from URL query parameters
+    const searchParams = new URLSearchParams(location.search);
+    const searchTerm = searchParams.get('search_term') || "";
+    const userTopic = searchTerm; // Use search term as user topic since they're the same
+
+    // Get frequency range from URL or use defaults
+    const minParam = searchParams.get('min');
+    const maxParam = searchParams.get('max');
+    const initialMin = minParam ? parseInt(minParam, 10) : 0;
+    const initialMax = maxParam ? parseInt(maxParam, 10) : 1;
+
+    // Get finalized topics from URL if they exist
+    const topicsParam = searchParams.get('topics');
+    const initialFinalTopics = topicsParam ? topicsParam.split(',') : [];
 
     // Add state for storing the user topic
     const [originalTopic, setOriginalTopic] = useState(userTopic);
 
     // State for the current step in the wizard
-    const [currentStep, setCurrentStep] = useState(1);
+    const [currentStep, setCurrentStep] = useState<1 | 2>(initialFinalTopics.length > 0 ? 2 : 1);
 
     // State for extracted topics and their frequencies
     const [extractedTopics, setExtractedTopics] = useState<Array<{ name: string; count: number }>>([]);
 
-    // State for selected topics
+    // State for selected topics (from frequency range)
     const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
+    // State for finalized topics (manually selected/refined)
+    const [finalizedTopics, setFinalizedTopics] = useState<string[]>(initialFinalTopics);
+
     // State for frequency range
-    const [frequencyRange, setFrequencyRange] = useState({ min: 0, max: 1 });
-    const [hasAdjustedRange, setHasAdjustedRange] = useState(false);
+    const [frequencyRange, setFrequencyRange] = useState({ min: initialMin, max: initialMax });
+    const [hasAdjustedRange, setHasAdjustedRange] = useState(!!minParam || !!maxParam);
     const maxCount = Math.max(...extractedTopics.map(item => item.count || 0), 1);
 
-    // Update frequency range when maxCount changes, but only if it hasn't been adjusted yet
-    useEffect(() => {
-        if (!hasAdjustedRange) {
-            setFrequencyRange({ min: 0, max: 1 });  // Keep it at 0-1 until user adjusts
-        }
-    }, [maxCount, hasAdjustedRange]);
+    // Function to update URL with current state
+    const updateUrl = (newParams: URLSearchParams) => {
+        navigate(`/topics?${newParams.toString()}`, { replace: true });
+    };
 
-    // State for final topics
-    const [finalTopics, setFinalTopics] = useState<string[]>([]);
-    const [newTopic, setNewTopic] = useState("");
+    // Function to update frequency range and URL
+    const updateFrequencyRange = (range: { min: number; max: number }) => {
+        setFrequencyRange(range);
+        setHasAdjustedRange(true);
+
+        const newParams = new URLSearchParams(location.search);
+        newParams.set('min', range.min.toString());
+        newParams.set('max', range.max.toString());
+        updateUrl(newParams);
+    };
+
+    // Function to update finalized topics and URL
+    const updateFinalizedTopics = (topics: string[]) => {
+        setFinalizedTopics(topics);
+
+        const newParams = new URLSearchParams(location.search);
+        if (topics.length > 0) {
+            newParams.set('topics', topics.join(','));
+        } else {
+            newParams.delete('topics');
+        }
+        updateUrl(newParams);
+    };
+
+    // Effect to update selected topics based on frequency range
+    useEffect(() => {
+        if (extractedTopics.length > 0) {
+            const newSelectedTopics = extractedTopics
+                .filter(topic => topic.count >= frequencyRange.min && topic.count <= frequencyRange.max)
+                .map(topic => topic.name);
+            setSelectedTopics(newSelectedTopics);
+        }
+    }, [frequencyRange, extractedTopics]);
+
+    // Function to handle form submission for the final step
+    const handleSubmit = () => {
+        const newParams = new URLSearchParams();
+        newParams.set('search_term', searchTerm);
+        newParams.set('min', frequencyRange.min.toString());
+        newParams.set('max', frequencyRange.max.toString());
+        if (finalizedTopics.length > 0) {
+            newParams.set('topics', finalizedTopics.join(','));
+        }
+        navigate(`/graph?${newParams.toString()}`, { state: { topics: finalizedTopics } });
+    };
+
+    // Function to move to the next step
+    const nextStep = () => {
+        setCurrentStep((prev: 1 | 2) => (prev === 1 ? 2 : 1));
+        // Scroll to the main content/card after step change
+        setTimeout(() => {
+            const main = document.querySelector('main');
+            if (main) main.scrollIntoView({ behavior: 'smooth' });
+        }, 0);
+    };
+
+    // Function to move to the previous step
+    const prevStep = () => {
+        setCurrentStep((prev: 1 | 2) => (prev === 2 ? 1 : 2));
+    };
+
+    // Function to go back to home
+    const goBackToHome = () => {
+        navigate('/');  // Use navigate instead of window.location for consistent routing
+    };
+
+    // State for loading and UI
     const [isLoading, setIsLoading] = useState(false);
     const [highlightedTopic, setHighlightedTopic] = useState<string | undefined>();
     const [selectedTopicForExplanation, setSelectedTopicForExplanation] = useState<string | null>(null);
@@ -203,7 +279,6 @@ const TopicHistogram: FC = () => {
 
     // Add state for AI suggestions
     const [llmSuggestionsState, setLlmSuggestionsState] = useState<string[]>([]);
-    const [isLlmProcessing, setIsLlmProcessing] = useState(false);
 
     // Function to handle topic click
     const handleTopicClick = (topic: string) => {
@@ -239,7 +314,7 @@ const TopicHistogram: FC = () => {
 
     // Effect to check if search term and topic are provided
     useEffect(() => {
-        if (!searchTerm || !userTopic) {
+        if (!searchTerm) {
             notify({
                 message: "No search term provided. Please enter a topic to search.",
                 type: "warning"
@@ -294,46 +369,6 @@ const TopicHistogram: FC = () => {
                 setIsLoading(false);
             });
     }, [userTopic]);
-
-    // Effect to update selected topics based on frequency range
-    useEffect(() => {
-        if (extractedTopics.length > 0) {
-            setSelectedTopics(
-                extractedTopics
-                    .filter(topic => topic.count >= frequencyRange.min && topic.count <= frequencyRange.max)
-                    .map(topic => topic.name)
-            );
-        }
-    }, [frequencyRange, extractedTopics]);
-
-    // Function to handle form submission for the final step
-    const handleSubmit = () => {
-        navigate('/graph', { state: { topics: finalTopics } });
-    };
-
-    // Function to move to the next step
-    const nextStep = () => {
-        if (currentStep === 1) {
-            setFinalTopics(selectedTopics);
-        }
-        setCurrentStep(prev => Math.min(prev + 1, 2));
-        // Scroll to the main content/card after step change
-        setTimeout(() => {
-            const main = document.querySelector('main');
-            if (main) main.scrollIntoView({ behavior: 'smooth' });
-        }, 0);
-    };
-
-    // Function to move to the previous step
-    const prevStep = () => {
-        setCurrentStep(prev => Math.max(prev - 1, 1));
-    };
-
-    // Function to go back to home
-    const goBackToHome = () => {
-        window.location.href = '/';  // Direct browser navigation
-        // Alternative: window.location.replace('/');
-    };
 
     // Function to fetch topic explanation
     const fetchTopicExplanation = async (topic: string) => {
@@ -395,7 +430,6 @@ const TopicHistogram: FC = () => {
 
     // Function to handle AI suggestions request
     const handleRequestSuggestions = async (model: string, prompt: string, apiKey: string, topics: string[]) => {
-        setIsLlmProcessing(true);
         setLlmSuggestionsState([]); // Clear previous suggestions immediately
         try {
             console.log('Requesting AI suggestions with:', { model, prompt, apiKey, topics });
@@ -466,8 +500,6 @@ const TopicHistogram: FC = () => {
                 type: "error"
             });
             setLlmSuggestionsState([]);
-        } finally {
-            setIsLlmProcessing(false);
         }
     };
 
@@ -614,10 +646,10 @@ const TopicHistogram: FC = () => {
 
             {/* Step labels */}
             {/* <div className="d-flex gap-4 mb-4">
-                <span className={currentStep === 1 ? "text-primary" : "text-muted"}>
+                <span className={currentStepType === 1 ? "text-primary" : "text-muted"}>
                     Select by Frequency
                 </span>
-                <span className={currentStep === 2 ? "text-primary" : "text-muted"}>
+                <span className={currentStepType === 2 ? "text-primary" : "text-muted"}>
                     Refine Topics
                 </span>
             </div> */}
@@ -647,11 +679,8 @@ const TopicHistogram: FC = () => {
                                     <div style={{ width: '80%' }}>
                                         <MultiRangeSlider
                                             min={0}
-                                            max={maxCount}
-                                            onChange={({ min, max }) => {
-                                                setFrequencyRange({ min, max });
-                                                setHasAdjustedRange(true);
-                                            }}
+                                            max={Math.max(maxCount, frequencyRange.max)} // Ensure max is at least the current range
+                                            onChange={updateFrequencyRange}
                                             value={frequencyRange}
                                         />
                                     </div>
@@ -789,6 +818,8 @@ const TopicHistogram: FC = () => {
                     onRequestSuggestions={handleRequestSuggestions}
                     selectedTopics={selectedTopics}
                     setSelectedTopics={setSelectedTopics}
+                    finalizedTopics={finalizedTopics}
+                    setFinalizedTopics={updateFinalizedTopics}
                     newTopic=""
                     setNewTopic={() => { }}
                     prevStep={prevStep}
