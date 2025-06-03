@@ -75,7 +75,7 @@ export const BASE_SIGMA_SETTINGS: Partial<Settings> = {
 };
 
 // Data indexation
-export const RESERVED_FIELDS = new Set(["label", "size", "color", "x", "y", "z"]);
+export const RESERVED_FIELDS = new Set(["label", "size", "color", "x", "y", "z", "github_url"]);
 
 export const RETINA_FIELD_PREFIX = "RETINA::";
 export const RETINA_HIDDEN_FIELD_PREFIX = RETINA_FIELD_PREFIX + "HIDDEN::";

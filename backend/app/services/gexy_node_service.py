@@ -2,15 +2,24 @@ import os
 import duckdb
 import psutil
 import networkx as nx
+from datetime import datetime
+
 
 class GexfNodeGenerator:
     def __init__(self):
-        self.save_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'gexf')
+        self.save_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "gexf")
         os.makedirs(self.save_dir, exist_ok=True)
-        self.gexf_path = os.path.join(self.save_dir, 'generated_nodes.gexf')
+        self.gexf_path = os.path.join(self.save_dir, "generated_nodes.gexf")
 
         # DuckDB connection (copied from TopicService)
-        db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'public', 'data', 'github_meta.duckdb')
+        db_path = os.path.join(
+            os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            ),
+            "public",
+            "data",
+            "github_meta.duckdb",
+        )
         if os.path.exists(db_path):
             self.con = duckdb.connect(database=db_path, read_only=True)
             available_memory = psutil.virtual_memory().available
@@ -20,7 +29,9 @@ class GexfNodeGenerator:
             thread_count = max(1, min(cpu_count, 2))
             self.con.execute(f"SET threads TO {thread_count}")
         else:
-            raise FileNotFoundError(f"Database not found at {db_path}. Please ensure the database file exists before running the application.")
+            raise FileNotFoundError(
+                f"Database not found at {db_path}. Please ensure the database file exists before running the application."
+            )
 
     def generate_gexf_nodes_for_topics(self, topics):
         """
@@ -30,17 +41,44 @@ class GexfNodeGenerator:
         if not topics:
             return None
         topics_lower = [t.lower() for t in topics]
-        placeholders = ','.join(['?'] * len(topics_lower))
-        query = f'''
-            SELECT DISTINCT r.nameWithOwner, r.stars, r.forks, r.watchers, r.isFork, r.isArchived, r.languageCount, r.pullRequests, r.issues, r.primaryLanguage, r.createdAt, r.license, r.codeOfConduct
+        placeholders = ",".join(["?"] * len(topics_lower))
+
+        query = f"""
+            WITH repo_topics_agg AS (
+                SELECT r.nameWithOwner, 
+                       GROUP_CONCAT(t.topic, '|') as topics
+                FROM repos r
+                JOIN repo_topics t ON r.nameWithOwner = t.repo
+                WHERE LOWER(t.topic) IN ({placeholders})
+                GROUP BY r.nameWithOwner
+            )
+            SELECT DISTINCT r.nameWithOwner, r.stars, r.forks, r.watchers, r.isFork, r.isArchived, 
+                           r.languageCount, r.pullRequests, r.issues, r.primaryLanguage, r.createdAt, 
+                           r.license, rt.topics
             FROM repos r
             JOIN repo_topics t ON r.nameWithOwner = t.repo
+            JOIN repo_topics_agg rt ON r.nameWithOwner = rt.nameWithOwner
             WHERE LOWER(t.topic) IN ({placeholders})
-        '''
-        result = self.con.execute(query, topics_lower).fetchall()
-        columns = ["nameWithOwner", "stars", "forks", "watchers", "isFork", "isArchived", "languageCount", "pullRequests", "issues", "primaryLanguage", "createdAt", "license", "codeOfConduct"]
+        """
+        result = self.con.execute(query, topics_lower + topics_lower).fetchall()
+        columns = [
+            "nameWithOwner",
+            "stars",
+            "forks",
+            "watchers",
+            "isFork",
+            "isArchived",
+            "languageCount",
+            "pullRequests",
+            "issues",
+            "primaryLanguage",
+            "createdAt",
+            "license",
+            "topics",
+        ]
         G = nx.Graph()
-        
+        G.graph['has_edges'] = False  # Add this attribute to indicate no edges in this graph
+
         # Define default values for each column type
         default_values = {
             "stars": 0,
@@ -52,20 +90,65 @@ class GexfNodeGenerator:
             "pullRequests": 0,
             "issues": 0,
             "primaryLanguage": "",
-            "createdAt": "",
+            "createdAt_year": 0,  # Keep only year
             "license": "",
-            "codeOfConduct": ""
+            "topics": "",  # Default empty string for topics
         }
-        
+
+        # Add attributes to the graph
+        G.graph['node_attributes'] = {
+            'createdAt_year': {'type': 'integer'},  # Keep only year
+            'stars': {'type': 'integer'},
+            'forks': {'type': 'integer'},
+            'watchers': {'type': 'integer'},
+            'isFork': {'type': 'boolean'},
+            'isArchived': {'type': 'boolean'},
+            'languageCount': {'type': 'integer'},
+            'pullRequests': {'type': 'integer'},
+            'issues': {'type': 'integer'},
+            'primaryLanguage': {'type': 'string'},
+            'license': {'type': 'string'},
+            'github_url': {'type': 'string'},
+            'topics': {'type': 'string'},  # Add topics as a string attribute
+        }
+
         for row in result:
             node_attrs = {}
             for col, val in zip(columns, row):
                 if col == "nameWithOwner":
                     repo_name = val
+                    # Add GitHub URL using nameWithOwner
+                    node_attrs["github_url"] = f"https://github.com/{val}"
+                elif col == "createdAt":
+                    # Only extract year from the date
+                    if val:
+                        try:
+                            # Handle both string and datetime objects
+                            if isinstance(val, str):
+                                # Parse ISO format date (e.g., "2018-06-02T04:08:16Z")
+                                date = datetime.strptime(val.split('T')[0], "%Y-%m-%d")
+                            else:
+                                date = val  # Assume it's already a datetime object
+                            node_attrs["createdAt_year"] = date.year
+                        except (ValueError, TypeError) as e:
+                            print(f"Error processing date for {repo_name}: {e}")
+                            # If date parsing fails, use default value
+                            node_attrs["createdAt_year"] = 0
+                    else:
+                        node_attrs["createdAt_year"] = 0
+                elif col == "topics":
+                    # Store topics as a comma-separated string
+                    node_attrs[col] = val if val else default_values[col]
                 else:
                     # Use default value if the value is None
                     node_attrs[col] = default_values[col] if val is None else val
             G.add_node(repo_name, **node_attrs)
-        
+
+        # Print some statistics about the years
+        years = [attrs.get("createdAt_year", 0) for _, attrs in G.nodes(data=True)]
+        # print(f"Date statistics:")
+        # print(f"Years range: {min(years)} to {max(years)}")
+        # print(f"Number of nodes with year=0: {years.count(0)}")
+
         nx.write_gexf(G, self.gexf_path)
-        return self.gexf_path  # Return the file path 
+        return self.gexf_path  # Return the file path

@@ -3,7 +3,7 @@ import React, { FC, JSX, useContext, useMemo } from "react";
 import { FaHome } from "react-icons/fa";
 import { MdOutlinePreview } from "react-icons/md";
 import { VscSettings } from "react-icons/vsc";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import Footer from "../components/Footer";
 import { GraphContext } from "../lib/context";
@@ -15,6 +15,7 @@ import SelectedNodePanel from "./SelectedNodePanel";
 
 const ContextPanel: FC = () => {
   const { navState, data, panel, setPanel } = useContext(GraphContext);
+  const navigate = useNavigate();
 
   const selectedNode = useMemo(
     () =>
@@ -23,6 +24,8 @@ const ContextPanel: FC = () => {
         : null,
     [data?.graph, navState?.selectedNode],
   );
+
+  const searchTerm = navState?.searchTerm || "";
 
   let content: JSX.Element;
   if (panel === "readability") {
@@ -59,6 +62,12 @@ const ContextPanel: FC = () => {
               disabled={panel === "readability"}
             >
               <VscSettings /> Settings
+            </button>
+            <button
+              className={cx("btn ms-2 mt-1", "btn-outline-dark")}
+              onClick={() => navigate(`/topics?search=${encodeURIComponent(searchTerm)}`)}
+            >
+              Topic Refiner
             </button>
           </span>
           <span className="text-nowrap">

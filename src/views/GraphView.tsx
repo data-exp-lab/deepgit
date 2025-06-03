@@ -203,11 +203,11 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
           if (!rawGraph) throw new Error("Parsed graph is empty or invalid (possibly no edges).");
           return prepareGraph(rawGraph);
         })
-        .then(({ graph, report }) => {
+        .then(({ graph, report, hasEdges }) => {
           const notif = getReportNotification(report, /*rawNavState.role !== "d"*/ true);
           if (notif) notify(notif);
 
-          const richData = enrichData(graph);
+          const richData = enrichData(graph, hasEdges);
           setData(richData);
 
           if (fromHome) {
@@ -242,14 +242,16 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
     if (!data || !navState) return;
     const allFields = data.fields;
     const { filterable, sizeable } = navState;
+    // Filter out createdAt_year from sizeable fields
+    const sizeableFields = allFields.filter(field => field !== 'createdAt_year');
     if (
       !filterable || filterable.length !== allFields.length ||
-      !sizeable || sizeable.length !== allFields.length
+      !sizeable || sizeable.length !== sizeableFields.length
     ) {
       setNavState({
         ...navState,
         filterable: allFields,
-        sizeable: allFields,
+        sizeable: sizeableFields,
       });
     }
   }, [data, navState, setNavState]);
