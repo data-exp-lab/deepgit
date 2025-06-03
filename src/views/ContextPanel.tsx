@@ -1,6 +1,5 @@
 import cx from "classnames";
 import React, { FC, JSX, useContext, useMemo } from "react";
-import { BsShare } from "react-icons/bs";
 import { FaHome } from "react-icons/fa";
 import { MdOutlinePreview } from "react-icons/md";
 import { VscSettings } from "react-icons/vsc";
@@ -15,7 +14,7 @@ import ReadabilityBlock from "./ReadabilityBlock";
 import SelectedNodePanel from "./SelectedNodePanel";
 
 const ContextPanel: FC = () => {
-  const { navState, embedMode, data, panel, setPanel, openModal } = useContext(GraphContext);
+  const { navState, data, panel, setPanel } = useContext(GraphContext);
 
   const selectedNode = useMemo(
     () =>
@@ -63,6 +62,7 @@ const ContextPanel: FC = () => {
             </button>
           </span>
           <span className="text-nowrap">
+            {/*
             {!embedMode && (
               <button
                 className={cx("btn btn-outline-dark ms-2 mt-1", !!navState.local && "text-danger")}
@@ -72,6 +72,7 @@ const ContextPanel: FC = () => {
                 <BsShare />
               </button>
             )}
+            */}
             <Link className="btn btn-outline-dark ms-2 mt-1" title="Retina's homepage" to="/">
               <FaHome />
             </Link>

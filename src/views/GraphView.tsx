@@ -1,6 +1,6 @@
 import { SigmaContainer } from "@react-sigma/core";
 import cx from "classnames";
-import React, { FC, createElement, useCallback, useEffect, useMemo, useRef, useState, useContext } from "react";
+import React, { FC, createElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BsChevronDoubleLeft, BsChevronDoubleRight } from "react-icons/bs";
 import { useLocation, useNavigate } from "react-router";
 import Sigma from "sigma";
@@ -29,7 +29,6 @@ import {
 } from "../lib/errors";
 import { applyGraphStyle } from "../lib/graph";
 import {
-  DEFAULT_ROLE,
   NavState,
   cleanNavState,
   guessNavState,
@@ -291,7 +290,10 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
         setShowEditionPanel,
 
         modal: modalName,
-        openModal: (modal: ModalName) => setModalName(modal),
+        openModal: (modal: ModalName) => {
+          if (modal === 'share') return; // Disable share modal
+          setModalName(modal);
+        },
         closeModal: () => setModalName(undefined),
 
         panel,
