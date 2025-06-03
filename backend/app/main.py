@@ -1,12 +1,13 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file, url_for
 from flask_cors import CORS
 from services.topic_service import TopicService
 from services.ai_service import AITopicProcessor
+from services.gexy_node_service import GexfNodeGenerator
 import os
 import asyncio
 import re
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='gexf', static_url_path='/gexf')
 CORS(
     app,
     resources={
@@ -20,6 +21,7 @@ CORS(
 
 topic_service = TopicService()
 ai_processor = AITopicProcessor()
+gexy_node_service = GexfNodeGenerator()
 
 
 @app.route("/api/process-topics", methods=["GET", "POST"])
@@ -233,6 +235,22 @@ def suggest_topics():
             "error": str(e),
             "message": "An error occurred while getting suggestions"
         }), 500
+
+
+@app.route("/api/generated-node-gexf", methods=["POST"])
+def finalized_node_gexf():
+    data = request.get_json()
+    topics = data.get("topics", [])
+    gexf_path = gexy_node_service.generate_gexf_nodes_for_topics(topics)
+    print(topics)
+    # Read the GEXF file content
+    with open(gexf_path, "r", encoding="utf-8") as f:
+        gexf_content = f.read()
+    
+    return jsonify({
+        "success": True,
+        "gexfContent": gexf_content
+    })
 
 
 @app.route("/")

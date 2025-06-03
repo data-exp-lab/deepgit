@@ -16,6 +16,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import { API_ENDPOINTS } from "../lib/config";
 import debounce from 'lodash/debounce';
 import { Tooltip } from 'bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 interface AIModel {
     id: string;
@@ -69,10 +70,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     setLlmSuggestions,
     selectedTopics = [],
     setSelectedTopics,
-    newTopic = "",
-    setNewTopic,
     prevStep,
-    handleSubmit,
     searchTerm,
     onRequestSuggestions
 }) => {
@@ -92,6 +90,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [suggestionsByModel, setSuggestionsByModel] = useState<TopicWithModel[]>([]);
     const tooltipRefs = useRef<{ [key: string]: Tooltip }>({});
     const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
+    const navigate = useNavigate();
 
     const moveToRightColumn = (topic: string) => {
         setFinalizedTopics(prev => [...prev, topic]);
@@ -339,6 +338,33 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         // Don't clear parent state
         // setLlmSuggestions([]);
     }, []);
+
+    const handleSubmitFinalizedTopics = async () => {
+        try {
+            const response = await fetch(`${API_ENDPOINTS.GENERATED_NODES}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ topics: finalizedTopics }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate GEXF file');
+            }
+
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error('Failed to generate GEXF file');
+            }
+
+            const file = new File([data.gexfContent], "generated_nodes.gexf", { type: "application/xml" });
+            navigate('/graph?l=1', { state: { file } });
+        } catch (error) {
+            console.error('Error submitting finalized topics:', error);
+            alert('Failed to generate graph. Please try again.');
+        }
+    };
 
     return (
         <main className="container-fluid py-4" style={{ height: '100vh', overflowY: 'auto' }}>
@@ -619,10 +645,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                     <div className="d-flex justify-content-end mt-4">
                         <button
                             className="btn btn-success d-flex align-items-center"
-                            onClick={() => {
-                                // Pass finalized topics to parent component
-                                handleSubmit();
-                            }}
+                            onClick={handleSubmitFinalizedTopics}
                             disabled={finalizedTopics.length === 0}
                         >
                             <ThumbsUp size={16} className="me-2" />

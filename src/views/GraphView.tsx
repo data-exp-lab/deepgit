@@ -200,7 +200,10 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
           setGraphFile({ name, extension, textContent });
           return readGraph({ name, extension, textContent });
         })
-        .then((rawGraph) => prepareGraph(rawGraph))
+        .then((rawGraph) => {
+          if (!rawGraph) throw new Error("Parsed graph is empty or invalid (possibly no edges).");
+          return prepareGraph(rawGraph);
+        })
         .then(({ graph, report }) => {
           const notif = getReportNotification(report, /*rawNavState.role !== "d"*/ true);
           if (notif) notify(notif);
