@@ -62,7 +62,7 @@ const REPORT_DICT: Record<
       } used instead (${n > 1 ? "they are" : "it is"} italic in the graph).`,
   },
   missingNodePositions: {
-    level: "warning",
+    level: "info",
     log: (n) => (
       <>
         {n === 1 ? "One" : n} node{n > 1 ? "s have" : " has"} no position. The layout has been determined using{" "}

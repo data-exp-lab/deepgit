@@ -1,6 +1,6 @@
 import { SigmaContainer } from "@react-sigma/core";
 import cx from "classnames";
-import React, { FC, createElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { FC, createElement, useCallback, useEffect, useMemo, useRef, useState, useContext } from "react";
 import { BsChevronDoubleLeft, BsChevronDoubleRight } from "react-icons/bs";
 import { useLocation, useNavigate } from "react-router";
 import Sigma from "sigma";
@@ -238,6 +238,22 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
     }
   }, [url, local, ready]);
   /* eslint-enable react-hooks/exhaustive-deps */
+
+  useEffect(() => {
+    if (!data || !navState) return;
+    const allFields = data.fields;
+    const { filterable, sizeable } = navState;
+    if (
+      !filterable || filterable.length !== allFields.length ||
+      !sizeable || sizeable.length !== allFields.length
+    ) {
+      setNavState({
+        ...navState,
+        filterable: allFields,
+        sizeable: allFields,
+      });
+    }
+  }, [data, navState, setNavState]);
 
   if (!ready)
     return (

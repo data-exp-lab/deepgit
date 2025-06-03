@@ -19,594 +19,18 @@
       <attribute id="11" title="codeOfConduct" type="string" />
     </attributes>
     <nodes>
-      <node id="xodio/xod" label="xodio/xod">
+      <node id="TheFuseLab/VL.Fuse" label="TheFuseLab/VL.Fuse">
         <attvalues>
-          <attvalue for="0" value="898" />
-          <attvalue for="1" value="119" />
-          <attvalue for="2" value="43" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="11" />
-          <attvalue for="6" value="1281" />
-          <attvalue for="7" value="855" />
-          <attvalue for="8" value="JavaScript" />
-          <attvalue for="9" value="2015-08-05T22:02:33Z" />
-          <attvalue for="10" value="GNU Affero General Public License v3.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="maximecb/noisecraft" label="maximecb/noisecraft">
-        <attvalues>
-          <attvalue for="0" value="1071" />
-          <attvalue for="1" value="61" />
-          <attvalue for="2" value="18" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="5" />
-          <attvalue for="6" value="33" />
-          <attvalue for="7" value="62" />
-          <attvalue for="8" value="JavaScript" />
-          <attvalue for="9" value="2021-05-24T15:19:20Z" />
-          <attvalue for="10" value="GNU General Public License v2.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="rgleichman/glance" label="rgleichman/glance">
-        <attvalues>
-          <attvalue for="0" value="720" />
-          <attvalue for="1" value="15" />
-          <attvalue for="2" value="34" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="7" />
-          <attvalue for="7" value="8" />
-          <attvalue for="8" value="Haskell" />
-          <attvalue for="9" value="2016-01-05T01:04:01Z" />
-          <attvalue for="10" value="Apache License 2.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="carlosperate/ardublockly" label="carlosperate/ardublockly">
-        <attvalues>
-          <attvalue for="0" value="463" />
-          <attvalue for="1" value="279" />
-          <attvalue for="2" value="57" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="5" />
-          <attvalue for="6" value="49" />
-          <attvalue for="7" value="213" />
-          <attvalue for="8" value="JavaScript" />
-          <attvalue for="9" value="2014-07-24T17:37:47Z" />
-          <attvalue for="10" value="Apache License 2.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="vuo/vuo" label="vuo/vuo">
-        <attvalues>
-          <attvalue for="0" value="143" />
+          <attvalue for="0" value="275" />
           <attvalue for="1" value="21" />
-          <attvalue for="2" value="11" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="17" />
-          <attvalue for="6" value="19" />
-          <attvalue for="7" value="0" />
-          <attvalue for="8" value="C++" />
-          <attvalue for="9" value="2015-01-14T04:51:18Z" />
-          <attvalue for="10" value="Other" />
-          <attvalue for="11" value="Other" />
-        </attvalues>
-      </node>
-      <node id="snap-cloud/snapCloud" label="snap-cloud/snapCloud">
-        <attvalues>
-          <attvalue for="0" value="54" />
-          <attvalue for="1" value="29" />
-          <attvalue for="2" value="4" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="9" />
-          <attvalue for="6" value="183" />
-          <attvalue for="7" value="189" />
-          <attvalue for="8" value="Lua" />
-          <attvalue for="9" value="2017-09-27T17:06:37Z" />
-          <attvalue for="10" value="GNU General Public License v3.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="felko/ton-lang" label="felko/ton-lang">
-        <attvalues>
-          <attvalue for="0" value="63" />
-          <attvalue for="1" value="1" />
-          <attvalue for="2" value="2" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="3" />
-          <attvalue for="7" value="0" />
-          <attvalue for="8" value="Python" />
-          <attvalue for="9" value="2020-03-21T10:32:04Z" />
-          <attvalue for="10" value="" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="jyjblrd/flowblocks" label="jyjblrd/flowblocks">
-        <attvalues>
-          <attvalue for="0" value="40" />
-          <attvalue for="1" value="8" />
-          <attvalue for="2" value="5" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="6" />
-          <attvalue for="6" value="1" />
-          <attvalue for="7" value="0" />
-          <attvalue for="8" value="TypeScript" />
-          <attvalue for="9" value="2023-01-19T11:42:04Z" />
-          <attvalue for="10" value="MIT License" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="Bitspark/slang-ui" label="Bitspark/slang-ui">
-        <attvalues>
-          <attvalue for="0" value="28" />
-          <attvalue for="1" value="0" />
-          <attvalue for="2" value="6" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="5" />
-          <attvalue for="6" value="68" />
-          <attvalue for="7" value="7" />
-          <attvalue for="8" value="TypeScript" />
-          <attvalue for="9" value="2018-05-04T15:14:41Z" />
-          <attvalue for="10" value="Apache License 2.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="CheshireCaat/bas-remote-node" label="CheshireCaat/bas-remote-node">
-        <attvalues>
-          <attvalue for="0" value="28" />
-          <attvalue for="1" value="7" />
-          <attvalue for="2" value="3" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="10" />
-          <attvalue for="7" value="15" />
-          <attvalue for="8" value="JavaScript" />
-          <attvalue for="9" value="2020-02-16T18:37:09Z" />
-          <attvalue for="10" value="MIT License" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="marianoguerra/band-blocks" label="marianoguerra/band-blocks">
-        <attvalues>
-          <attvalue for="0" value="14" />
-          <attvalue for="1" value="1" />
-          <attvalue for="2" value="3" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="3" />
-          <attvalue for="6" value="0" />
-          <attvalue for="7" value="0" />
-          <attvalue for="8" value="JavaScript" />
-          <attvalue for="9" value="2017-02-26T21:54:57Z" />
-          <attvalue for="10" value="" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="Sverchok/Sverchok" label="Sverchok/Sverchok">
-        <attvalues>
-          <attvalue for="0" value="19" />
-          <attvalue for="1" value="2" />
-          <attvalue for="2" value="9" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="27" />
-          <attvalue for="7" value="39" />
-          <attvalue for="8" value="Python" />
-          <attvalue for="9" value="2017-01-16T07:21:49Z" />
-          <attvalue for="10" value="GNU General Public License v3.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="rjamesnw/FlowScript" label="rjamesnw/FlowScript">
-        <attvalues>
-          <attvalue for="0" value="13" />
-          <attvalue for="1" value="0" />
-          <attvalue for="2" value="4" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="7" />
-          <attvalue for="6" value="0" />
-          <attvalue for="7" value="0" />
-          <attvalue for="8" value="TypeScript" />
-          <attvalue for="9" value="2018-10-30T22:06:15Z" />
-          <attvalue for="10" value="Other" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="tebjan/CraftLie" label="tebjan/CraftLie">
-        <attvalues>
-          <attvalue for="0" value="5" />
-          <attvalue for="1" value="3" />
-          <attvalue for="2" value="3" />
+          <attvalue for="2" value="26" />
           <attvalue for="3" value="false" />
           <attvalue for="4" value="false" />
           <attvalue for="5" value="2" />
-          <attvalue for="6" value="2" />
-          <attvalue for="7" value="12" />
+          <attvalue for="6" value="31" />
+          <attvalue for="7" value="100" />
           <attvalue for="8" value="C#" />
-          <attvalue for="9" value="2015-06-20T18:40:03Z" />
-          <attvalue for="10" value="BSD 3-Clause &quot;New&quot; or &quot;Revised&quot; License" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="Bitspark/slang-lib" label="Bitspark/slang-lib">
-        <attvalues>
-          <attvalue for="0" value="5" />
-          <attvalue for="1" value="2" />
-          <attvalue for="2" value="3" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="2" />
-          <attvalue for="6" value="8" />
-          <attvalue for="7" value="0" />
-          <attvalue for="8" value="Go" />
-          <attvalue for="9" value="2018-02-17T02:14:51Z" />
-          <attvalue for="10" value="Apache License 2.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="imengyu/node-blueprint" label="imengyu/node-blueprint">
-        <attvalues>
-          <attvalue for="0" value="158" />
-          <attvalue for="1" value="38" />
-          <attvalue for="2" value="8" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="5" />
-          <attvalue for="6" value="27" />
-          <attvalue for="7" value="3" />
-          <attvalue for="8" value="TypeScript" />
-          <attvalue for="9" value="2020-07-30T15:59:22Z" />
-          <attvalue for="10" value="" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="vvvv/vvvv-sdk" label="vvvv/vvvv-sdk">
-        <attvalues>
-          <attvalue for="0" value="237" />
-          <attvalue for="1" value="189" />
-          <attvalue for="2" value="41" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="20" />
-          <attvalue for="6" value="294" />
-          <attvalue for="7" value="0" />
-          <attvalue for="8" value="C#" />
-          <attvalue for="9" value="2011-10-19T14:20:40Z" />
-          <attvalue for="10" value="" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="kobra-dev/Kobra" label="kobra-dev/Kobra">
-        <attvalues>
-          <attvalue for="0" value="267" />
-          <attvalue for="1" value="20" />
-          <attvalue for="2" value="3" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="3" />
-          <attvalue for="6" value="128" />
-          <attvalue for="7" value="49" />
-          <attvalue for="8" value="TypeScript" />
-          <attvalue for="9" value="2020-08-05T22:01:46Z" />
-          <attvalue for="10" value="Other" />
-          <attvalue for="11" value="Contributor Covenant" />
-        </attvalues>
-      </node>
-      <node id="nicolas-p/skov" label="nicolas-p/skov">
-        <attvalues>
-          <attvalue for="0" value="103" />
-          <attvalue for="1" value="10" />
-          <attvalue for="2" value="7" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="0" />
-          <attvalue for="7" value="12" />
-          <attvalue for="8" value="Factor" />
-          <attvalue for="9" value="2015-10-21T19:03:41Z" />
-          <attvalue for="10" value="Other" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="p-ranav/box" label="p-ranav/box">
-        <attvalues>
-          <attvalue for="0" value="123" />
-          <attvalue for="1" value="4" />
-          <attvalue for="2" value="5" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="0" />
-          <attvalue for="7" value="5" />
-          <attvalue for="8" value="Python" />
-          <attvalue for="9" value="2021-06-15T01:23:52Z" />
-          <attvalue for="10" value="" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="NetsBlox/NetsBlox" label="NetsBlox/NetsBlox">
-        <attvalues>
-          <attvalue for="0" value="71" />
-          <attvalue for="1" value="34" />
-          <attvalue for="2" value="9" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="0" />
-          <attvalue for="6" value="1635" />
-          <attvalue for="7" value="1790" />
-          <attvalue for="8" value="" />
-          <attvalue for="9" value="2015-03-25T20:13:41Z" />
-          <attvalue for="10" value="" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="Bitspark/slang" label="Bitspark/slang">
-        <attvalues>
-          <attvalue for="0" value="100" />
-          <attvalue for="1" value="11" />
-          <attvalue for="2" value="9" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="5" />
-          <attvalue for="6" value="180" />
-          <attvalue for="7" value="72" />
-          <attvalue for="8" value="Go" />
-          <attvalue for="9" value="2017-12-18T14:48:06Z" />
-          <attvalue for="10" value="Apache License 2.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="VRL-Studio/VRL" label="VRL-Studio/VRL">
-        <attvalues>
-          <attvalue for="0" value="29" />
-          <attvalue for="1" value="18" />
-          <attvalue for="2" value="13" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="6" />
-          <attvalue for="6" value="14" />
-          <attvalue for="7" value="66" />
-          <attvalue for="8" value="Java" />
-          <attvalue for="9" value="2012-10-27T21:56:45Z" />
-          <attvalue for="10" value="" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="StitchDesign/Stitch" label="StitchDesign/Stitch">
-        <attvalues>
-          <attvalue for="0" value="29" />
-          <attvalue for="1" value="0" />
-          <attvalue for="2" value="5" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="671" />
-          <attvalue for="7" value="24" />
-          <attvalue for="8" value="Swift" />
-          <attvalue for="9" value="2024-06-16T05:21:49Z" />
-          <attvalue for="10" value="GNU General Public License v3.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="lambdabricks/bricks-front-react" label="lambdabricks/bricks-front-react">
-        <attvalues>
-          <attvalue for="0" value="23" />
-          <attvalue for="1" value="1" />
-          <attvalue for="2" value="3" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="5" />
-          <attvalue for="7" value="22" />
-          <attvalue for="8" value="JavaScript" />
-          <attvalue for="9" value="2015-11-18T08:58:10Z" />
-          <attvalue for="10" value="GNU Affero General Public License v3.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="CheshireCaat/BASRemote.NET" label="CheshireCaat/BASRemote.NET">
-        <attvalues>
-          <attvalue for="0" value="23" />
-          <attvalue for="1" value="12" />
-          <attvalue for="2" value="4" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="1" />
-          <attvalue for="7" value="20" />
-          <attvalue for="8" value="C#" />
-          <attvalue for="9" value="2020-01-03T09:29:43Z" />
-          <attvalue for="10" value="MIT License" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="CheshireCaat/bas-remote-python" label="CheshireCaat/bas-remote-python">
-        <attvalues>
-          <attvalue for="0" value="32" />
-          <attvalue for="1" value="8" />
-          <attvalue for="2" value="3" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="2" />
-          <attvalue for="7" value="5" />
-          <attvalue for="8" value="Python" />
-          <attvalue for="9" value="2020-02-19T17:02:01Z" />
-          <attvalue for="10" value="MIT License" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="mocabe/yave" label="mocabe/yave">
-        <attvalues>
-          <attvalue for="0" value="33" />
-          <attvalue for="1" value="4" />
-          <attvalue for="2" value="3" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="3" />
-          <attvalue for="6" value="86" />
-          <attvalue for="7" value="16" />
-          <attvalue for="8" value="C++" />
-          <attvalue for="9" value="2019-03-30T12:53:10Z" />
-          <attvalue for="10" value="GNU Lesser General Public License v3.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="XBagon/PIPES" label="XBagon/PIPES">
-        <attvalues>
-          <attvalue for="0" value="11" />
-          <attvalue for="1" value="0" />
-          <attvalue for="2" value="2" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="2" />
-          <attvalue for="7" value="2" />
-          <attvalue for="8" value="JavaScript" />
-          <attvalue for="9" value="2018-04-15T13:09:34Z" />
-          <attvalue for="10" value="MIT License" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="gllms/Flue" label="gllms/Flue">
-        <attvalues>
-          <attvalue for="0" value="11" />
-          <attvalue for="1" value="0" />
-          <attvalue for="2" value="3" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="3" />
-          <attvalue for="6" value="0" />
-          <attvalue for="7" value="1" />
-          <attvalue for="8" value="JavaScript" />
-          <attvalue for="9" value="2020-10-11T22:04:53Z" />
-          <attvalue for="10" value="MIT License" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="VisualPLC/BlocklyPLC" label="VisualPLC/BlocklyPLC">
-        <attvalues>
-          <attvalue for="0" value="6" />
-          <attvalue for="1" value="1" />
-          <attvalue for="2" value="2" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="0" />
-          <attvalue for="6" value="0" />
-          <attvalue for="7" value="0" />
-          <attvalue for="8" value="" />
-          <attvalue for="9" value="2023-12-21T01:14:59Z" />
-          <attvalue for="10" value="MIT License" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="CharlesSS07/jupyter-FlowBook" label="CharlesSS07/jupyter-FlowBook">
-        <attvalues>
-          <attvalue for="0" value="8" />
-          <attvalue for="1" value="0" />
-          <attvalue for="2" value="1" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="3" />
-          <attvalue for="6" value="4" />
-          <attvalue for="7" value="0" />
-          <attvalue for="8" value="JavaScript" />
-          <attvalue for="9" value="2020-08-04T16:47:19Z" />
-          <attvalue for="10" value="" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="mdavisprog/Snippet" label="mdavisprog/Snippet">
-        <attvalues>
-          <attvalue for="0" value="8" />
-          <attvalue for="1" value="0" />
-          <attvalue for="2" value="2" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="4" />
-          <attvalue for="6" value="0" />
-          <attvalue for="7" value="16" />
-          <attvalue for="8" value="C++" />
-          <attvalue for="9" value="2021-05-07T05:53:14Z" />
-          <attvalue for="10" value="MIT License" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="NHLStenden-ISAL/VAPE-3D" label="NHLStenden-ISAL/VAPE-3D">
-        <attvalues>
-          <attvalue for="0" value="8" />
-          <attvalue for="1" value="1" />
-          <attvalue for="2" value="1" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="3" />
-          <attvalue for="6" value="3" />
-          <attvalue for="7" value="3" />
-          <attvalue for="8" value="TypeScript" />
-          <attvalue for="9" value="2022-02-21T10:29:40Z" />
-          <attvalue for="10" value="Apache License 2.0" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="juletopi/Linguagem_de_Programacao_Visual" label="juletopi/Linguagem_de_Programacao_Visual">
-        <attvalues>
-          <attvalue for="0" value="5" />
-          <attvalue for="1" value="0" />
-          <attvalue for="2" value="1" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="1" />
-          <attvalue for="6" value="0" />
-          <attvalue for="7" value="0" />
-          <attvalue for="8" value="C#" />
-          <attvalue for="9" value="2023-02-25T23:48:45Z" />
-          <attvalue for="10" value="MIT License" />
-          <attvalue for="11" value="" />
-        </attvalues>
-      </node>
-      <node id="flydelabs/flyde" label="flydelabs/flyde">
-        <attvalues>
-          <attvalue for="0" value="2005" />
-          <attvalue for="1" value="51" />
-          <attvalue for="2" value="18" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="8" />
-          <attvalue for="6" value="113" />
-          <attvalue for="7" value="61" />
-          <attvalue for="8" value="TypeScript" />
-          <attvalue for="9" value="2022-08-29T17:29:47Z" />
-          <attvalue for="10" value="Other" />
-          <attvalue for="11" value="Contributor Covenant" />
-        </attvalues>
-      </node>
-      <node id="bablosoft/BAS" label="bablosoft/BAS">
-        <attvalues>
-          <attvalue for="0" value="485" />
-          <attvalue for="1" value="154" />
-          <attvalue for="2" value="49" />
-          <attvalue for="3" value="false" />
-          <attvalue for="4" value="false" />
-          <attvalue for="5" value="7" />
-          <attvalue for="6" value="1" />
-          <attvalue for="7" value="18" />
-          <attvalue for="8" value="C++" />
-          <attvalue for="9" value="2016-05-16T22:31:03Z" />
+          <attvalue for="9" value="2020-11-04T14:27:13Z" />
           <attvalue for="10" value="MIT License" />
           <attvalue for="11" value="" />
         </attvalues>
@@ -627,6 +51,22 @@
           <attvalue for="11" value="" />
         </attvalues>
       </node>
+      <node id="sebescudie/GammaLauncher" label="sebescudie/GammaLauncher">
+        <attvalues>
+          <attvalue for="0" value="51" />
+          <attvalue for="1" value="7" />
+          <attvalue for="2" value="8" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="10" />
+          <attvalue for="7" value="75" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2019-12-09T13:57:46Z" />
+          <attvalue for="10" value="GNU General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
       <node id="knights-dev/knights" label="knights-dev/knights">
         <attvalues>
           <attvalue for="0" value="64" />
@@ -639,6 +79,38 @@
           <attvalue for="7" value="22" />
           <attvalue for="8" value="TypeScript" />
           <attvalue for="9" value="2019-07-17T02:58:47Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="woeishi/GenerativeDesignWorkshop" label="woeishi/GenerativeDesignWorkshop">
+        <attvalues>
+          <attvalue for="0" value="18" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="6" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="Logos" />
+          <attvalue for="9" value="2015-04-18T18:17:55Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="everyoneishappy/InstanceNoodles" label="everyoneishappy/InstanceNoodles">
+        <attvalues>
+          <attvalue for="0" value="26" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="9" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="8" />
+          <attvalue for="8" value="HLSL" />
+          <attvalue for="9" value="2015-08-22T07:34:00Z" />
           <attvalue for="10" value="MIT License" />
           <attvalue for="11" value="" />
         </attvalues>
@@ -659,6 +131,54 @@
           <attvalue for="11" value="" />
         </attvalues>
       </node>
+      <node id="vvvv/VL.Audio" label="vvvv/VL.Audio">
+        <attvalues>
+          <attvalue for="0" value="15" />
+          <attvalue for="1" value="6" />
+          <attvalue for="2" value="10" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="11" />
+          <attvalue for="7" value="22" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2019-11-13T17:31:51Z" />
+          <attvalue for="10" value="GNU Lesser General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="TobyKLight/VL.PolyTools" label="TobyKLight/VL.PolyTools">
+        <attvalues>
+          <attvalue for="0" value="15" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="16" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2022-10-02T15:11:53Z" />
+          <attvalue for="10" value="Boost Software License 1.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebllll/VL.RichTextKit" label="sebllll/VL.RichTextKit">
+        <attvalues>
+          <attvalue for="0" value="15" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="4" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2023-12-06T12:20:39Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
       <node id="turbofuro/turbofuro" label="turbofuro/turbofuro">
         <attvalues>
           <attvalue for="0" value="15" />
@@ -672,6 +192,22 @@
           <attvalue for="8" value="Rust" />
           <attvalue for="9" value="2024-01-24T09:47:52Z" />
           <attvalue for="10" value="Apache License 2.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.IO.NDI" label="vvvv/VL.IO.NDI">
+        <attvalues>
+          <attvalue for="0" value="19" />
+          <attvalue for="1" value="4" />
+          <attvalue for="2" value="13" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="11" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2020-04-08T08:48:12Z" />
+          <attvalue for="10" value="" />
           <attvalue for="11" value="" />
         </attvalues>
       </node>
@@ -691,6 +227,38 @@
           <attvalue for="11" value="" />
         </attvalues>
       </node>
+      <node id="tebjan/VVVV.OpenVR" label="tebjan/VVVV.OpenVR">
+        <attvalues>
+          <attvalue for="0" value="9" />
+          <attvalue for="1" value="5" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="9" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2016-08-01T16:19:38Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.DemoLib" label="vvvv/VL.DemoLib">
+        <attvalues>
+          <attvalue for="0" value="9" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="10" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2017-08-01T14:32:27Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
       <node id="nickretallack/nameless-language" label="nickretallack/nameless-language">
         <attvalues>
           <attvalue for="0" value="12" />
@@ -704,6 +272,54 @@
           <attvalue for="8" value="ReScript" />
           <attvalue for="9" value="2019-01-09T09:27:29Z" />
           <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Devices.Kinect2" label="vvvv/VL.Devices.Kinect2">
+        <attvalues>
+          <attvalue for="0" value="12" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="10" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="6" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2019-05-02T00:42:39Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="wolfmoritzcramer/VL.Rhino.3dm" label="wolfmoritzcramer/VL.Rhino.3dm">
+        <attvalues>
+          <attvalue for="0" value="11" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="3" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2022-06-22T09:26:39Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="elliotwoods/Workshops.DigitalEmulsion" label="elliotwoods/Workshops.DigitalEmulsion">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C++" />
+          <attvalue for="9" value="2014-05-22T10:06:24Z" />
+          <attvalue for="10" value="" />
           <attvalue for="11" value="" />
         </attvalues>
       </node>
@@ -771,6 +387,230 @@
           <attvalue for="11" value="" />
         </attvalues>
       </node>
+      <node id="vvvv/VL.Devices.ZED" label="vvvv/VL.Devices.ZED">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="7" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="3" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2022-06-20T11:43:04Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="torinos-yt/VL.ShadowCatcher" label="torinos-yt/VL.ShadowCatcher">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2023-07-13T12:56:45Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sunep/VL.Unicolour" label="sunep/VL.Unicolour">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2023-10-01T18:01:43Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Devices.DigiCamControl" label="vvvv/VL.Devices.DigiCamControl">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="8" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2018-02-02T16:03:15Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Augmenta" label="vvvv/VL.Augmenta">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2023-09-05T18:55:05Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="bj-rn/VL.Audio.LTC" label="bj-rn/VL.Audio.LTC">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C++" />
+          <attvalue for="9" value="2024-03-20T14:26:19Z" />
+          <attvalue for="10" value="GNU Lesser General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.StringExtensions" label="sebescudie/VL.StringExtensions">
+        <attvalues>
+          <attvalue for="0" value="10" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2018-11-08T13:04:45Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.SocketIOClient" label="sebescudie/VL.SocketIOClient">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="true" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="4" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="HTML" />
+          <attvalue for="9" value="2018-08-11T10:27:49Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.Devices.SICK" label="sebescudie/VL.Devices.SICK">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2019-07-24T13:40:04Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="smakhtin/gamma-course" label="smakhtin/gamma-course">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2019-11-04T06:16:37Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="bj-rn/VL.FastNoiseLite" label="bj-rn/VL.FastNoiseLite">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2024-01-08T14:09:46Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="bj-rn/VL.CredentialManager" label="bj-rn/VL.CredentialManager">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2024-05-13T11:10:00Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Devices.uEye" label="vvvv/VL.Devices.uEye">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="8" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="true" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2018-03-21T21:26:44Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Devices.Kinect" label="vvvv/VL.Devices.Kinect">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="8" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2019-12-18T13:27:12Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
       <node id="honix/copervil" label="honix/copervil">
         <attvalues>
           <attvalue for="0" value="7" />
@@ -784,6 +624,70 @@
           <attvalue for="8" value="C" />
           <attvalue for="9" value="2020-03-03T09:58:39Z" />
           <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebllll/VL.FileTypeAssociation" label="sebllll/VL.FileTypeAssociation">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2020-06-02T10:43:36Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.IO.HTTP.WebServer" label="vvvv/VL.IO.HTTP.WebServer">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="10" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="3" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2020-06-05T17:08:57Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="flydelabs/flyde" label="flydelabs/flyde">
+        <attvalues>
+          <attvalue for="0" value="2005" />
+          <attvalue for="1" value="51" />
+          <attvalue for="2" value="18" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="8" />
+          <attvalue for="6" value="113" />
+          <attvalue for="7" value="61" />
+          <attvalue for="8" value="TypeScript" />
+          <attvalue for="9" value="2022-08-29T17:29:47Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="Contributor Covenant" />
+        </attvalues>
+      </node>
+      <node id="bablosoft/BAS" label="bablosoft/BAS">
+        <attvalues>
+          <attvalue for="0" value="485" />
+          <attvalue for="1" value="154" />
+          <attvalue for="2" value="49" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="7" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="18" />
+          <attvalue for="8" value="C++" />
+          <attvalue for="9" value="2016-05-16T22:31:03Z" />
+          <attvalue for="10" value="MIT License" />
           <attvalue for="11" value="" />
         </attvalues>
       </node>
@@ -819,6 +723,38 @@
           <attvalue for="11" value="" />
         </attvalues>
       </node>
+      <node id="tebjan/VVVV.Audio" label="tebjan/VVVV.Audio">
+        <attvalues>
+          <attvalue for="0" value="38" />
+          <attvalue for="1" value="13" />
+          <attvalue for="2" value="13" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="3" />
+          <attvalue for="7" value="173" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2013-07-15T21:46:46Z" />
+          <attvalue for="10" value="GNU Lesser General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/The-Gray-Book" label="vvvv/The-Gray-Book">
+        <attvalues>
+          <attvalue for="0" value="23" />
+          <attvalue for="1" value="19" />
+          <attvalue for="2" value="12" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="48" />
+          <attvalue for="7" value="6" />
+          <attvalue for="8" value="JavaScript" />
+          <attvalue for="9" value="2015-03-17T12:27:03Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
       <node id="tdh8316/Guico" label="tdh8316/Guico">
         <attvalues>
           <attvalue for="0" value="23" />
@@ -832,6 +768,70 @@
           <attvalue for="8" value="Python" />
           <attvalue for="9" value="2018-07-11T13:41:52Z" />
           <attvalue for="10" value="GNU General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="elliotwoods/VVVV.Packs.OSC" label="elliotwoods/VVVV.Packs.OSC">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2011-11-21T10:35:41Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="elliotwoods/VVVV.Mapping.Tutorials.Mapping2-3D" label="elliotwoods/VVVV.Mapping.Tutorials.Mapping2-3D">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="6" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2012-03-30T16:30:21Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="everyoneishappy/happy.fxh" label="everyoneishappy/happy.fxh">
+        <attvalues>
+          <attvalue for="0" value="18" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="7" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="HLSL" />
+          <attvalue for="9" value="2017-06-02T12:48:18Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="woeishi/DX11-RenderTechniques-I" label="woeishi/DX11-RenderTechniques-I">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="6" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2013-03-05T13:33:12Z" />
+          <attvalue for="10" value="" />
           <attvalue for="11" value="" />
         </attvalues>
       </node>
@@ -851,6 +851,150 @@
           <attvalue for="11" value="" />
         </attvalues>
       </node>
+      <node id="woeishi/VVVV.Struct" label="woeishi/VVVV.Struct">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="6" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2015-02-06T17:58:22Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Devices.RealSense" label="vvvv/VL.Devices.RealSense">
+        <attvalues>
+          <attvalue for="0" value="11" />
+          <attvalue for="1" value="4" />
+          <attvalue for="2" value="10" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="3" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2019-06-13T17:01:57Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="bj-rn/VL.Stride.Text3d" label="bj-rn/VL.Stride.Text3d">
+        <attvalues>
+          <attvalue for="0" value="12" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2022-06-04T15:38:16Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.CEF" label="vvvv/VL.CEF">
+        <attvalues>
+          <attvalue for="0" value="17" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="10" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="5" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="13" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2020-05-22T16:16:56Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="elliotwoods/VVVV.Nodes.MultiTouchStack" label="elliotwoods/VVVV.Nodes.MultiTouchStack">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2017-02-20T05:52:11Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.DBSCAN" label="sebescudie/VL.DBSCAN">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="3" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2018-10-24T12:33:37Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Devices.AxiDraw" label="vvvv/VL.Devices.AxiDraw">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2018-08-16T12:56:28Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebllll/VL.PJLink" label="sebllll/VL.PJLink">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2019-10-31T16:35:59Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.VIOSOWarpBlend" label="vvvv/VL.VIOSOWarpBlend">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="6" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2022-05-19T10:10:08Z" />
+          <attvalue for="10" value="GNU Lesser General Public License v2.1" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
       <node id="pm-Architect/Verse3" label="pm-Architect/Verse3">
         <attvalues>
           <attvalue for="0" value="8" />
@@ -865,6 +1009,102 @@
           <attvalue for="9" value="2022-06-03T11:17:44Z" />
           <attvalue for="10" value="Other" />
           <attvalue for="11" value="Contributor Covenant" />
+        </attvalues>
+      </node>
+      <node id="TobyKLight/VL.GameAudioPlayer" label="TobyKLight/VL.GameAudioPlayer">
+        <attvalues>
+          <attvalue for="0" value="10" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="8" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2023-01-19T17:23:02Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="microdee/mp.dx" label="microdee/mp.dx">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="4" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="4" />
+          <attvalue for="6" value="3" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2016-04-02T02:13:25Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.DebugInfo.HDE" label="sebescudie/VL.DebugInfo.HDE">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2023-05-31T16:35:46Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="bj-rn/VL.IO.OpenVR" label="bj-rn/VL.IO.OpenVR">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2023-08-16T12:30:51Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="lisandroperalta/movvvvedor" label="lisandroperalta/movvvvedor">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2023-11-10T19:25:21Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="schnellebuntebilder/VL.Syslog" label="schnellebuntebilder/VL.Syslog">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2020-06-11T18:18:58Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
         </attvalues>
       </node>
       <node id="5eqn/proof-cat" label="5eqn/proof-cat">
@@ -883,6 +1123,22 @@
           <attvalue for="11" value="" />
         </attvalues>
       </node>
+      <node id="szekelyisz/VVVV.Network.sACN" label="szekelyisz/VVVV.Network.sACN">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2020-04-11T07:25:51Z" />
+          <attvalue for="10" value="GNU Lesser General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
       <node id="jjvanzon/Circular-Language-Spec" label="jjvanzon/Circular-Language-Spec">
         <attvalues>
           <attvalue for="0" value="5" />
@@ -896,6 +1152,1574 @@
           <attvalue for="8" value="JavaScript" />
           <attvalue for="9" value="2021-01-28T21:06:29Z" />
           <attvalue for="10" value="Other" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.ColourLovers" label="sebescudie/VL.ColourLovers">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2021-04-16T06:26:03Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="imengyu/node-blueprint" label="imengyu/node-blueprint">
+        <attvalues>
+          <attvalue for="0" value="158" />
+          <attvalue for="1" value="38" />
+          <attvalue for="2" value="8" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="5" />
+          <attvalue for="6" value="27" />
+          <attvalue for="7" value="3" />
+          <attvalue for="8" value="TypeScript" />
+          <attvalue for="9" value="2020-07-30T15:59:22Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/vvvv-sdk" label="vvvv/vvvv-sdk">
+        <attvalues>
+          <attvalue for="0" value="237" />
+          <attvalue for="1" value="189" />
+          <attvalue for="2" value="41" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="20" />
+          <attvalue for="6" value="294" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2011-10-19T14:20:40Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="kobra-dev/Kobra" label="kobra-dev/Kobra">
+        <attvalues>
+          <attvalue for="0" value="267" />
+          <attvalue for="1" value="20" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="128" />
+          <attvalue for="7" value="49" />
+          <attvalue for="8" value="TypeScript" />
+          <attvalue for="9" value="2020-08-05T22:01:46Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="Contributor Covenant" />
+        </attvalues>
+      </node>
+      <node id="nicolas-p/skov" label="nicolas-p/skov">
+        <attvalues>
+          <attvalue for="0" value="103" />
+          <attvalue for="1" value="10" />
+          <attvalue for="2" value="7" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="12" />
+          <attvalue for="8" value="Factor" />
+          <attvalue for="9" value="2015-10-21T19:03:41Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="KairosResearchLab/Kairos" label="KairosResearchLab/Kairos">
+        <attvalues>
+          <attvalue for="0" value="127" />
+          <attvalue for="1" value="5" />
+          <attvalue for="2" value="11" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="6" />
+          <attvalue for="7" value="310" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2019-02-06T12:40:51Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vuo/vuo" label="vuo/vuo">
+        <attvalues>
+          <attvalue for="0" value="143" />
+          <attvalue for="1" value="21" />
+          <attvalue for="2" value="11" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="17" />
+          <attvalue for="6" value="19" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C++" />
+          <attvalue for="9" value="2015-01-14T04:51:18Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="Other" />
+        </attvalues>
+      </node>
+      <node id="chkworks/awesome-vl" label="chkworks/awesome-vl">
+        <attvalues>
+          <attvalue for="0" value="49" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="3" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2024-07-20T21:18:55Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="chkworks/VL.TheBigBang" label="chkworks/VL.TheBigBang">
+        <attvalues>
+          <attvalue for="0" value="53" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="8" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="28" />
+          <attvalue for="7" value="31" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2022-10-24T22:09:09Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="snap-cloud/snapCloud" label="snap-cloud/snapCloud">
+        <attvalues>
+          <attvalue for="0" value="54" />
+          <attvalue for="1" value="29" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="9" />
+          <attvalue for="6" value="183" />
+          <attvalue for="7" value="189" />
+          <attvalue for="8" value="Lua" />
+          <attvalue for="9" value="2017-09-27T17:06:37Z" />
+          <attvalue for="10" value="GNU General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="felko/ton-lang" label="felko/ton-lang">
+        <attvalues>
+          <attvalue for="0" value="63" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="3" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="Python" />
+          <attvalue for="9" value="2020-03-21T10:32:04Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Stride" label="vvvv/VL.Stride">
+        <attvalues>
+          <attvalue for="0" value="33" />
+          <attvalue for="1" value="24" />
+          <attvalue for="2" value="20" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="true" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="40" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2018-08-24T16:17:08Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="jyjblrd/flowblocks" label="jyjblrd/flowblocks">
+        <attvalues>
+          <attvalue for="0" value="40" />
+          <attvalue for="1" value="8" />
+          <attvalue for="2" value="5" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="6" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="TypeScript" />
+          <attvalue for="9" value="2023-01-19T11:42:04Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.OpenCV" label="vvvv/VL.OpenCV">
+        <attvalues>
+          <attvalue for="0" value="43" />
+          <attvalue for="1" value="17" />
+          <attvalue for="2" value="16" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="11" />
+          <attvalue for="7" value="57" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2018-01-17T12:42:38Z" />
+          <attvalue for="10" value="BSD 3-Clause &quot;New&quot; or &quot;Revised&quot; License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvvpm/vpm" label="vvvvpm/vpm">
+        <attvalues>
+          <attvalue for="0" value="19" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="4" />
+          <attvalue for="6" value="5" />
+          <attvalue for="7" value="9" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2016-05-26T21:53:23Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="Bitspark/slang-ui" label="Bitspark/slang-ui">
+        <attvalues>
+          <attvalue for="0" value="28" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="6" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="5" />
+          <attvalue for="6" value="68" />
+          <attvalue for="7" value="7" />
+          <attvalue for="8" value="TypeScript" />
+          <attvalue for="9" value="2018-05-04T15:14:41Z" />
+          <attvalue for="10" value="Apache License 2.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="nsynkde/Tilda" label="nsynkde/Tilda">
+        <attvalues>
+          <attvalue for="0" value="28" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="8" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="8" />
+          <attvalue for="7" value="67" />
+          <attvalue for="8" value="Batchfile" />
+          <attvalue for="9" value="2019-06-10T15:56:47Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="CheshireCaat/bas-remote-node" label="CheshireCaat/bas-remote-node">
+        <attvalues>
+          <attvalue for="0" value="28" />
+          <attvalue for="1" value="7" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="10" />
+          <attvalue for="7" value="15" />
+          <attvalue for="8" value="JavaScript" />
+          <attvalue for="9" value="2020-02-16T18:37:09Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL-Language" label="vvvv/VL-Language">
+        <attvalues>
+          <attvalue for="0" value="31" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="14" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="67" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2020-06-09T15:58:44Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="Other" />
+        </attvalues>
+      </node>
+      <node id="everyoneishappy/FieldTrip" label="everyoneishappy/FieldTrip">
+        <attvalues>
+          <attvalue for="0" value="32" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="10" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="6" />
+          <attvalue for="8" value="HLSL" />
+          <attvalue for="9" value="2017-06-24T16:14:12Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="marianoguerra/band-blocks" label="marianoguerra/band-blocks">
+        <attvalues>
+          <attvalue for="0" value="14" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="JavaScript" />
+          <attvalue for="9" value="2017-02-26T21:54:57Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="TobyKLight/VL.ExtendedTutorials" label="TobyKLight/VL.ExtendedTutorials">
+        <attvalues>
+          <attvalue for="0" value="15" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2022-06-18T14:06:35Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="Sverchok/Sverchok" label="Sverchok/Sverchok">
+        <attvalues>
+          <attvalue for="0" value="19" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="9" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="27" />
+          <attvalue for="7" value="39" />
+          <attvalue for="8" value="Python" />
+          <attvalue for="9" value="2017-01-16T07:21:49Z" />
+          <attvalue for="10" value="GNU General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="bj-rn/VL.Addons" label="bj-rn/VL.Addons">
+        <attvalues>
+          <attvalue for="0" value="20" />
+          <attvalue for="1" value="10" />
+          <attvalue for="2" value="5" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="9" />
+          <attvalue for="7" value="18" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2023-01-25T10:22:52Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.MediaPipe" label="vvvv/VL.MediaPipe">
+        <attvalues>
+          <attvalue for="0" value="9" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="8" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="4" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="JavaScript" />
+          <attvalue for="9" value="2023-12-17T17:21:06Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="rjamesnw/FlowScript" label="rjamesnw/FlowScript">
+        <attvalues>
+          <attvalue for="0" value="13" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="7" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="TypeScript" />
+          <attvalue for="9" value="2018-10-30T22:06:15Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="tebjan/CraftLie" label="tebjan/CraftLie">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="12" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2015-06-20T18:40:03Z" />
+          <attvalue for="10" value="BSD 3-Clause &quot;New&quot; or &quot;Revised&quot; License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="elektromeier/HomographySharp" label="elektromeier/HomographySharp">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2024-12-23T14:40:11Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvvpm/vpdb" label="vvvvpm/vpdb">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="6" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2016-07-25T13:34:33Z" />
+          <attvalue for="10" value="The Unlicense" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="mhusinsky/VL.Devices.StreamDeck" label="mhusinsky/VL.Devices.StreamDeck">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2023-10-07T22:07:07Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="lasalillo/VL.ILDA" label="lasalillo/VL.ILDA">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="Rich Text Format" />
+          <attvalue for="9" value="2024-02-23T09:39:35Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="dis-co/disco" label="dis-co/disco">
+        <attvalues>
+          <attvalue for="0" value="9" />
+          <attvalue for="1" value="6" />
+          <attvalue for="2" value="6" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="10" />
+          <attvalue for="6" value="34" />
+          <attvalue for="7" value="54" />
+          <attvalue for="8" value="F#" />
+          <attvalue for="9" value="2017-12-08T10:40:05Z" />
+          <attvalue for="10" value="GNU General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="meso-unimpressed/Notuiv" label="meso-unimpressed/Notuiv">
+        <attvalues>
+          <attvalue for="0" value="9" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="5" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2018-03-06T16:14:56Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Devices.DeckLink" label="vvvv/VL.Devices.DeckLink">
+        <attvalues>
+          <attvalue for="0" value="10" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="8" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="5" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2020-08-14T18:01:46Z" />
+          <attvalue for="10" value="GNU Lesser General Public License v2.1" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="bj-rn/VL.IO.MouseKeyGlobal" label="bj-rn/VL.IO.MouseKeyGlobal">
+        <attvalues>
+          <attvalue for="0" value="9" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2022-09-17T08:40:59Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="Bitspark/slang-lib" label="Bitspark/slang-lib">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="8" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="Go" />
+          <attvalue for="9" value="2018-02-17T02:14:51Z" />
+          <attvalue for="10" value="Apache License 2.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="rabbitControl/rcp-vvvv" label="rabbitControl/rcp-vvvv">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="6" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2018-03-19T12:58:40Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Devices.AzureKinect" label="vvvv/VL.Devices.AzureKinect">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="10" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="5" />
+          <attvalue for="7" value="3" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2019-09-19T17:44:58Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="lasalillo/VL.PTZ" label="lasalillo/VL.PTZ">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2024-02-23T11:59:02Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Devices.AzureKinect.Body" label="vvvv/VL.Devices.AzureKinect.Body">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="5" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2020-04-30T20:46:48Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.SocketIO" label="sebescudie/VL.SocketIO">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="HTML" />
+          <attvalue for="9" value="2020-11-13T14:07:28Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.Spotify" label="sebescudie/VL.Spotify">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2021-12-02T19:23:32Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.SimpleHTTP" label="sebescudie/VL.SimpleHTTP">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2022-02-19T16:40:10Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="kosmos/awesome-generative-art" label="kosmos/awesome-generative-art">
+        <attvalues>
+          <attvalue for="0" value="1736" />
+          <attvalue for="1" value="99" />
+          <attvalue for="2" value="86" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="10" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2017-03-29T11:16:12Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="Contributor Covenant" />
+        </attvalues>
+      </node>
+      <node id="xodio/xod" label="xodio/xod">
+        <attvalues>
+          <attvalue for="0" value="898" />
+          <attvalue for="1" value="119" />
+          <attvalue for="2" value="43" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="11" />
+          <attvalue for="6" value="1281" />
+          <attvalue for="7" value="855" />
+          <attvalue for="8" value="JavaScript" />
+          <attvalue for="9" value="2015-08-05T22:02:33Z" />
+          <attvalue for="10" value="GNU Affero General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="maximecb/noisecraft" label="maximecb/noisecraft">
+        <attvalues>
+          <attvalue for="0" value="1071" />
+          <attvalue for="1" value="61" />
+          <attvalue for="2" value="18" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="5" />
+          <attvalue for="6" value="33" />
+          <attvalue for="7" value="62" />
+          <attvalue for="8" value="JavaScript" />
+          <attvalue for="9" value="2021-05-24T15:19:20Z" />
+          <attvalue for="10" value="GNU General Public License v2.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="rgleichman/glance" label="rgleichman/glance">
+        <attvalues>
+          <attvalue for="0" value="720" />
+          <attvalue for="1" value="15" />
+          <attvalue for="2" value="34" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="7" />
+          <attvalue for="7" value="8" />
+          <attvalue for="8" value="Haskell" />
+          <attvalue for="9" value="2016-01-05T01:04:01Z" />
+          <attvalue for="10" value="Apache License 2.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="carlosperate/ardublockly" label="carlosperate/ardublockly">
+        <attvalues>
+          <attvalue for="0" value="463" />
+          <attvalue for="1" value="279" />
+          <attvalue for="2" value="57" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="5" />
+          <attvalue for="6" value="49" />
+          <attvalue for="7" value="213" />
+          <attvalue for="8" value="JavaScript" />
+          <attvalue for="9" value="2014-07-24T17:37:47Z" />
+          <attvalue for="10" value="Apache License 2.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="p-ranav/box" label="p-ranav/box">
+        <attvalues>
+          <attvalue for="0" value="123" />
+          <attvalue for="1" value="4" />
+          <attvalue for="2" value="5" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="5" />
+          <attvalue for="8" value="Python" />
+          <attvalue for="9" value="2021-06-15T01:23:52Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="NetsBlox/NetsBlox" label="NetsBlox/NetsBlox">
+        <attvalues>
+          <attvalue for="0" value="71" />
+          <attvalue for="1" value="34" />
+          <attvalue for="2" value="9" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="1635" />
+          <attvalue for="7" value="1790" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2015-03-25T20:13:41Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="Bitspark/slang" label="Bitspark/slang">
+        <attvalues>
+          <attvalue for="0" value="100" />
+          <attvalue for="1" value="11" />
+          <attvalue for="2" value="9" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="5" />
+          <attvalue for="6" value="180" />
+          <attvalue for="7" value="72" />
+          <attvalue for="8" value="Go" />
+          <attvalue for="9" value="2017-12-18T14:48:06Z" />
+          <attvalue for="10" value="Apache License 2.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="VRL-Studio/VRL" label="VRL-Studio/VRL">
+        <attvalues>
+          <attvalue for="0" value="29" />
+          <attvalue for="1" value="18" />
+          <attvalue for="2" value="13" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="6" />
+          <attvalue for="6" value="14" />
+          <attvalue for="7" value="66" />
+          <attvalue for="8" value="Java" />
+          <attvalue for="9" value="2012-10-27T21:56:45Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="elliotwoods/VVVV.Packs.Image" label="elliotwoods/VVVV.Packs.Image">
+        <attvalues>
+          <attvalue for="0" value="36" />
+          <attvalue for="1" value="31" />
+          <attvalue for="2" value="17" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="24" />
+          <attvalue for="7" value="55" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2013-02-24T02:13:06Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.StandardLibs" label="vvvv/VL.StandardLibs">
+        <attvalues>
+          <attvalue for="0" value="43" />
+          <attvalue for="1" value="16" />
+          <attvalue for="2" value="9" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="31" />
+          <attvalue for="7" value="657" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2023-02-06T17:32:31Z" />
+          <attvalue for="10" value="GNU Lesser General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="woeishi/SplinesGPU" label="woeishi/SplinesGPU">
+        <attvalues>
+          <attvalue for="0" value="15" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="6" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2011-11-02T15:56:52Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="elliotwoods/VVVV.Tutorials.Fundamentals" label="elliotwoods/VVVV.Tutorials.Fundamentals">
+        <attvalues>
+          <attvalue for="0" value="17" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="9" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2011-09-30T13:16:53Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/badMapper" label="vvvv/badMapper">
+        <attvalues>
+          <attvalue for="0" value="25" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="11" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="6" />
+          <attvalue for="7" value="7" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2014-08-15T20:34:08Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="StitchDesign/Stitch" label="StitchDesign/Stitch">
+        <attvalues>
+          <attvalue for="0" value="29" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="5" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="671" />
+          <attvalue for="7" value="24" />
+          <attvalue for="8" value="Swift" />
+          <attvalue for="9" value="2024-06-16T05:21:49Z" />
+          <attvalue for="10" value="GNU General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="bj-rn/texconvgui" label="bj-rn/texconvgui">
+        <attvalues>
+          <attvalue for="0" value="21" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2022-06-24T19:52:12Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="lambdabricks/bricks-front-react" label="lambdabricks/bricks-front-react">
+        <attvalues>
+          <attvalue for="0" value="23" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="5" />
+          <attvalue for="7" value="22" />
+          <attvalue for="8" value="JavaScript" />
+          <attvalue for="9" value="2015-11-18T08:58:10Z" />
+          <attvalue for="10" value="GNU Affero General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="CheshireCaat/BASRemote.NET" label="CheshireCaat/BASRemote.NET">
+        <attvalues>
+          <attvalue for="0" value="23" />
+          <attvalue for="1" value="12" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="20" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2020-01-03T09:29:43Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="woeishi/StableFluids" label="woeishi/StableFluids">
+        <attvalues>
+          <attvalue for="0" value="24" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="C++" />
+          <attvalue for="9" value="2017-10-19T14:16:44Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="ThinkingForms/VLML" label="ThinkingForms/VLML">
+        <attvalues>
+          <attvalue for="0" value="24" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="10" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="11" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2018-12-18T04:38:39Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="CheshireCaat/bas-remote-python" label="CheshireCaat/bas-remote-python">
+        <attvalues>
+          <attvalue for="0" value="32" />
+          <attvalue for="1" value="8" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="5" />
+          <attvalue for="8" value="Python" />
+          <attvalue for="9" value="2020-02-19T17:02:01Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="mocabe/yave" label="mocabe/yave">
+        <attvalues>
+          <attvalue for="0" value="33" />
+          <attvalue for="1" value="4" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="86" />
+          <attvalue for="7" value="16" />
+          <attvalue for="8" value="C++" />
+          <attvalue for="9" value="2019-03-30T12:53:10Z" />
+          <attvalue for="10" value="GNU Lesser General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="elliotwoods/VVVV.Nodes.ProjectorSimulation" label="elliotwoods/VVVV.Nodes.ProjectorSimulation">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="4" />
+          <attvalue for="2" value="7" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="HLSL" />
+          <attvalue for="9" value="2012-01-04T16:26:43Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="elliotwoods/Installation.Link" label="elliotwoods/Installation.Link">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="11" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2011-07-13T14:57:10Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/ParasiticDesign" label="vvvv/ParasiticDesign">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="10" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="7" />
+          <attvalue for="8" value="HLSL" />
+          <attvalue for="9" value="2011-10-19T12:22:28Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="elliotwoods/VVVV.Nodes.KCParticles" label="elliotwoods/VVVV.Nodes.KCParticles">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2011-11-14T08:54:09Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="smakhtin/ParticlesGPU-Modular" label="smakhtin/ParticlesGPU-Modular">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="3" />
+          <attvalue for="2" value="8" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2012-10-02T19:22:11Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="elliotwoods/ofxVVVV" label="elliotwoods/ofxVVVV">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="5" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C++" />
+          <attvalue for="9" value="2012-11-29T17:06:33Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="b-g/vvvv_voodoo_3d_matching" label="b-g/vvvv_voodoo_3d_matching">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2012-12-13T15:10:50Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="tebjan/VVVV.LaserDAC" label="tebjan/VVVV.LaserDAC">
+        <attvalues>
+          <attvalue for="0" value="12" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="5" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2015-03-08T18:04:42Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="Polyrhythm/vvvvery_physical" label="Polyrhythm/vvvvery_physical">
+        <attvalues>
+          <attvalue for="0" value="17" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="9" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="2" />
+          <attvalue for="6" value="6" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="HLSL" />
+          <attvalue for="9" value="2017-03-28T03:59:05Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="MrRoundRobin/VVVV.Packs.UI" label="MrRoundRobin/VVVV.Packs.UI">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="4" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="1" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2014-04-10T17:21:48Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="schnellebuntebilder/VL.Ollama" label="schnellebuntebilder/VL.Ollama">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2024-11-13T15:30:58Z" />
+          <attvalue for="10" value="GNU Lesser General Public License v2.1" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="lasalillo/VL.Interpolator" label="lasalillo/VL.Interpolator">
+        <attvalues>
+          <attvalue for="0" value="13" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2024-02-12T21:42:23Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="lasalillo/VL.ImGui.Extensions" label="lasalillo/VL.ImGui.Extensions">
+        <attvalues>
+          <attvalue for="0" value="13" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2024-02-25T19:46:05Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="XBagon/PIPES" label="XBagon/PIPES">
+        <attvalues>
+          <attvalue for="0" value="11" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="2" />
+          <attvalue for="8" value="JavaScript" />
+          <attvalue for="9" value="2018-04-15T13:09:34Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="gllms/Flue" label="gllms/Flue">
+        <attvalues>
+          <attvalue for="0" value="11" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="JavaScript" />
+          <attvalue for="9" value="2020-10-11T22:04:53Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="VisualPLC/BlocklyPLC" label="VisualPLC/BlocklyPLC">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2023-12-21T01:14:59Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.Here" label="sebescudie/VL.Here">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2024-10-18T11:28:23Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Devices.Nuitrack" label="vvvv/VL.Devices.Nuitrack">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="9" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2019-06-07T04:54:07Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VLSandbox" label="sebescudie/VLSandbox">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2019-05-04T13:49:09Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="CharlesSS07/jupyter-FlowBook" label="CharlesSS07/jupyter-FlowBook">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="4" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="JavaScript" />
+          <attvalue for="9" value="2020-08-04T16:47:19Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="mhusinsky/VL.2D.CurveFitting" label="mhusinsky/VL.2D.CurveFitting">
+        <attvalues>
+          <attvalue for="0" value="9" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2021-02-10T21:00:31Z" />
+          <attvalue for="10" value="Other" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="mdavisprog/Snippet" label="mdavisprog/Snippet">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="4" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="16" />
+          <attvalue for="8" value="C++" />
+          <attvalue for="9" value="2021-05-07T05:53:14Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Pipette.HDE" label="vvvv/VL.Pipette.HDE">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="4" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2021-10-26T21:15:22Z" />
+          <attvalue for="10" value="GNU Lesser General Public License v2.1" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="NHLStenden-ISAL/VAPE-3D" label="NHLStenden-ISAL/VAPE-3D">
+        <attvalues>
+          <attvalue for="0" value="8" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="3" />
+          <attvalue for="7" value="3" />
+          <attvalue for="8" value="TypeScript" />
+          <attvalue for="9" value="2022-02-21T10:29:40Z" />
+          <attvalue for="10" value="Apache License 2.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.Wekinator" label="sebescudie/VL.Wekinator">
+        <attvalues>
+          <attvalue for="0" value="10" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="7" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2020-10-23T19:48:54Z" />
+          <attvalue for="10" value="" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.Audio.GPL" label="vvvv/VL.Audio.GPL">
+        <attvalues>
+          <attvalue for="0" value="10" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="10" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="3" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2020-12-02T16:07:50Z" />
+          <attvalue for="10" value="GNU General Public License v3.0" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.OpenEXR" label="vvvv/VL.OpenEXR">
+        <attvalues>
+          <attvalue for="0" value="10" />
+          <attvalue for="1" value="2" />
+          <attvalue for="2" value="3" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="3" />
+          <attvalue for="6" value="6" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="Rust" />
+          <attvalue for="9" value="2022-01-23T17:09:04Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="bj-rn/VL.Devices.SpaceMouseHID" label="bj-rn/VL.Devices.SpaceMouseHID">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2022-09-21T14:21:31Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="vvvv/VL.IO.TCP" label="vvvv/VL.IO.TCP">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="6" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="2" />
+          <attvalue for="7" value="3" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2020-06-05T10:53:08Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="bj-rn/VL.OrderedDictionary" label="bj-rn/VL.OrderedDictionary">
+        <attvalues>
+          <attvalue for="0" value="7" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="5" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="true" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2020-08-13T11:12:50Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="mhusinsky/VL.IO.MQTTnet" label="mhusinsky/VL.IO.MQTTnet">
+        <attvalues>
+          <attvalue for="0" value="6" />
+          <attvalue for="1" value="1" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="0" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="" />
+          <attvalue for="9" value="2020-09-23T07:18:40Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="sebescudie/VL.OpenWeather" label="sebescudie/VL.OpenWeather">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="2" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="1" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2021-02-08T19:51:36Z" />
+          <attvalue for="10" value="MIT License" />
+          <attvalue for="11" value="" />
+        </attvalues>
+      </node>
+      <node id="juletopi/Linguagem_de_Programacao_Visual" label="juletopi/Linguagem_de_Programacao_Visual">
+        <attvalues>
+          <attvalue for="0" value="5" />
+          <attvalue for="1" value="0" />
+          <attvalue for="2" value="1" />
+          <attvalue for="3" value="false" />
+          <attvalue for="4" value="false" />
+          <attvalue for="5" value="1" />
+          <attvalue for="6" value="0" />
+          <attvalue for="7" value="0" />
+          <attvalue for="8" value="C#" />
+          <attvalue for="9" value="2023-02-25T23:48:45Z" />
+          <attvalue for="10" value="MIT License" />
           <attvalue for="11" value="" />
         </attvalues>
       </node>

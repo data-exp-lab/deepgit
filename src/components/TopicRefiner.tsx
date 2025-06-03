@@ -91,6 +91,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const tooltipRefs = useRef<{ [key: string]: Tooltip }>({});
     const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
     const navigate = useNavigate();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const moveToRightColumn = (topic: string) => {
         setFinalizedTopics(prev => [...prev, topic]);
@@ -341,6 +342,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
     const handleSubmitFinalizedTopics = async () => {
         try {
+            setIsSubmitting(true);  // Start loading state
             const response = await fetch(`${API_ENDPOINTS.GENERATED_NODES}`, {
                 method: 'POST',
                 headers: {
@@ -363,6 +365,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         } catch (error) {
             console.error('Error submitting finalized topics:', error);
             alert('Failed to generate graph. Please try again.');
+            setIsSubmitting(false);  // Reset loading state on error
         }
     };
 
@@ -644,12 +647,27 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
                     <div className="d-flex justify-content-end mt-4">
                         <button
-                            className="btn btn-success d-flex align-items-center"
+                            className="btn d-flex align-items-center"
                             onClick={handleSubmitFinalizedTopics}
-                            disabled={finalizedTopics.length === 0}
+                            disabled={finalizedTopics.length === 0 || isSubmitting}
+                            style={{
+                                color: 'white',
+                                backgroundColor: '#198754',  // Bootstrap's success color
+                                borderColor: '#198754',
+                                opacity: finalizedTopics.length === 0 || isSubmitting ? 0.65 : 1
+                            }}
                         >
-                            <ThumbsUp size={16} className="me-2" />
-                            Submit Topics
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 size={16} className="me-2 animate-spin" />
+                                    Generating Graph...
+                                </>
+                            ) : (
+                                <>
+                                    <ThumbsUp size={16} className="me-2" />
+                                    Submit Topics
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>

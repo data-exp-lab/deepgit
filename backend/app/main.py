@@ -242,7 +242,7 @@ def finalized_node_gexf():
     data = request.get_json()
     topics = data.get("topics", [])
     gexf_path = gexy_node_service.generate_gexf_nodes_for_topics(topics)
-    print(topics)
+    # print(topics)
     # Read the GEXF file content
     with open(gexf_path, "r", encoding="utf-8") as f:
         gexf_content = f.read()
