@@ -10,7 +10,8 @@ import {
     Minus,
     Check,
     Search,
-    Loader2
+    Loader2,
+    Lightbulb
 } from "lucide-react";
 import { FaArrowLeft } from "react-icons/fa";
 import { API_ENDPOINTS } from "../lib/config";
@@ -535,11 +536,11 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             </div>
             <div className="card shadow-sm mx-auto" style={{ maxWidth: '90%' }}>
                 <div className="card-body">
-                    <div className="alert alert-info mb-4 d-flex align-items-center">
-                        <Sparkles className="text-warning me-2" size={20} />
+                    <div className="d-flex align-items-center mb-4">
+                        <Lightbulb className="text-danger me-2" size={20} />
                         <div>
                             <p className="mb-0">
-                                Your selected topics have been loaded. Use AI suggestions to refine them based on your search term:
+                                Your topics are ready. Let AI help you explore how these topics relate to your search term:
                                 <span className="badge bg-primary ms-2" style={{ fontSize: '1rem' }}>{searchTerm}</span>
                             </p>
                         </div>
@@ -553,7 +554,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     <div className="d-flex justify-content-between align-items-center mb-4">
                                         <h3 className="h5 mb-0 d-flex align-items-center">
                                             <Sparkles className="text-warning me-2" size={20} />
-                                            Available Topics
+                                            Potential Topics
                                             <span className="badge bg-secondary ms-2" style={{ fontSize: '0.9rem' }}>
                                                 {selectedTopics.length} topics
                                             </span>
