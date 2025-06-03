@@ -66,7 +66,7 @@ const ContextPanel: FC = () => {
             >
               <VscSettings /> Settings
             </button>
-            <button
+            {/* <button
               className={cx("btn ms-2 mt-1", "btn-outline-dark")}
               onClick={() => {
                 const currentParams = new URLSearchParams(location.search);
@@ -91,7 +91,7 @@ const ContextPanel: FC = () => {
               }}
             >
               Topic Refiner
-            </button>
+            </button> */}
           </span>
           <span className="text-nowrap">
             {/*

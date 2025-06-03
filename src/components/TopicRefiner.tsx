@@ -485,6 +485,41 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         prevStep();
     };
 
+    // Add this function after the other helper functions
+    const getTopicsWithBothModels = () => {
+        const topicsByModel = suggestionsByModel.reduce((acc, suggestion) => {
+            if (!acc[suggestion.topic]) {
+                acc[suggestion.topic] = new Set();
+            }
+            acc[suggestion.topic].add(suggestion.model);
+            return acc;
+        }, {} as Record<string, Set<ModelType>>);
+
+        return Object.entries(topicsByModel)
+            .filter(([, models]) => models.size === 2)
+            .map(([topic]) => topic);
+    };
+
+    const handleAddAllRecommendedTopics = () => {
+        const topicsWithBothModels = getTopicsWithBothModels();
+        const newTopics = topicsWithBothModels.filter(topic => !finalizedTopics.includes(topic));
+        if (newTopics.length > 0) {
+            setFinalizedTopics([...finalizedTopics, ...newTopics]);
+            // Update topic counts for new topics
+            newTopics.forEach(topic => {
+                const suggestion = suggestions.find(s => s.name === topic);
+                if (suggestion) {
+                    setTopicCounts(prev => ({
+                        ...prev,
+                        [topic]: suggestion.count
+                    }));
+                } else {
+                    fetchTopicCount(topic);
+                }
+            });
+        }
+    };
+
     return (
         <main className="container-fluid py-4" style={{ height: '100vh', overflowY: 'auto' }}>
             {/* Navigation/Header Row */}
@@ -560,6 +595,15 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                             </span>
                                         </h3>
                                         <div className="d-flex gap-2">
+                                            <button
+                                                className="btn btn-outline-primary"
+                                                onClick={handleAddAllRecommendedTopics}
+                                                disabled={getTopicsWithBothModels().length === 0}
+                                                title="Add all topics recommended by both AI models"
+                                            >
+                                                <Plus size={16} className="me-2" />
+                                                Both AI Recommended
+                                            </button>
                                             <button
                                                 className="btn btn-outline-secondary"
                                                 onClick={() => setShowPromptModal(true)}

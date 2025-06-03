@@ -6,7 +6,7 @@ from fastapi import HTTPException
 import re
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 class AITopicProcessor:
@@ -136,7 +136,7 @@ flow-based-programming: A programming paradigm where programs are built by conne
 """
 
             response = self.gemini_client.generate_content(full_prompt)
-            print("Raw response:", response.text)  # Debug print
+            # print("Raw response:", response.text)  # Debug print
 
             if response.text:
                 suggestions = response.text.strip().split("\n")
@@ -174,7 +174,7 @@ flow-based-programming: A programming paradigm where programs are built by conne
                             "topic": s.strip(),
                             "explanation": f"Suggested as relevant to {search_term}"
                         })
-                print("Processed suggestions:", processed_suggestions)  # Debug print
+                # print("Processed suggestions:", processed_suggestions)  # Debug print
                 return processed_suggestions
             return []
 
