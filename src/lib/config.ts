@@ -8,4 +8,5 @@ export const API_ENDPOINTS = {
     EXPLAIN_TOPIC: `${API_BASE_URL}/api/explain-topic`,
     SUGGEST_TOPICS: `${API_BASE_URL}/api/suggest-topics`,
     GENERATED_NODES: `${API_BASE_URL}/api/generated-node-gexf`,
+    GET_UNIQUE_REPOS: `${API_BASE_URL}/api/get-unique-repos`,
 } as const; 

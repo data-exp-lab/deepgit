@@ -253,6 +253,44 @@ def finalized_node_gexf():
     })
 
 
+@app.route("/api/get-unique-repos", methods=["POST"])
+def get_unique_repos():
+    try:
+        data = request.get_json()
+        topics = data.get("topics", [])
+        if not topics:
+            return jsonify({
+                "success": True,
+                "count": 0
+            })
+
+        # Convert topics to lowercase for case-insensitive matching
+        topics_lower = [t.lower() for t in topics]
+        placeholders = ",".join(["?"] * len(topics_lower))
+
+        # Query to get unique repositories that have ANY of the given topics
+        query = f"""
+            SELECT COUNT(DISTINCT r.nameWithOwner) as count
+            FROM repos r
+            JOIN repo_topics t ON r.nameWithOwner = t.repo
+            WHERE LOWER(t.topic) IN ({placeholders})
+        """
+        
+        result = topic_service.con.execute(query, topics_lower).fetchone()
+        count = result[0] if result else 0
+
+        return jsonify({
+            "success": True,
+            "count": count
+        })
+    except Exception as e:
+        print(f"Error getting unique repos: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
 @app.route("/")
 def home():
     return "Hello World!"

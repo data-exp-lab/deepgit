@@ -241,7 +241,11 @@ const TopicHistogram: FC = () => {
         if (finalizedTopics.length > 0) {
             newParams.set('topics', finalizedTopics.join(','));
         }
-        navigate(`/graph?${newParams.toString()}`, { state: { topics: finalizedTopics } });
+        // Use replace: false to ensure proper history entry is created
+        navigate(`/graph?${newParams.toString()}`, {
+            state: { topics: finalizedTopics },
+            replace: false
+        });
     };
 
     // Function to move to the next step
@@ -257,11 +261,6 @@ const TopicHistogram: FC = () => {
     // Function to move to the previous step
     const prevStep = () => {
         setCurrentStep((prev: 1 | 2) => (prev === 2 ? 1 : 2));
-    };
-
-    // Function to go back to home
-    const goBackToHome = () => {
-        navigate('/');  // Use navigate instead of window.location for consistent routing
     };
 
     // State for loading and UI
@@ -501,6 +500,12 @@ const TopicHistogram: FC = () => {
             });
             setLlmSuggestionsState([]);
         }
+    };
+
+    // Function to go back to home
+    const goBackToHome = () => {
+        // Use window.location to navigate to the root URL without the hash
+        window.location.href = window.location.origin;
     };
 
     return (
@@ -791,13 +796,7 @@ const TopicHistogram: FC = () => {
                             </div>
                         )}
 
-                        <div className="d-flex justify-content-between mt-auto pt-4">
-                            <button
-                                className="btn btn-outline-secondary"
-                                onClick={goBackToHome}
-                            >
-                                Cancel
-                            </button>
+                        <div className="d-flex justify-content-end mt-auto pt-4">
                             <button
                                 className="btn btn-primary"
                                 onClick={nextStep}

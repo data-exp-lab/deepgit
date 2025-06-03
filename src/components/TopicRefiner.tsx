@@ -1,6 +1,6 @@
 "use client"
 
-import React, { FC, useState, useEffect, useCallback, useRef } from "react";
+import React, { FC, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
     Sparkles,
     Plus,
@@ -79,7 +79,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     onRequestSuggestions
 }) => {
     const [showPromptModal, setShowPromptModal] = useState(false);
-    const [showWelcomeModal, setShowWelcomeModal] = useState(true);
     const [customPrompt, setCustomPrompt] = useState(
         "Select the top K most relevant topics from the list of {Current topics} based on their relevance to the {Search Term}."
     );
@@ -95,13 +94,108 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [topicCounts, setTopicCounts] = useState<{ [key: string]: number }>({});
+    const [uniqueReposCount, setUniqueReposCount] = useState<number>(0);
+    const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
+    // Function to fetch unique repository count for all finalized topics
+    const fetchUniqueReposCount = async (topics: string[]) => {
+        if (topics.length === 0) {
+            setUniqueReposCount(0);
+            return;
+        }
+        try {
+            const response = await fetch(API_ENDPOINTS.GET_UNIQUE_REPOS, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ topics }),
+            });
+            const data = await response.json();
+            if (data.success) {
+                setUniqueReposCount(data.count);
+            }
+        } catch (error) {
+            console.error('Error fetching unique repos count:', error);
+        }
+    };
+
+    // Update unique repos count when finalized topics change
+    useEffect(() => {
+        fetchUniqueReposCount(finalizedTopics);
+    }, [finalizedTopics]);
+
+    // Calculate total repositories for finalized topics using topicCounts
+    const totalRepositories = useMemo(() => {
+        return finalizedTopics.reduce((total, topic) => {
+            return total + (topicCounts[topic] || 0);
+        }, 0);
+    }, [finalizedTopics, topicCounts]);
+
+    // Function to fetch repository count for a topic
+    const fetchTopicCount = async (topic: string) => {
+        try {
+            const response = await fetch(`${API_ENDPOINTS.SUGGEST_TOPICS}?query=${encodeURIComponent(topic)}`);
+            const data = await response.json();
+            if (data.success && data.suggestions.length > 0) {
+                const suggestion = data.suggestions.find((s: TopicSuggestion) => s.name === topic);
+                if (suggestion) {
+                    setTopicCounts(prev => ({
+                        ...prev,
+                        [topic]: suggestion.count
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching topic count:', error);
+        }
+    };
+
+    // Update topicCounts when suggestions change
+    useEffect(() => {
+        const newCounts = { ...topicCounts };
+        suggestions.forEach(suggestion => {
+            if (finalizedTopics.includes(suggestion.name)) {
+                newCounts[suggestion.name] = suggestion.count;
+            }
+        });
+        setTopicCounts(newCounts);
+    }, [suggestions, finalizedTopics]);
+
+    // Effect to fetch counts for any finalized topics that don't have counts
+    useEffect(() => {
+        finalizedTopics.forEach(topic => {
+            if (!topicCounts[topic]) {
+                fetchTopicCount(topic);
+            }
+        });
+    }, [finalizedTopics]);
+
+    // Update topicCounts when a topic is added
     const moveToRightColumn = (topic: string) => {
         setFinalizedTopics([...finalizedTopics, topic]);
+        // Find and store the count for the added topic
+        const suggestion = suggestions.find(s => s.name === topic);
+        if (suggestion) {
+            setTopicCounts(prev => ({
+                ...prev,
+                [topic]: suggestion.count
+            }));
+        } else {
+            // If we don't have the count in suggestions, fetch it
+            fetchTopicCount(topic);
+        }
     };
 
     const moveToLeftColumn = (topic: string) => {
         setFinalizedTopics(finalizedTopics.filter(t => t !== topic));
+        // Remove the count for the removed topic
+        setTopicCounts(prev => {
+            const newCounts = { ...prev };
+            delete newCounts[topic];
+            return newCounts;
+        });
     };
 
     useEffect(() => {
@@ -344,6 +438,15 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     }, []);
 
     const handleSubmitFinalizedTopics = async () => {
+        // Add confirmation for large repository counts
+        if (uniqueReposCount > 10000) {
+            setShowConfirmationModal(true);
+            return;
+        }
+        await submitTopics();
+    };
+
+    const submitTopics = async () => {
         try {
             setIsSubmitting(true);  // Start loading state
             const response = await fetch(`${API_ENDPOINTS.GENERATED_NODES}`, {
@@ -364,12 +467,21 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             }
 
             const file = new File([data.gexfContent], "generated_nodes.gexf", { type: "application/xml" });
-            navigate('/graph?l=1', { state: { file } });
+            // Use replace: false to ensure proper history entry is created
+            navigate('/graph?l=1', {
+                state: { file },
+                replace: false
+            });
         } catch (error) {
             console.error('Error submitting finalized topics:', error);
             alert('Failed to generate graph. Please try again.');
             setIsSubmitting(false);  // Reset loading state on error
         }
+    };
+
+    // Update the back button click handler
+    const handleBackClick = () => {
+        prevStep();
     };
 
     return (
@@ -382,13 +494,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                         <button
                             className="btn btn-outline-secondary me-3"
                             style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0 }}
-                            onClick={() => {
-                                if (showWelcomeModal) {
-                                    setShowWelcomeModal(false);
-                                } else {
-                                    prevStep();
-                                }
-                            }}
+                            onClick={handleBackClick}
                         >
                             <FaArrowLeft />
                         </button>
@@ -429,7 +535,15 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             </div>
             <div className="card shadow-sm mx-auto" style={{ maxWidth: '90%' }}>
                 <div className="card-body">
-                    <p className="text-muted mb-4">Use AI suggestions to refine your topics or manually add/remove topics.</p>
+                    <div className="alert alert-info mb-4 d-flex align-items-center">
+                        <Sparkles className="text-warning me-2" size={20} />
+                        <div>
+                            <p className="mb-0">
+                                Your selected topics have been loaded. Use AI suggestions to refine them based on your search term:
+                                <span className="badge bg-primary ms-2" style={{ fontSize: '1rem' }}>{searchTerm}</span>
+                            </p>
+                        </div>
+                    </div>
 
                     <div className="row g-4">
                         {/* Left column - Available Topics */}
@@ -628,18 +742,53 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     <div className="list-group" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                                         {finalizedTopics.map((topic) => (
                                             <div key={topic} className="list-group-item py-2 px-3 d-flex justify-content-between align-items-center">
-                                                <span className="d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
-                                                    {topic}
+                                                <span className="d-flex align-items-center gap-2" style={{ fontSize: '0.9rem' }}>
+                                                    <span>{topic}</span>
                                                     {renderModelBadges(topic, true)}
                                                 </span>
-                                                <button
-                                                    className="btn btn-sm btn-outline-danger ms-2"
-                                                    style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                                                    onClick={() => moveToLeftColumn(topic)}
-                                                    title="Remove from finalized topics"
-                                                >
-                                                    <Minus size={14} />
-                                                </button>
+                                                <div className="d-flex align-items-center gap-2">
+                                                    {topicCounts[topic] ? (
+                                                        <span
+                                                            className="badge rounded-pill px-2 py-1"
+                                                            style={{
+                                                                backgroundColor: topicCounts[topic] > 1000 ? "rgba(220, 53, 69, 0.1)" : "rgba(108, 117, 125, 0.1)",
+                                                                color: topicCounts[topic] > 1000 ? "#dc3545" : "#495057",
+                                                                fontSize: "0.85rem",
+                                                                fontWeight: "500",
+                                                                display: "inline-flex",
+                                                                alignItems: "center"
+                                                            }}
+                                                        >
+                                                            {topicCounts[topic].toLocaleString()} repos
+                                                        </span>
+                                                    ) : (
+                                                        <span
+                                                            className="badge rounded-pill px-2 py-1"
+                                                            style={{
+                                                                backgroundColor: "rgba(108, 117, 125, 0.1)",
+                                                                color: "#495057",
+                                                                fontSize: "0.85rem",
+                                                                fontWeight: "500",
+                                                                display: "inline-flex",
+                                                                alignItems: "center",
+                                                                gap: "4px"
+                                                            }}
+                                                        >
+                                                            <div className="spinner-border spinner-border-sm" role="status" style={{ width: "0.75rem", height: "0.75rem" }}>
+                                                                <span className="visually-hidden">Loading...</span>
+                                                            </div>
+                                                            Loading...
+                                                        </span>
+                                                    )}
+                                                    <button
+                                                        className="btn btn-sm btn-outline-danger"
+                                                        style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                                        onClick={() => moveToLeftColumn(topic)}
+                                                        title="Remove from finalized topics"
+                                                    >
+                                                        <Minus size={14} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -648,7 +797,11 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                         </div>
                     </div>
 
-                    <div className="d-flex justify-content-end mt-4">
+                    <div className="d-flex justify-content-end align-items-center mt-4 gap-3">
+                        <div className="text-muted" style={{ fontSize: '0.9rem' }}>
+                            <div>Total Topic Occurrences: <span className="fw-bold">{totalRepositories.toLocaleString()}</span></div>
+                            <div>Unique Repositories: <span className="fw-bold">{uniqueReposCount.toLocaleString()}</span></div>
+                        </div>
                         <button
                             className="btn d-flex align-items-center"
                             onClick={handleSubmitFinalizedTopics}
@@ -675,47 +828,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                     </div>
                 </div>
             </div>
-
-            {/* Welcome Modal */}
-            {showWelcomeModal && (
-                <div className="modal show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title d-flex align-items-center">
-                                    <Sparkles className="text-warning me-2" size={20} />
-                                    Welcome to Topic Refinement
-                                </h5>
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    onClick={() => setShowWelcomeModal(false)}
-                                    aria-label="Close"
-                                ></button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="alert alert-info mb-0">
-                                    <p className="mb-0">
-                                        Your selected topics have been loaded. Please use AI to further refine them with your search term: <span className="badge bg-primary" style={{ fontSize: '1rem' }}>{searchTerm}</span>
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                {/* <button
-                                    type="button"
-                                    className="btn btn-primary"
-                                    onClick={() => {
-                                        setShowWelcomeModal(false);
-                                        setShowPromptModal(true);
-                                    }}
-                                >
-                                    Configure AI Settings
-                                </button> */}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Prompt Customization Modal */}
             {showPromptModal && (
@@ -834,6 +946,57 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     ) : (
                                         'Save Changes & Get Suggestions'
                                     )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirmation Modal for Large Repository Count */}
+            {showConfirmationModal && (
+                <div className="modal show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title d-flex align-items-center">
+                                    <i className="fas fa-exclamation-circle text-danger me-2"></i>
+                                    Large Dataset Warning
+                                </h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setShowConfirmationModal(false)}
+                                    aria-label="Close"
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="alert alert-danger mb-0">
+                                    <p className="mb-2">
+                                        You are about to generate a graph with <strong>{uniqueReposCount.toLocaleString()}</strong> unique repositories.
+                                    </p>
+                                    <p className="mb-0">
+                                        This may take a while to process and could impact performance. Are you sure you want to continue?
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowConfirmationModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-danger"
+                                    onClick={async () => {
+                                        setShowConfirmationModal(false);
+                                        await submitTopics();
+                                    }}
+                                >
+                                    Continue
                                 </button>
                             </div>
                         </div>
