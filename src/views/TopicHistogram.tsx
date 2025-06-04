@@ -272,6 +272,17 @@ const TopicHistogram: FC = () => {
 
     // State for API key
     const [apiKey, setApiKey] = useState<string>('');
+    // Add state to track if we need to fetch explanation after API key is set
+    const [pendingExplanationTopic, setPendingExplanationTopic] = useState<string | null>(null);
+
+    // Add cleanup effect for API key
+    useEffect(() => {
+        // Clear API key and pending explanation when component unmounts
+        return () => {
+            setApiKey('');
+            setPendingExplanationTopic(null);
+        };
+    }, []);
 
     // Add API key input modal - initialize to false instead of !apiKey
     const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -281,48 +292,191 @@ const TopicHistogram: FC = () => {
 
     // Function to handle topic click
     const handleTopicClick = (topic: string) => {
-        console.log('Topic clicked:', topic);
-        console.log('Current API key:', apiKey ? 'Present' : 'Missing');
-
         if (!apiKey) {
-            console.log('No API key, showing modal');
-            // Show API key modal if no key is set
+            // Store the topic that was clicked for later explanation
+            setPendingExplanationTopic(topic);
             setShowApiKeyModal(true);
             return;
         }
 
-        console.log('Starting explanation fetch for topic:', topic);
-        // Show explanation modal immediately with loading state
+        // If we have an API key, fetch explanation immediately
         setSelectedTopicForExplanation(topic);
         setTopicExplanation("");  // Clear previous explanation
         setIsLoadingExplanation(true);  // Set loading state
-        // Then fetch the explanation
         fetchTopicExplanation(topic);
     };
 
     // Function to save API key and fetch explanation if a topic was clicked
     const saveApiKey = (key: string) => {
-        setApiKey(key);
+        // Trim the key to remove any accidental whitespace
+        const trimmedKey = key.trim();
+        setApiKey(trimmedKey);
         setShowApiKeyModal(false);
 
-        // If there was a topic waiting for explanation, fetch it now
-        if (selectedTopicForExplanation) {
-            fetchTopicExplanation(selectedTopicForExplanation);
+        // If there was a pending topic waiting for explanation, fetch it now
+        if (pendingExplanationTopic) {
+            setSelectedTopicForExplanation(pendingExplanationTopic);
+            setTopicExplanation("");  // Clear previous explanation
+            setIsLoadingExplanation(true);  // Set loading state
+            fetchTopicExplanation(pendingExplanationTopic);
+            setPendingExplanationTopic(null);  // Clear the pending topic
         }
     };
 
-    // Effect to check if search term and topic are provided
-    useEffect(() => {
-        if (!searchTerm) {
+    // Function to clear API key
+    const clearApiKey = () => {
+        setApiKey('');
+        setShowApiKeyModal(false);
+        setSelectedTopicForExplanation(null);
+        setPendingExplanationTopic(null);  // Also clear any pending explanation
+    };
+
+    // Function to handle API key input change
+    const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Clear any existing key when user starts typing
+        if (apiKey) {
+            setApiKey('');
+            setPendingExplanationTopic(null);  // Clear pending explanation when key is cleared
+        }
+        setApiKey(e.target.value);
+    };
+
+    // Function to fetch topic explanation
+    const fetchTopicExplanation = async (topic: string) => {
+        if (!apiKey) {
             notify({
-                message: "No search term provided. Please enter a topic to search.",
+                message: "Please set your Google API key first",
                 type: "warning"
             });
-            navigate('/');
-        } else {
-            setOriginalTopic(userTopic);
+            setSelectedTopicForExplanation(null);
+            setPendingExplanationTopic(topic);  // Store the topic for later
+            return;
         }
-    }, [searchTerm, userTopic, navigate, notify]);
+
+        try {
+            const response = await fetch(API_ENDPOINTS.EXPLAIN_TOPIC, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    topic: topic,
+                    searchTerm: searchTerm,
+                    originalTopic: originalTopic,
+                    apiKey: apiKey
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                const explanation = typeof data.explanation === 'object' ? data.explanation.explanation : data.explanation;
+                setTopicExplanation(explanation || "No explanation available.");
+            } else {
+                throw new Error(data.message || 'Failed to get explanation');
+            }
+        } catch (error) {
+            console.error('Error fetching explanation:', error);
+            notify({
+                message: "Failed to get topic explanation. Please try again.",
+                type: "error"
+            });
+            setTopicExplanation("Sorry, I couldn't generate an explanation for this topic at the moment.");
+            // Don't clear the selected topic on error, so user can try again
+        } finally {
+            setIsLoadingExplanation(false);
+        }
+    };
+
+    // Function to close the explanation modal
+    const closeExplanationModal = () => {
+        setSelectedTopicForExplanation(null);
+        setTopicExplanation("");
+    };
+
+    // Function to handle AI suggestions request
+    const handleRequestSuggestions = async (model: string, prompt: string, apiKey: string, topics: string[]) => {
+        setLlmSuggestionsState([]); // Clear previous suggestions immediately
+        try {
+            // console.log('Requesting AI suggestions with:', { model, prompt, apiKey, topics });
+            const response = await fetch(API_ENDPOINTS.AI_PROCESS, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    selectedModel: model,
+                    customPrompt: prompt,
+                    apiKey: apiKey,
+                    selectedTopics: topics,
+                    searchTerm: searchTerm
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            // console.log('Received AI suggestions:', data);
+
+            if (data.success && Array.isArray(data.result)) {
+                // Update state synchronously
+                setLlmSuggestionsState(data.result);
+
+                // Wait for state to be updated
+                await new Promise<void>(resolve => {
+                    // Use a MutationObserver to detect when the state is actually updated
+                    const observer = new MutationObserver((mutations, obs) => {
+                        obs.disconnect();
+                        resolve();
+                    });
+
+                    // Create a temporary element to observe
+                    const temp = document.createElement('div');
+                    temp.style.display = 'none';
+                    document.body.appendChild(temp);
+
+                    // Start observing
+                    observer.observe(temp, {
+                        attributes: true,
+                        childList: true,
+                        subtree: true
+                    });
+
+                    // Force a re-render
+                    temp.setAttribute('data-update', Date.now().toString());
+
+                    // Clean up after a timeout
+                    setTimeout(() => {
+                        observer.disconnect();
+                        document.body.removeChild(temp);
+                        resolve();
+                    }, 100);
+                });
+
+                // console.log('State updated with suggestions:', data.result);
+            } else {
+                throw new Error('Invalid response format from AI service');
+            }
+        } catch (error) {
+            console.error('Error getting AI suggestions:', error);
+            notify({
+                message: "Failed to get AI suggestions. Please try again.",
+                type: "error"
+            });
+            setLlmSuggestionsState([]);
+        }
+    };
+
+    // Function to go back to home
+    const goBackToHome = () => {
+        // Use window.location to navigate to the root URL without the hash
+        window.location.href = window.location.origin;
+    };
 
     // Effect to handle topic extraction when search term changes
     useEffect(() => {
@@ -369,144 +523,18 @@ const TopicHistogram: FC = () => {
             });
     }, [userTopic]);
 
-    // Function to fetch topic explanation
-    const fetchTopicExplanation = async (topic: string) => {
-        console.log('Fetching explanation for topic:', topic);
-        if (!apiKey) {
-            console.log('No API key in fetchTopicExplanation');
+    // Effect to check if search term and topic are provided
+    useEffect(() => {
+        if (!searchTerm) {
             notify({
-                message: "Please set your Google API key first",
+                message: "No search term provided. Please enter a topic to search.",
                 type: "warning"
             });
-            setSelectedTopicForExplanation(null);  // Close modal if no API key
-            return;
+            navigate('/');
+        } else {
+            setOriginalTopic(userTopic);
         }
-
-        try {
-            console.log('Making API request to:', API_ENDPOINTS.EXPLAIN_TOPIC);
-            const response = await fetch(API_ENDPOINTS.EXPLAIN_TOPIC, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    topic: topic,
-                    searchTerm: searchTerm,
-                    originalTopic: originalTopic,
-                    apiKey: apiKey
-                })
-            });
-
-            console.log('Response status:', response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('Response data:', data);
-            if (data.success) {
-                setTopicExplanation(data.explanation);
-            } else {
-                throw new Error(data.message || 'Failed to get explanation');
-            }
-        } catch (error) {
-            console.error('Error fetching explanation:', error);
-            notify({
-                message: "Failed to get topic explanation. Please try again.",
-                type: "error"
-            });
-            setTopicExplanation("Sorry, I couldn't generate an explanation for this topic at the moment.");
-        } finally {
-            setIsLoadingExplanation(false);
-        }
-    };
-
-    // Function to close the explanation modal
-    const closeExplanationModal = () => {
-        setSelectedTopicForExplanation(null);
-        setTopicExplanation("");
-    };
-
-    // Function to handle AI suggestions request
-    const handleRequestSuggestions = async (model: string, prompt: string, apiKey: string, topics: string[]) => {
-        setLlmSuggestionsState([]); // Clear previous suggestions immediately
-        try {
-            console.log('Requesting AI suggestions with:', { model, prompt, apiKey, topics });
-            const response = await fetch(API_ENDPOINTS.AI_PROCESS, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    selectedModel: model,
-                    customPrompt: prompt,
-                    apiKey: apiKey,
-                    selectedTopics: topics,
-                    searchTerm: searchTerm
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            console.log('Received AI suggestions:', data);
-
-            if (data.success && Array.isArray(data.result)) {
-                // Update state synchronously
-                setLlmSuggestionsState(data.result);
-
-                // Wait for state to be updated
-                await new Promise<void>(resolve => {
-                    // Use a MutationObserver to detect when the state is actually updated
-                    const observer = new MutationObserver((mutations, obs) => {
-                        obs.disconnect();
-                        resolve();
-                    });
-
-                    // Create a temporary element to observe
-                    const temp = document.createElement('div');
-                    temp.style.display = 'none';
-                    document.body.appendChild(temp);
-
-                    // Start observing
-                    observer.observe(temp, {
-                        attributes: true,
-                        childList: true,
-                        subtree: true
-                    });
-
-                    // Force a re-render
-                    temp.setAttribute('data-update', Date.now().toString());
-
-                    // Clean up after a timeout
-                    setTimeout(() => {
-                        observer.disconnect();
-                        document.body.removeChild(temp);
-                        resolve();
-                    }, 100);
-                });
-
-                console.log('State updated with suggestions:', data.result);
-            } else {
-                throw new Error('Invalid response format from AI service');
-            }
-        } catch (error) {
-            console.error('Error getting AI suggestions:', error);
-            notify({
-                message: "Failed to get AI suggestions. Please try again.",
-                type: "error"
-            });
-            setLlmSuggestionsState([]);
-        }
-    };
-
-    // Function to go back to home
-    const goBackToHome = () => {
-        // Use window.location to navigate to the root URL without the hash
-        window.location.href = window.location.origin;
-    };
+    }, [searchTerm, userTopic, navigate, notify]);
 
     return (
         <main className="container-fluid py-4" style={{ height: '100vh', overflowY: 'auto' }}>
@@ -520,10 +548,7 @@ const TopicHistogram: FC = () => {
                                 <button
                                     type="button"
                                     className="btn-close"
-                                    onClick={() => {
-                                        setShowApiKeyModal(false);
-                                        setSelectedTopicForExplanation(null);
-                                    }}
+                                    onClick={clearApiKey}
                                     aria-label="Close"
                                 />
                             </div>
@@ -535,11 +560,19 @@ const TopicHistogram: FC = () => {
                                         className="form-control"
                                         id="apiKey"
                                         value={apiKey}
-                                        onChange={(e) => setApiKey(e.target.value)}
+                                        onChange={handleApiKeyChange}
                                         placeholder="Enter your Google Gemini API key"
+                                        autoComplete="off"
                                     />
                                     <div className="form-text">
-                                        Your Google Gemini API key is required to get topic explanations. It is stored locally in your browser and is never shared with our servers.
+                                        Your Google Gemini API key is required to get topic explanations.
+                                        <strong>Important security notes:</strong>
+                                        <ul className="mt-2 mb-0">
+                                            <li>The key is stored only in memory and is cleared when you close the page</li>
+                                            <li>It is never saved to disk or sent to our servers</li>
+                                            <li>It is only used to make direct API calls to Google's services</li>
+                                            <li>Please use a key with appropriate restrictions set in Google Cloud Console</li>
+                                        </ul>
                                         <br />
                                         <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer">
                                             Get your API key from Google AI Studio
@@ -551,10 +584,7 @@ const TopicHistogram: FC = () => {
                                 <button
                                     type="button"
                                     className="btn btn-secondary"
-                                    onClick={() => {
-                                        setShowApiKeyModal(false);
-                                        setSelectedTopicForExplanation(null);
-                                    }}
+                                    onClick={clearApiKey}
                                 >
                                     Cancel
                                 </button>
@@ -562,7 +592,7 @@ const TopicHistogram: FC = () => {
                                     type="button"
                                     className="btn btn-primary"
                                     onClick={() => saveApiKey(apiKey)}
-                                    disabled={!apiKey}
+                                    disabled={!apiKey.trim()}
                                 >
                                     Save & Continue
                                 </button>
