@@ -3,13 +3,14 @@ import duckdb
 import psutil
 import networkx as nx
 from datetime import datetime
+import hashlib
+from pathlib import Path
 
 
 class GexfNodeGenerator:
     def __init__(self):
         self.save_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "gexf")
         os.makedirs(self.save_dir, exist_ok=True)
-        self.gexf_path = os.path.join(self.save_dir, "generated_nodes.gexf")
 
         # DuckDB connection (copied from TopicService)
         db_path = os.path.join(
@@ -33,6 +34,18 @@ class GexfNodeGenerator:
                 f"Database not found at {db_path}. Please ensure the database file exists before running the application."
             )
 
+    def get_unique_filename(self, topics):
+        """Generate a unique filename based on the topics"""
+        # Sort topics to ensure consistent hash for same topics in different order
+        sorted_topics = sorted(topics)
+        # Create a hash of the topics
+        topics_str = "|".join(sorted_topics)
+        hash_object = hashlib.md5(topics_str.encode())
+        hash_hex = hash_object.hexdigest()[:12]  # Use first 12 characters of hash
+        # Include timestamp to ensure uniqueness even for same topics
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        return f"topics_{hash_hex}_{timestamp}.gexf"
+
     def generate_gexf_nodes_for_topics(self, topics):
         """
         Generate and store a GEXF file for all repos containing any of the given topics.
@@ -40,6 +53,11 @@ class GexfNodeGenerator:
         """
         if not topics:
             return None
+
+        # Generate unique filename for this search
+        filename = self.get_unique_filename(topics)
+        gexf_path = os.path.join(self.save_dir, filename)
+
         topics_lower = [t.lower() for t in topics]
         placeholders = ",".join(["?"] * len(topics_lower))
 
@@ -150,5 +168,5 @@ class GexfNodeGenerator:
         # print(f"Years range: {min(years)} to {max(years)}")
         # print(f"Number of nodes with year=0: {years.count(0)}")
 
-        nx.write_gexf(G, self.gexf_path)
-        return self.gexf_path  # Return the file path
+        nx.write_gexf(G, gexf_path)
+        return gexf_path  # Return the unique file path

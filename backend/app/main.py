@@ -93,7 +93,7 @@ def ai_process():
 def explain_topic():
     try:
         data = request.get_json()
-        print("Received explain-topic request with data:", {k: v for k, v in data.items() if k != 'apiKey'})  # Log data without API key
+        # print("Received explain-topic request with data:", {k: v for k, v in data.items() if k != 'apiKey'})  # Log data without API key
         
         topic = data.get("topic", "")
         search_term = data.get("searchTerm", "")
