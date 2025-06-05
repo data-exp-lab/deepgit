@@ -121,6 +121,7 @@ export interface Data {
   // - Move that edgeSizeField value into navState
   // - Add an input to select it
   edgesSizeField: string;
+  hasEdges: boolean;
 }
 
 export interface Report {
@@ -161,21 +162,25 @@ export async function readGraph({
   name: string;
   extension: string;
   textContent: string;
-}): Promise<RawGraph> {
+}): Promise<{ graph: RawGraph; hasEdges: boolean }> {
   if (!Loaders[extension]) {
     const e = new Error(`Graph file extension ".${extension}" not recognized.`);
     e.name = BAD_EXTENSION;
     throw e;
   }
 
-  return Loaders[extension](textContent);
+  const graph = Loaders[extension](textContent);
+  // Check if the graph has any edges
+  const hasEdges = graph.size > 0;
+  return { graph, hasEdges };
 }
 
-export function prepareGraph(rawGraph: RawGraph): { graph: RetinaGraph; report: Report } {
+export function prepareGraph(rawGraph: { graph: RawGraph; hasEdges: boolean }): { graph: RetinaGraph; report: Report; hasEdges: boolean } {
+  const { graph: rawGraphData, hasEdges } = rawGraph;
   const graph = new MultiGraph<NodeData, EdgeData>();
   const report: Report = {};
 
-  rawGraph.forEachNode((node, attributes) => {
+  rawGraphData.forEachNode((node, attributes) => {
     const { x, y, size, color, label } = attributes;
 
     if (typeof attributes.x !== "number" || typeof attributes.y !== "number")
@@ -207,9 +212,9 @@ export function prepareGraph(rawGraph: RawGraph): { graph: RetinaGraph; report: 
 
     graph.addNode(node, newNodeAttributes);
   });
-  rawGraph.forEachEdge((edge, attributes, source, target) => {
+  rawGraphData.forEachEdge((edge, attributes, source, target) => {
     const { size, color, label } = attributes;
-    const directed = rawGraph.isDirected(edge);
+    const directed = rawGraphData.isDirected(edge);
 
     if (typeof attributes.size !== "number") report.missingEdgeSizes = (report.missingEdgeSizes || 0) + 1;
     if (typeof attributes.color !== "string") report.missingEdgeColors = (report.missingEdgeColors || 0) + 1;
@@ -245,7 +250,7 @@ export function prepareGraph(rawGraph: RawGraph): { graph: RetinaGraph; report: 
     noverlap.assign(graph, { maxIterations: 150 });
   }
 
-  return { graph, report };
+  return { graph, report, hasEdges };
 }
 
 /**
@@ -255,10 +260,18 @@ export function prepareGraph(rawGraph: RawGraph): { graph: RetinaGraph; report: 
 export function inferFieldTypes(values: (string | number)[], nodesCount: number): FieldType[] {
   const types: FieldType[] = [];
 
-  if (values.every((v) => isNumber(v))) types.push("quanti");
+  // If all values are numbers, it's quantitative
+  if (values.every((v) => isNumber(v))) {
+    types.push("quanti");
+  } else {
+    // Only consider qualitative if it's not quantitative
+    const uniqValuesCount = uniq(values).length;
+    if (uniqValuesCount > 1 && uniqValuesCount < Math.max(Math.pow(nodesCount, 0.75), 5)) {
+      types.push("quali");
+    }
+  }
 
-  const uniqValuesCount = uniq(values).length;
-  if (uniqValuesCount > 1 && uniqValuesCount < Math.max(Math.pow(nodesCount, 0.75), 5)) types.push("quali");
+  // If no types were assigned, it's content
   if (!types.length) types.push("content");
 
   return types;
@@ -268,12 +281,12 @@ export function getValue(node: NodeData, field: Field): any {
   return field.computed ? (node.computed as any)[field.rawFieldId] : node.attributes[field.rawFieldId];
 }
 
-export function getFields(graph: RetinaGraph, type: "node" | "edge"): Field[] {
+export function getFields(graph: RetinaGraph, type: "node" | "edge", hasEdges: boolean): Field[] {
   let fields: Record<string, (string | number)[]> = {};
 
   // Inject computed fields (here, only "Degree" for now):
   const computedFields: Field[] = [];
-  if (type === "node") {
+  if (type === "node" && hasEdges) {  // Only add degree if the GEXF has edges
     const degreeExtent: [number, number] = [Infinity, -Infinity];
     graph.forEachNode((node) => {
       graph.updateNodeAttribute(node, "computed", (o) => {
@@ -301,7 +314,18 @@ export function getFields(graph: RetinaGraph, type: "node" | "edge"): Field[] {
       const value = attributes[key];
       if (!isNil(value)) {
         if (!fields[key]) fields[key] = [];
-        fields[key].push(attributes[key]);
+        // Special handling for date fields
+        if (key === "createdAt_year" || key === "createdAt_month") {
+          fields[key].push(value);
+        } else if (key === "createdAt") {
+          fields[key].push(value);
+        } else if (key === "topics") {
+          // Split topics by '|', collect all unique topics
+          const topicsArr = typeof value === 'string' ? value.split('|').map(t => t.trim()).filter(Boolean) : [];
+          fields[key].push(...topicsArr);
+        } else {
+          fields[key].push(attributes[key]);
+        }
       }
     }
   });
@@ -327,6 +351,38 @@ export function getFields(graph: RetinaGraph, type: "node" | "edge"): Field[] {
   // Infer field types:
   const totalRowsCount = type === "node" ? graph.order : graph.size;
   const inferedFields: Field[] = flatMap(fields, (values, key) => {
+    // Special handling for year and month fields - always quantitative
+    if (key === "createdAt_year" || key === "createdAt_month") {
+      const numbers = values.map(v => +v) as number[];
+      return [{
+        type: "quanti",
+        id: minimized[key],
+        rawFieldId: key,
+        label: key === "createdAt_year" ? "Creation Year" : "Creation Month",
+        typeLabel: undefined,
+        nullValuesCount: totalRowsCount - values.length,
+        min: min(numbers) as number,
+        max: max(numbers) as number,
+      }];
+    }
+    // Special handling for topics: always qualitative, unique values
+    if (key === "topics") {
+      const uniqTopics = uniq(values as string[]);
+      return [{
+        type: "quali",
+        id: minimized[key],
+        rawFieldId: key,
+        label: "topics",
+        typeLabel: undefined,
+        nullValuesCount: 0,
+        values: mapValues(groupBy(uniqTopics, v => v), (a, v) => ({
+          id: v,
+          label: v,
+          count: 0, // will be counted in countTerms
+        })),
+      }];
+    }
+
     const types =
       key.indexOf(RETINA_NUMBER_FIELD_PREFIX) === 0
         ? (["quanti"] as FieldType[])
@@ -380,12 +436,19 @@ export function getFields(graph: RetinaGraph, type: "node" | "edge"): Field[] {
     });
   });
 
-  return inferedFields.concat(computedFields);
+  // Sort fields to put topics first
+  const sortedFields = [...inferedFields, ...computedFields].sort((a, b) => {
+    if (a.rawFieldId === 'topics') return -1;
+    if (b.rawFieldId === 'topics') return 1;
+    return 0;
+  });
+
+  return sortedFields;
 }
 
-export function enrichData(graph: RetinaGraph): Data {
-  const fields = getFields(graph, "node");
-  const edgeFields = getFields(graph, "edge");
+export function enrichData(graph: RetinaGraph, hasEdges: boolean): Data {
+  const fields = getFields(graph, "node", hasEdges);
+  const edgeFields = getFields(graph, "edge", hasEdges);
 
   // Reindex number fields as numbers:
   const fieldsToReindex = uniq(
@@ -424,6 +487,7 @@ export function enrichData(graph: RetinaGraph): Data {
     edgeFieldsIndex: keyBy(edgeFields, "id"),
     edgeFields: edgeFields.map((field) => field.id),
     edgesSizeField,
+    hasEdges,
   };
 }
 
@@ -437,7 +501,13 @@ export function countTerms(graph: RetinaGraph, field: Field, nodes?: string[] | 
 
   nodesToSearch.forEach((n) => {
     const v = getValue(graph.getNodeAttributes(n), field);
-    if (!isNil(v)) counts[v] = (counts[v] || 0) + 1;
+    if (field.rawFieldId === 'topics' && typeof v === 'string') {
+      v.split('|').map(t => t.trim()).filter(Boolean).forEach(topic => {
+        counts[topic] = (counts[topic] || 0) + 1;
+      });
+    } else if (!isNil(v)) {
+      counts[v] = (counts[v] || 0) + 1;
+    }
   });
 
   return counts;
@@ -477,6 +547,10 @@ export function filterNode(nodeData: NodeData, filters: Filter[], fieldsIndex: R
           (typeof filter.max !== "number" || filter.max > value)
         );
       case "terms":
+        if (field.rawFieldId === 'topics' && typeof value === 'string') {
+          const topicsArr = value.split('|').map(t => t.trim()).filter(Boolean);
+          return filter.values.some(val => topicsArr.includes(val));
+        }
         return !isNil(value) && filter.values.includes(value + "");
       case "search":
         return value && normalize(value).includes(filter.normalizedValue);

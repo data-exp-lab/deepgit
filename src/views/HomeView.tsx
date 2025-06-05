@@ -70,12 +70,7 @@ const HomeView: FC = () => {
     setShowSuggestions(false);
 
     if (searchTerm.trim()) {
-      navigate('/topics', {
-        state: {
-          searchTerm: searchTerm.trim(),
-          userTopic: searchTerm.trim()
-        }
-      });
+      navigate(`/topics?search_term=${encodeURIComponent(searchTerm.trim())}`);
     }
   };
 
@@ -83,12 +78,7 @@ const HomeView: FC = () => {
   const handleSuggestionClick = (suggestion: TopicSuggestion) => {
     setSearchTerm(suggestion.name);
     setShowSuggestions(false);
-    navigate('/topics', {
-      state: {
-        searchTerm: suggestion.name,
-        userTopic: suggestion.name
-      }
-    });
+    navigate(`/topics?search_term=${encodeURIComponent(suggestion.name)}`);
   };
 
   return (
@@ -278,12 +268,7 @@ const HomeView: FC = () => {
               }}
               onClick={() => {
                 setSearchTerm(tag);
-                navigate('/topics', {
-                  state: {
-                    searchTerm: tag,
-                    userTopic: tag
-                  }
-                });
+                navigate(`/topics?search_term=${encodeURIComponent(tag)}`);
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#f8f9fa";

@@ -29,7 +29,6 @@ import {
 } from "../lib/errors";
 import { applyGraphStyle } from "../lib/graph";
 import {
-  DEFAULT_ROLE,
   NavState,
   cleanNavState,
   guessNavState,
@@ -200,12 +199,15 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
           setGraphFile({ name, extension, textContent });
           return readGraph({ name, extension, textContent });
         })
-        .then((rawGraph) => prepareGraph(rawGraph))
-        .then(({ graph, report }) => {
+        .then((rawGraph) => {
+          if (!rawGraph) throw new Error("Parsed graph is empty or invalid (possibly no edges).");
+          return prepareGraph(rawGraph);
+        })
+        .then(({ graph, report, hasEdges }) => {
           const notif = getReportNotification(report, /*rawNavState.role !== "d"*/ true);
           if (notif) notify(notif);
 
-          const richData = enrichData(graph);
+          const richData = enrichData(graph, hasEdges);
           setData(richData);
 
           if (fromHome) {
@@ -235,6 +237,24 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
     }
   }, [url, local, ready]);
   /* eslint-enable react-hooks/exhaustive-deps */
+
+  useEffect(() => {
+    if (!data || !navState) return;
+    const allFields = data.fields;
+    const { filterable, sizeable } = navState;
+    // Filter out createdAt_year from sizeable fields
+    const sizeableFields = allFields.filter(field => field !== 'createdAt_year');
+    if (
+      !filterable || filterable.length !== allFields.length ||
+      !sizeable || sizeable.length !== sizeableFields.length
+    ) {
+      setNavState({
+        ...navState,
+        filterable: allFields,
+        sizeable: sizeableFields,
+      });
+    }
+  }, [data, navState, setNavState]);
 
   if (!ready)
     return (
@@ -272,7 +292,10 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
         setShowEditionPanel,
 
         modal: modalName,
-        openModal: (modal: ModalName) => setModalName(modal),
+        openModal: (modal: ModalName) => {
+          if (modal === 'share') return; // Disable share modal
+          setModalName(modal);
+        },
         closeModal: () => setModalName(undefined),
 
         panel,

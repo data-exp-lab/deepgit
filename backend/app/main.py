@@ -1,12 +1,13 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file, url_for
 from flask_cors import CORS
 from services.topic_service import TopicService
 from services.ai_service import AITopicProcessor
+from services.gexy_node_service import GexfNodeGenerator
 import os
 import asyncio
 import re
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='gexf', static_url_path='/gexf')
 CORS(
     app,
     resources={
@@ -20,6 +21,7 @@ CORS(
 
 topic_service = TopicService()
 ai_processor = AITopicProcessor()
+gexy_node_service = GexfNodeGenerator()
 
 
 @app.route("/api/process-topics", methods=["GET", "POST"])
@@ -91,7 +93,7 @@ def ai_process():
 def explain_topic():
     try:
         data = request.get_json()
-        print("Received explain-topic request with data:", {k: v for k, v in data.items() if k != 'apiKey'})  # Log data without API key
+        # print("Received explain-topic request with data:", {k: v for k, v in data.items() if k != 'apiKey'})  # Log data without API key
         
         topic = data.get("topic", "")
         search_term = data.get("searchTerm", "")
@@ -232,6 +234,60 @@ def suggest_topics():
             "success": False,
             "error": str(e),
             "message": "An error occurred while getting suggestions"
+        }), 500
+
+
+@app.route("/api/generated-node-gexf", methods=["POST"])
+def finalized_node_gexf():
+    data = request.get_json()
+    topics = data.get("topics", [])
+    gexf_path = gexy_node_service.generate_gexf_nodes_for_topics(topics)
+    # print(topics)
+    # Read the GEXF file content
+    with open(gexf_path, "r", encoding="utf-8") as f:
+        gexf_content = f.read()
+    
+    return jsonify({
+        "success": True,
+        "gexfContent": gexf_content
+    })
+
+
+@app.route("/api/get-unique-repos", methods=["POST"])
+def get_unique_repos():
+    try:
+        data = request.get_json()
+        topics = data.get("topics", [])
+        if not topics:
+            return jsonify({
+                "success": True,
+                "count": 0
+            })
+
+        # Convert topics to lowercase for case-insensitive matching
+        topics_lower = [t.lower() for t in topics]
+        placeholders = ",".join(["?"] * len(topics_lower))
+
+        # Query to get unique repositories that have ANY of the given topics
+        query = f"""
+            SELECT COUNT(DISTINCT r.nameWithOwner) as count
+            FROM repos r
+            JOIN repo_topics t ON r.nameWithOwner = t.repo
+            WHERE LOWER(t.topic) IN ({placeholders})
+        """
+        
+        result = topic_service.con.execute(query, topics_lower).fetchone()
+        count = result[0] if result else 0
+
+        return jsonify({
+            "success": True,
+            "count": count
+        })
+    except Exception as e:
+        print(f"Error getting unique repos: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
         }), 500
 
 

@@ -14,7 +14,7 @@ import { saveFileFromURL } from "../utils/file";
 
 const GraphSumUp: FC = () => {
   const { origin, pathname } = window.location;
-  const { embedMode, navState, data, computedData, setNavState } = useContext(GraphContext);
+  const { embedMode, navState, data, computedData, setNavState, graphFile } = useContext(GraphContext);
 
   const { graph } = data;
   const attributes = useMemo(() => graph.getAttributes(), [graph]);
@@ -27,9 +27,21 @@ const GraphSumUp: FC = () => {
   const hasFilter = nodesVisible < nodesTotal;
 
   const downloadData = useCallback(() => {
-    const url = navState.url || "";
-    saveFileFromURL(url, url.replace(/(^.*[\\/]|[?#].*$)/g, ""));
-  }, [navState.url]);
+    if (navState.local && graphFile) {
+      // For local file, create a Blob and download it using a temporary URL.
+      const blob = new Blob([graphFile.textContent], { type: "application/xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = graphFile.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      // For a public URL, use the existing saveFileFromURL.
+      const url = navState.url || "";
+      saveFileFromURL(url, url.replace(/(^.*[\\/]|[?#].*$)/g, ""));
+    }
+  }, [navState.local, navState.url, graphFile]);
 
   const graphURL = useMemo(() => {
     return origin + pathname + `#/graph?` + navStateToQueryURL(cleanNavState(navState, data as Data));
@@ -85,7 +97,7 @@ const GraphSumUp: FC = () => {
             <MdOutlineOpenInNew />
           </a>
         )}
-        <button className="btn btn-outline-dark me-2 mt-1" onClick={downloadData} disabled={!!navState.local}>
+        <button className="btn btn-outline-dark me-2 mt-1" onClick={downloadData}>
           <FaFileDownload /> Download dataset
         </button>
         {navState.role !== "v" && (

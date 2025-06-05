@@ -58,12 +58,11 @@ const REPORT_DICT: Record<
   missingNodeLabels: {
     level: "warning",
     log: (n) =>
-      `${n > 1 ? n : "One"} node${n > 1 ? "s have" : " has"} no label. ${
-        n > 1 ? "Their keys are" : "Its key is"
+      `${n > 1 ? n : "One"} node${n > 1 ? "s have" : " has"} no label. ${n > 1 ? "Their keys are" : "Its key is"
       } used instead (${n > 1 ? "they are" : "it is"} italic in the graph).`,
   },
   missingNodePositions: {
-    level: "warning",
+    level: "info",
     log: (n) => (
       <>
         {n === 1 ? "One" : n} node{n > 1 ? "s have" : " has"} no position. The layout has been determined using{" "}
