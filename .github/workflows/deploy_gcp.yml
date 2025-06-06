@@ -1,8 +1,5 @@
 name: Deploy to Google Cloud Platform
 on:
-  push:
-    branches:
-      - 'deploy'
   pull_request:
     branches:
       - 'deploy'
