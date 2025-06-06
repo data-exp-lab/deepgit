@@ -1,6 +1,6 @@
 name: Deploy to Google Cloud Platform
 on:
-  pull_request:
+  push:
     branches:
       - 'deploy'
   workflow_dispatch: # TODO: should be removed when the workflow is stable
