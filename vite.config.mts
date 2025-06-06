@@ -46,16 +46,15 @@ export default defineConfig({
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
     allowedHosts: ["deepgit.onrender.com"]
   },
-  // Disable automatic public directory copying
-  publicDir: false,
-  // Manually copy only specific files from public
+  // Only disable public directory copying during build
+  publicDir: process.env.NODE_ENV === 'production' ? false : 'public',
   build: {
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
       },
     },
-    // Copy only specific files from public
+    // Copy only specific files from public during build
     copyPublicDir: true,
     assetsInlineLimit: 0,
   },

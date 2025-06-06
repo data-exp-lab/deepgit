@@ -42,5 +42,4 @@ fi
 # Start the frontend development server
 echo "Starting frontend server..."
 cd ../..
-npm run build
-npm start
+npm run dev
