@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - 'deploy'
+  pull_request:
+    branches:
+      - 'deploy'
   workflow_dispatch: # TODO: should be removed when the workflow is stable
 
 jobs:
