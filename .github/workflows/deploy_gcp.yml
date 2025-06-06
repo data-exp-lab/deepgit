@@ -32,7 +32,7 @@ jobs:
           user: "user"
           zone: 'us-central1-f'
           ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
-          command: 'echo Hello world'
+          script: ${{ github.workspace }}/.github/scripts/deploy_deepgit.sh
 
       - id: 'test'
         run: |-
