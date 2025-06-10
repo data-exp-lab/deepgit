@@ -1,2 +1,22 @@
-echo Hello World
-ls -l
+#!/bin/bash
+# This should be run inside GCP compute engine
+
+# pull deploy branch
+cd ~/projects/deepgit
+git pull origin deploy
+
+# build and deploy the frontend
+npm install
+rm -rf 
+npm run build
+sudo rm -rf /var/www/deepgit-app/*
+sudo cp -rf ~/projects/deepgit
+
+# build and deploy the backend
+source .venv/bin/activate
+cd backend
+pip install -r requirements.txt
+
+# restart nginx and gunicorn
+sudo systemctl restart nginx
+sudo systemctl restart gunicorn
