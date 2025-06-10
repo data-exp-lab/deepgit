@@ -16,9 +16,8 @@ sudo cp -rf ~/projects/deepgit/dist/* /var/www/deepgit-app/.
 
 # build and deploy the backend
 cd ~/projects/deepgit
-source .venv/bin/activate
 cd backend
-pip install -r requirements.txt --quiet
+~/projects/deepgit/.venv/bin/pip install -r requirements.txt --quiet
 
 # restart nginx and gunicorn
 sudo systemctl restart nginx
