@@ -9,6 +9,7 @@ git pull origin deploy --quiet
 npm --silent install
 rm -rf dist
 npm run --silent build
+touch dist/$(git log -1 --pretty=format:%H)
 sudo rm -rf /var/www/deepgit-app/*
 sudo cp -rf ~/projects/deepgit/dist/* /var/www/deepgit-app/.
 

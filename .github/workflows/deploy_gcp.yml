@@ -32,6 +32,11 @@ jobs:
           script: ${{ github.workspace }}/.github/scripts/deploy_deepgit.sh
 
       - id: 'check-deployment-status'
-        run: |-
-          echo '${{ steps.compute-ssh.outputs.stdout }}'
-          echo '${{ steps.compute-ssh.outputs.stderr }}'
+        uses: 'google-github-actions/ssh-compute@v1'
+        with:
+          instance_name: 'instance-1'
+          project_id: 'deepgit'
+          user: "user"
+          zone: 'us-central1-f'
+          ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
+          command: 'ls /var/www/deepgit-app/${{ github.sha }}'
