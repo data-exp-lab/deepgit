@@ -30,3 +30,8 @@ jobs:
           zone: 'us-central1-f'
           ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
           script: ${{ github.workspace }}/.github/scripts/deploy_deepgit.sh
+
+      - id: 'check-deployment-status'
+        run: |-
+          echo '${{ steps.compute-ssh.outputs.stdout }}'
+          echo '${{ steps.compute-ssh.outputs.stderr }}'

@@ -3,19 +3,19 @@
 
 # pull deploy branch
 cd ~/projects/deepgit
-git pull origin deploy
+git pull origin deploy --quiet
 
 # build and deploy the frontend
-npm install
+npm --silent install
 rm -rf dist
-npm run build
+npm run --silent build
 sudo rm -rf /var/www/deepgit-app/*
 sudo cp -rf ~/projects/deepgit/dist/* /var/www/deepgit-app/.
 
 # build and deploy the backend
 source .venv/bin/activate
 cd backend
-pip install -r requirements.txt
+pip install -r requirements.txt --quiet
 
 # restart nginx and gunicorn
 sudo systemctl restart nginx
