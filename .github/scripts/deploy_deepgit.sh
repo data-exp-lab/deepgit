@@ -6,6 +6,7 @@ cd ~/projects/deepgit
 git pull origin deploy --quiet
 
 # build and deploy the frontend
+cd ~/projects/deepgit
 npm --silent install
 rm -rf dist
 npm run --silent build
@@ -14,6 +15,7 @@ sudo rm -rf /var/www/deepgit-app/*
 sudo cp -rf ~/projects/deepgit/dist/* /var/www/deepgit-app/.
 
 # build and deploy the backend
+cd ~/projects/deepgit
 source .venv/bin/activate
 cd backend
 pip install -r requirements.txt --quiet
