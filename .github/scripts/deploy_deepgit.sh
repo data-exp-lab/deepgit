@@ -21,9 +21,3 @@ pip install -r requirements.txt
 sudo systemctl restart nginx
 sudo systemctl restart gunicorn
 
-# check bash status
-if [[ $? -eq 0 ]]; then
-    echo "Script succeeded"
-else
-    echo "Script failed"
-fi
