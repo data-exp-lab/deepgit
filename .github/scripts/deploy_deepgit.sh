@@ -10,7 +10,7 @@ npm install
 rm -rf dist
 npm run build
 sudo rm -rf /var/www/deepgit-app/*
-sudo cp -rf ~/projects/deepgit
+sudo cp -rf ~/projects/deepgit/dist/* /var/www/deepgit-app/*
 
 # build and deploy the backend
 source .venv/bin/activate
