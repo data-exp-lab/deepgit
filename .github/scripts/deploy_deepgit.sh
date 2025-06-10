@@ -7,7 +7,7 @@ git pull origin deploy
 
 # build and deploy the frontend
 npm install
-rm -rf 
+rm -rf dist
 npm run build
 sudo rm -rf /var/www/deepgit-app/*
 sudo cp -rf ~/projects/deepgit
