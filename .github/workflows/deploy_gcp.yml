@@ -1,0 +1,32 @@
+name: Deploy to Google Cloud Platform
+on:
+  push:
+    branches:
+      - 'deploy'
+
+jobs:
+  deploy-to-vm:
+    runs-on: ubuntu-latest # supporting Node 20
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: 'auth'
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: 'deepgit'
+          workload_identity_provider: 'projects/417733706772/locations/global/workloadIdentityPools/deployment/providers/github'
+
+      - name: 'Deploy'
+        id: 'compute-ssh'
+        uses: 'google-github-actions/ssh-compute@v1'
+        with:
+          instance_name: 'instance-1'
+          project_id: 'deepgit'
+          user: "user"
+          zone: 'us-central1-f'
+          ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
+          script: ${{ github.workspace }}/.github/scripts/deploy_deepgit.sh
