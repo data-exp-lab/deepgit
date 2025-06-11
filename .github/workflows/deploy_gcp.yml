@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - 'deploy'
-  workflow_dispatch: # TODO: should be removed when the workflow is stable
 
 jobs:
   deploy-to-vm:
