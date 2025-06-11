@@ -31,14 +31,3 @@ jobs:
           zone: 'us-central1-f'
           ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
           script: ${{ github.workspace }}/.github/scripts/deploy_deepgit.sh
-
-      - name: 'Check deployment'
-        id: 'check-deployment-status'
-        uses: 'google-github-actions/ssh-compute@v1'
-        with:
-          instance_name: 'instance-1'
-          project_id: 'deepgit'
-          user: "user"
-          zone: 'us-central1-f'
-          ssh_private_key: '${{ secrets.GCP_SSH_PRIVATE_KEY }}'
-          command: 'sudo ls /var/www/deepgit-app/${{ github.sha }}'
