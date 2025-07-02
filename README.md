@@ -22,17 +22,24 @@ DeepGit is a free, open-source web application designed to help researchers and 
 1. Clone the repository:
 ```bash
 git clone https://github.com/data-exp-lab/deepgit.git
-cd deepgit
 ```
 
-2. Install dependencies:
+2. Install frontend dependencies:
 ```bash
+cd deepgit
 npm install
 ```
 
-3. Start the development server:
+3. Install the backend dependencies:
 ```bash
-npm run dev:watch
+cd backend
+pip install -r requirements.txt
+```
+
+4. Start the development server:
+```bash
+cd ..
+bash start.sh
 ```
 # Acknowledgment
 DeepGit is built upon [Retina](https://ouestware.gitlab.io/retina/1.0.0-beta.4/#/) developed by [OuestWare](https://www.ouestware.com/en/)
