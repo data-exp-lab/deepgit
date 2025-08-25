@@ -8,19 +8,14 @@ import { VscSettings } from "react-icons/vsc";
 import Select from "react-select";
 
 import {
-  DEFAULT_EDGE_SIZE_RATIO,
   DEFAULT_LABEL_SIZE,
   DEFAULT_LABEL_THRESHOLD,
-  DEFAULT_NODE_SIZE_RATIO,
   LABEL_SIZE_STEP,
   LABEL_THRESHOLD_STEP,
   MAX_LABEL_SIZE,
   MAX_LABEL_THRESHOLD,
-  MAX_NODE_SIZE_RATIO,
   MIN_LABEL_SIZE,
   MIN_LABEL_THRESHOLD,
-  MIN_NODE_SIZE_RATIO,
-  NODE_SIZE_RATIO_STEP,
   RANGE_STYLE,
   SLIDER_STYLE,
   DEFAULT_SELECT_PROPS,
@@ -36,13 +31,11 @@ interface Option {
 
 const ReadabilityBlock: FC = () => {
   // const { navState, setNavState } = useContext(GraphContext);
-  const { navState, setNavState, showEditionPanel, setShowEditionPanel, setShowEdgePanel, data } = useContext(GraphContext);
+  const { navState, setNavState, setShowEditionPanel, setShowEdgePanel, data } = useContext(GraphContext);
   const [initialNavState] = useState<NavState>(navState);
 
   const minLabelSize = typeof navState.minLabelSize === "number" ? navState.minLabelSize : DEFAULT_LABEL_SIZE;
   const maxLabelSize = typeof navState.maxLabelSize === "number" ? navState.maxLabelSize : DEFAULT_LABEL_SIZE;
-  const nodeSizeRatio = typeof navState.nodeSizeRatio === "number" ? navState.nodeSizeRatio : DEFAULT_NODE_SIZE_RATIO;
-  const edgeSizeRatio = typeof navState.edgeSizeRatio === "number" ? navState.edgeSizeRatio : DEFAULT_EDGE_SIZE_RATIO;
   const labelThresholdRatio =
     typeof navState.labelThresholdRatio === "number" ? navState.labelThresholdRatio : DEFAULT_LABEL_THRESHOLD;
 
@@ -144,7 +137,7 @@ const ReadabilityBlock: FC = () => {
             <FaTimes /> Restore default
           </button>
         </h3>
-        <div className="pb-3">
+        <div className="pb-3" style={{ marginBottom: '2rem' }}>
           <Select
             {...DEFAULT_SELECT_PROPS}
             isMulti

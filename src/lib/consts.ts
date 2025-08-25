@@ -114,6 +114,16 @@ export const RANGE_STYLE = {
 };
 export const DEFAULT_SELECT_PROPS = {
   classNamePrefix: "react-select",
+  styles: {
+    menu: (provided: any) => ({
+      ...provided,
+      zIndex: 9999,
+    }),
+    menuPortal: (provided: any) => ({
+      ...provided,
+      zIndex: 9999,
+    }),
+  },
 };
 export const DEFAULT_LINKIFY_PROPS: Partial<LinkifyProps> = {
   textDecorator: (str) => str.replace(/^https?:\/\//, ""),

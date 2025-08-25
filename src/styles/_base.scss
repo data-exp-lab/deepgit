@@ -152,13 +152,14 @@ input::-webkit-inner-spin-button {
  * Vendors:
  */
 .react-select__menu-portal {
-  z-index: $zindex-tooltip !important;
+  z-index: 9999 !important;
 }
 .react-select__control {
   border-color: black !important;
 }
 .react-select__menu {
   margin-bottom: 1em;
+  z-index: 9999 !important;
 }
 .react-select__menu-list {
   @extend .custom-scrollbar;
