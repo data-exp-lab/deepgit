@@ -5,7 +5,7 @@ import { keyBy, take } from "lodash";
 import React, { FC, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { BiRadioCircleMarked } from "react-icons/bi";
 import { BsSearch, BsZoomIn, BsZoomOut } from "react-icons/bs";
-import { FaFileImage } from "react-icons/fa";
+import { FaFileImage, FaDownload } from "react-icons/fa";
 import { OptionProps } from "react-select";
 import AsyncSelect from "react-select/async";
 import { Coordinates } from "sigma/types";
@@ -38,11 +38,11 @@ function cropOptions(options: Option[]): Option[] {
   const moreOptionsCount = options.length - MAX_OPTIONS;
   return moreOptionsCount > 1
     ? take(options, MAX_OPTIONS).concat({
-        type: TYPE_MESSAGE,
-        value: RETINA_FIELD_PREFIX + "more-values",
-        label: `...and ${moreOptionsCount > 1 ? moreOptionsCount + " more nodes" : "one more node"}`,
-        isDisabled: true,
-      })
+      type: TYPE_MESSAGE,
+      value: RETINA_FIELD_PREFIX + "more-values",
+      label: `...and ${moreOptionsCount > 1 ? moreOptionsCount + " more nodes" : "one more node"}`,
+      isDisabled: true,
+    })
     : options;
 }
 
@@ -174,6 +174,7 @@ const GraphSearch: FC = () => {
 const GraphControls: FC = () => {
   const sigma = useSigma();
   const graph = sigma.getGraph();
+  const { graphFile } = useContext(GraphContext);
 
   const zoom = useCallback(
     (ratio?: number): void => {
@@ -198,6 +199,20 @@ const GraphControls: FC = () => {
     });
   }, [graph, sigma]);
 
+  const downloadGraph = useCallback(() => {
+    if (graphFile) {
+      const blob = new Blob([graphFile.textContent], { type: "application/xml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = graphFile.name || "graph.gexf";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  }, [graphFile]);
+
   return (
     <>
       <GraphSearch />
@@ -216,6 +231,10 @@ const GraphControls: FC = () => {
 
       <button className="btn btn-outline-dark graph-button mt-3" onClick={downloadImage} title="Download as image">
         <FaFileImage />
+      </button>
+
+      <button className="btn btn-outline-dark graph-button mt-3" onClick={downloadGraph} title="Download graph file (.gexf)">
+        <FaDownload />
       </button>
     </>
   );

@@ -97,9 +97,9 @@ const GraphSumUp: FC = () => {
             <MdOutlineOpenInNew />
           </a>
         )}
-        <button className="btn btn-outline-dark me-2 mt-1" onClick={downloadData}>
+        {/* <button className="btn btn-outline-dark me-2 mt-1" onClick={downloadData}>
           <FaFileDownload /> Download the Graph File (.gexf)
-        </button>
+        </button> */}
         {navState.role !== "v" && (
           <button
             className="btn btn-outline-dark mt-1"

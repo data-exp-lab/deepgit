@@ -209,6 +209,11 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                             colorable: "color",
                           }[key];
 
+                          // Debug logging
+                          if (key === "sizeable") {
+                            console.log(`Field: ${f}, Type: ${field.type}, Disabled: ${disabled}, Checked: ${checked}`);
+                          }
+
                           return (
                             <td key={key} className="align-middle text-center">
                               <input
