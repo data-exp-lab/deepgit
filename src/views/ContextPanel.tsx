@@ -105,9 +105,9 @@ const ContextPanel: FC = () => {
               </button>
             )}
             */}
-            <Link className="btn btn-outline-dark ms-2 mt-1" title="Retina's homepage" to="/">
+            {/* <Link className="btn btn-outline-dark ms-2 mt-1" title="Retina's homepage" to="/">
               <FaHome />
-            </Link>
+            </Link> */}
           </span>
         </div>
       </div>

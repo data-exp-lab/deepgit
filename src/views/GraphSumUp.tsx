@@ -98,7 +98,7 @@ const GraphSumUp: FC = () => {
           </a>
         )}
         <button className="btn btn-outline-dark me-2 mt-1" onClick={downloadData}>
-          <FaFileDownload /> Download dataset
+          <FaFileDownload /> Download the Graph File (.gexf)
         </button>
         {navState.role !== "v" && (
           <button
