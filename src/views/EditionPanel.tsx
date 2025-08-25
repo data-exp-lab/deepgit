@@ -1,7 +1,7 @@
 import cx from "classnames";
 import { keyBy, pull, uniqBy } from "lodash";
 import React, { FC, JSX, useContext, useMemo } from "react";
-import { BiSolidNetworkChart } from "react-icons/bi";
+// import { BiSolidNetworkChart } from "react-icons/bi";
 import { BsPaletteFill, BsShare } from "react-icons/bs";
 import { FaTimes } from "react-icons/fa";
 import { MdBubbleChart } from "react-icons/md";
@@ -119,10 +119,10 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                 style={{ height: "1em", filter: "invert(1)" }} // Inverts colors (turns black to white)
                 className="me-1 mb-1"
               />
-              Welcome to DeepGit
+              Explore Configuration
             </h1>
 
-            <p>
+            {/* <p>
               Before sharing your graph online, you can first select various options on how users will{" "}
               <strong>read and interrogate</strong> this graph.
             </p>
@@ -150,9 +150,9 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                 </button>{" "}
                 button to <strong>share</strong> or <strong>embed</strong> this graph.
               </p>
-            )}
+            )} */}
 
-            <div className="sticky-top py-3 border-bottom bg-dark mb-3">
+            {/* <div className="sticky-top py-3 border-bottom bg-dark mb-3">
               <button
                 className="btn btn-light w-100 text-center"
                 onClick={() => {
@@ -164,10 +164,10 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                   <BiSolidNetworkChart /> start exploring
                 </strong>
               </button>
-            </div>
+            </div> */}
 
             <div className="mb-3">
-              <h3 className="form-label fs-6 mb-0">Which fields should be actionable?</h3>
+              <h3 className="form-label fs-6 mb-3">Here is the place that you can set up the dimensions that can use in the explore</h3>
 
               <table className="table">
                 <thead>
@@ -266,24 +266,7 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
               </table>
             </div>
 
-            <div className="mb-3">
-              <label className="form-label" htmlFor="hovered-fields-input">
-                <h3 className="form-label fs-6 mb-0">Which node information should show up on hovered nodes?</h3>
-              </label>
-              <Select
-                {...DEFAULT_SELECT_PROPS}
-                isMulti
-                className="text-black"
-                inputId="hovered-fields-input"
-                options={subtitleOptions}
-                value={selectedOptions}
-                onChange={(v) => setNavState({ ...navState, subtitleFields: v.map((o) => o.field) as string[] })}
-                isDisabled={subtitleOptions.length < 1}
-                placeholder="Select fields..."
-              />
-            </div>
-
-            <div className="mb-3">
+            {/* <div className="mb-3">
               <label className="form-label" htmlFor="edge-coloring-input">
                 <h3 className="form-label fs-6 mb-0">How should the edges be colored?</h3>
               </label>
@@ -329,7 +312,7 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                   },
                 }}
               />
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

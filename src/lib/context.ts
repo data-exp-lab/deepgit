@@ -27,6 +27,8 @@ type GraphContextType = {
 
   showEditionPanel: boolean;
   setShowEditionPanel: Dispatch<SetStateAction<boolean>>;
+  showEdgePanel: boolean;
+  setShowEdgePanel: Dispatch<SetStateAction<boolean>>;
 
   navState: NavState;
   computedData: ComputedData;

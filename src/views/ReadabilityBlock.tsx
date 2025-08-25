@@ -1,10 +1,11 @@
 import cx from "classnames";
-import { isEqual } from "lodash";
+import { isEqual, keyBy, uniqBy } from "lodash";
 import Slider, { SliderProps } from "rc-slider";
-import React, { FC, useContext, useState } from "react";
+import React, { FC, useContext, useState, useMemo } from "react";
 import { FaTimes, FaUndo } from "react-icons/fa";
-import { FaGear } from "react-icons/fa6";
+import { FaGear, FaNetworkWired } from "react-icons/fa6";
 import { VscSettings } from "react-icons/vsc";
+import Select from "react-select";
 
 import {
   DEFAULT_EDGE_SIZE_RATIO,
@@ -22,13 +23,20 @@ import {
   NODE_SIZE_RATIO_STEP,
   RANGE_STYLE,
   SLIDER_STYLE,
+  DEFAULT_SELECT_PROPS,
 } from "../lib/consts";
 import { GraphContext } from "../lib/context";
 import { NavState } from "../lib/navState";
 
+interface Option {
+  value: string;
+  label: string;
+  field?: string;
+}
+
 const ReadabilityBlock: FC = () => {
   // const { navState, setNavState } = useContext(GraphContext);
-  const { navState, setNavState, showEditionPanel, setShowEditionPanel } = useContext(GraphContext);
+  const { navState, setNavState, showEditionPanel, setShowEditionPanel, setShowEdgePanel, data } = useContext(GraphContext);
   const [initialNavState] = useState<NavState>(navState);
 
   const minLabelSize = typeof navState.minLabelSize === "number" ? navState.minLabelSize : DEFAULT_LABEL_SIZE;
@@ -37,6 +45,26 @@ const ReadabilityBlock: FC = () => {
   const edgeSizeRatio = typeof navState.edgeSizeRatio === "number" ? navState.edgeSizeRatio : DEFAULT_EDGE_SIZE_RATIO;
   const labelThresholdRatio =
     typeof navState.labelThresholdRatio === "number" ? navState.labelThresholdRatio : DEFAULT_LABEL_THRESHOLD;
+
+  const { fields, fieldsIndex } = data;
+
+  const subtitleOptions: Option[] = useMemo(
+    () =>
+      uniqBy(
+        fields.map((key) => {
+          const field = fieldsIndex[key];
+          return {
+            value: `${key}-field`,
+            label: field.label,
+            field: key,
+          };
+        }),
+        ({ field }) => fieldsIndex[field].rawFieldId,
+      ),
+    [fields, fieldsIndex],
+  );
+  const optionsIndex = keyBy(subtitleOptions, "field");
+  const selectedOptions = (navState.subtitleFields || []).map((f) => optionsIndex[f]);
 
   const cancel = () => setNavState(initialNavState);
 
@@ -49,36 +77,86 @@ const ReadabilityBlock: FC = () => {
       <br />
 
       <div className="d-flex flex-row mt-1">
+        {navState.role !== "v" && (
+          <>
+            <button
+              type="button"
+              className="btn btn-outline-dark flex-grow-1 me-1"
+              disabled={navState.role === "d"}
+              onClick={() => {
+                // Close edge panel if open, then open edition panel
+                setShowEdgePanel(false);
+                setShowEditionPanel(true);
+                // Set the role if needed
+                setNavState({
+                  ...navState,
+                  role: "d",
+                });
+              }}
+            >
+              <FaGear /> Configure Explore
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline-dark flex-grow-1 me-1"
+              disabled={navState.role === "d"}
+              onClick={() => {
+                // Close edition panel if open, then open edge panel
+                setShowEditionPanel(false);
+                setShowEdgePanel(true);
+                // Set the role if needed
+                setNavState({
+                  ...navState,
+                  role: "d",
+                });
+              }}
+            >
+              <FaNetworkWired /> Configure Edge
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="d-flex flex-row mt-1">
         <button
           type="button"
-          className="btn btn-outline-dark flex-grow-1 me-1"
+          className="btn btn-outline-dark flex-grow-1"
           onClick={cancel}
           disabled={isEqual(navState, initialNavState)}
         >
           <FaUndo /> Cancel modifications
         </button>
-
-        {navState.role !== "v" && (
-          <button
-            type="button"
-            className="btn btn-outline-dark flex-grow-1"
-            disabled={navState.role === "d"}
-            onClick={() => {
-              // Toggle the edition panel
-              setShowEditionPanel(!showEditionPanel);
-              // Also set the role if needed
-              setNavState({
-                ...navState,
-                role: "d",
-              });
-            }}
-          >
-            <FaGear /> Configure this graph for DeepGit
-          </button>
-        )}
       </div>
 
       <br />
+
+      <div className="mb-3">
+        <h3 className="fs-6 form-label with-end-buttons">
+          <label>Which node information should show up on hovered nodes?</label>
+          <button
+            className={cx(
+              "btn btn-ico btn-sm btn-outline-dark",
+              !navState.subtitleFields?.length && "hidden",
+            )}
+            disabled={!navState.subtitleFields?.length}
+            onClick={() => setNavState({ ...navState, subtitleFields: [] })}
+          >
+            <FaTimes /> Restore default
+          </button>
+        </h3>
+        <div className="pb-3">
+          <Select
+            {...DEFAULT_SELECT_PROPS}
+            isMulti
+            className="text-black"
+            options={subtitleOptions}
+            value={selectedOptions}
+            onChange={(v) => setNavState({ ...navState, subtitleFields: v.map((o) => o.field) as string[] })}
+            isDisabled={subtitleOptions.length < 1}
+            placeholder="Select fields..."
+          />
+        </div>
+      </div>
 
       <div className="mb-3">
         <h3 className="fs-6 form-label with-end-buttons">
@@ -120,7 +198,7 @@ const ReadabilityBlock: FC = () => {
         </div>
       </div>
 
-      <div className="mb-3">
+      {/* <div className="mb-3">
         <h3 className="fs-6 form-label with-end-buttons">
           <label>Node sizes</label>
           <button
@@ -154,9 +232,9 @@ const ReadabilityBlock: FC = () => {
             {...SLIDER_STYLE}
           />
         </div>
-      </div>
+      </div> */}
 
-      <div className="mb-3">
+      {/* <div className="mb-3">
         <h3 className="fs-6 form-label with-end-buttons">
           <label>Edge sizes</label>
           <button
@@ -190,7 +268,7 @@ const ReadabilityBlock: FC = () => {
             {...SLIDER_STYLE}
           />
         </div>
-      </div>
+      </div> */}
 
       <div className="mb-3">
         <h3 className="fs-6 form-label with-end-buttons">
