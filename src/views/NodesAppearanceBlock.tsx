@@ -1,5 +1,5 @@
 import cx from "classnames";
-import React, { FC, useContext, useMemo } from "react";
+import React, { FC, useContext } from "react";
 import { BsPaletteFill } from "react-icons/bs";
 import { MdBubbleChart } from "react-icons/md";
 import Select from "react-select";
@@ -20,43 +20,53 @@ const NodesAppearanceBlock: FC = () => {
   const { role, nodeColorField, nodeSizeField, colorable, sizeable, disableDefaultColor, disableDefaultSize } =
     navState;
 
-  const colorOptions: Option[] = useMemo(
-    () => [
-      ...(disableDefaultColor ? [] : [{ value: "none", label: "Default (use colors from the graph file)" }]),
-      ...(colorable || []).map((key) => {
-        const field = fieldsIndex[key];
-        return {
-          value: `${key}-field`,
-          label: field.label,
-          field: key,
-        };
-      }),
-    ],
-    [colorable, fieldsIndex, disableDefaultColor],
-  );
+  // console.log("NodesAppearanceBlock render:", {
+  //   data: !!data,
+  //   fieldsIndex: !!fieldsIndex,
+  //   sizeable,
+  //   disableDefaultSize,
+  //   role,
+  //   nodeSizeField
+  // });
+
+  const colorOptions: Option[] = [
+    ...(disableDefaultColor ? [] : [{ value: "none", label: "Default (use colors from the graph file)" }]),
+    ...(colorable || []).map((key) => {
+      const field = fieldsIndex[key];
+      return {
+        value: `${key}-field`,
+        label: field.label,
+        field: key,
+      };
+    }),
+  ];
   const colorOption = nodeColorField
     ? colorOptions.find((o) => o.field === nodeColorField) || colorOptions[0]
     : colorOptions[0];
 
-  const sizeOptions: Option[] = useMemo(
-    () => [
-      ...(disableDefaultSize ? [] : [{ value: "none", label: "Default (use sizes from the graph file)" }]),
-      ...(sizeable || []).map((key) => {
-        const field = fieldsIndex[key];
-        return {
-          value: `${key}-field`,
-          label: field.label,
-          field: key,
-        };
-      }),
-    ],
-    [sizeable, fieldsIndex, disableDefaultSize],
-  );
+  // Always include PageRank option, regardless of other conditions
+  const sizeOptions: Option[] = [
+    ...(disableDefaultSize ? [] : [{ value: "none", label: "Default (use sizes from the graph file)" }]),
+    { value: "pagerank", label: "PageRank (importance based on connections)", field: "pagerank" },
+    ...(sizeable || []).map((key) => {
+      const field = fieldsIndex[key];
+      return {
+        value: `${key}-field`,
+        label: field.label,
+        field: key,
+      };
+    }),
+  ];
   const sizeOption = nodeSizeField
     ? sizeOptions.find((o) => o.field === nodeSizeField) || sizeOptions[0]
     : sizeOptions[0];
+
+
+
   const showSizes = sizeOptions.length > 1;
   const showColors = colorOptions.length > 1;
+
+
 
   if (!showSizes && !showColors) return null;
   if (role === "v") return null;
@@ -96,9 +106,18 @@ const NodesAppearanceBlock: FC = () => {
               menuPortalTarget={portalTarget}
               options={sizeOptions}
               value={sizeOption}
-              onChange={(o) => setNavState({ ...navState, nodeSizeField: o?.field })}
+              onChange={(o) => {
+                // Handle special case for PageRank
+                const fieldValue = o?.field === "pagerank" ? "pagerank" : o?.field;
+                setNavState({ ...navState, nodeSizeField: fieldValue });
+              }}
               isDisabled={sizeOptions.length <= 1}
             />
+            {sizeOption?.field === "pagerank" && (
+              <small className="form-text text-muted mt-1">
+                Note: PageRank sizing will automatically reset to default when new edges are created.
+              </small>
+            )}
           </div>
         )}
       </div>

@@ -3,6 +3,7 @@ import _, { max, min, sortBy } from "lodash";
 import { Dimensions } from "sigma/types";
 
 import { findRanges } from "../utils/number";
+import { calculatePageRank } from "../utils/graphAlgorithms";
 import {
   DEFAULT_NODE_COLOR,
   DEFAULT_NODE_SIZE_RATIO,
@@ -129,20 +130,62 @@ export function getNodeSizes(
 
   if (typeof nodeSizeField === "string") {
     nodeSizes = {};
-    const field = fieldsIndex[nodeSizeField];
 
-    if (field.type === "quanti") {
-      getSize = (value: any) => {
-        const size =
-          typeof value === "number"
-            ? ((NODE_SIZE_MAX - NODE_SIZE_MIN) * (value - field.min)) / (field.max - field.min) + NODE_SIZE_MIN
-            : NODE_DEFAULT_SIZE;
-        return size * ratio * screenSizeRatio * graphSizeRatio;
-      };
-      graph.forEachNode((node, nodeData) => {
-        nodeSizes![node] = getSize!(getValue(nodeData, field));
-      });
-      nodeSizeExtents = [field.min, field.max];
+    // Check if it's the PageRank option
+    if (nodeSizeField === "pagerank") {
+      try {
+        // Calculate PageRank scores
+        const pageRankScores = calculatePageRank(graph);
+        const scores = Object.values(pageRankScores);
+        const minScore = min(scores) as number;
+        const maxScore = max(scores) as number;
+
+        getSize = (value: any) => {
+          const size =
+            typeof value === "number"
+              ? ((NODE_SIZE_MAX - NODE_SIZE_MIN) * (value - minScore)) / (maxScore - minScore) + NODE_SIZE_MIN
+              : NODE_DEFAULT_SIZE;
+          return size * ratio * screenSizeRatio * graphSizeRatio;
+        };
+
+        graph.forEachNode((node) => {
+          const score = pageRankScores[node] || 0;
+          nodeSizes![node] = getSize!(score);
+        });
+
+        nodeSizeExtents = [minScore, maxScore];
+      } catch (error) {
+        // Fallback to default sizing
+        nodeSizes = {};
+        const values = graph.mapNodes((_node, attributes) => attributes.rawSize);
+        nodeSizeExtents = [min(values) as number, max(values) as number];
+        graph.forEachNode((node, { rawSize }) => {
+          nodeSizes[node] =
+            (((NODE_SIZE_MAX - NODE_SIZE_MIN) * (rawSize - nodeSizeExtents[0])) /
+              (nodeSizeExtents[1] - nodeSizeExtents[0]) +
+              NODE_SIZE_MIN) *
+            ratio *
+            screenSizeRatio *
+            graphSizeRatio;
+        });
+      }
+    } else {
+      // Handle regular field-based sizing
+      const field = fieldsIndex[nodeSizeField];
+
+      if (field.type === "quanti") {
+        getSize = (value: any) => {
+          const size =
+            typeof value === "number"
+              ? ((NODE_SIZE_MAX - NODE_SIZE_MIN) * (value - field.min)) / (field.max - field.min) + NODE_SIZE_MIN
+              : NODE_DEFAULT_SIZE;
+          return size * ratio * screenSizeRatio * graphSizeRatio;
+        };
+        graph.forEachNode((node, nodeData) => {
+          nodeSizes![node] = getSize!(getValue(nodeData, field));
+        });
+        nodeSizeExtents = [field.min, field.max];
+      }
     }
   } else {
     nodeSizes = {};

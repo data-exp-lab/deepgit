@@ -73,10 +73,12 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
   const navState = useMemo(() => (data ? cleanNavState(rawNavState, data) : null), [rawNavState, data]);
   const setNavState = useCallback(
     (newNavState: NavState) => {
+      const cleanedState = data ? cleanNavState(newNavState, data) : newNavState;
+      const queryString = navStateToQueryURL(cleanedState);
       navigate(
         location.hash.replace(/^#/, "").replace(/\?.*/, "") +
         "?" +
-        navStateToQueryURL(data ? cleanNavState(newNavState, data) : newNavState),
+        queryString,
       );
     },
     [data, location.hash, navigate],

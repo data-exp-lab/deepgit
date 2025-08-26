@@ -1,24 +1,122 @@
 import cx from "classnames";
-import React, { FC, useContext, useState } from "react";
+import React, { FC, useContext, useState, useEffect } from "react";
 import { FaTimes } from "react-icons/fa";
 import Slider from "rc-slider";
 
 import { GraphContext } from "../lib/context";
 import { EdgeData } from "../lib/data";
 import { DEFAULT_EDGE_COLOR } from "../lib/consts";
+import { useNotifications } from "../lib/notifications";
 
 const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
     const { navState, setNavState, setShowEdgePanel, data, graphFile } = useContext(GraphContext);
+    const { notify } = useNotifications();
 
-    // State for edge creation criteria
-    const [topicThreshold, setTopicThreshold] = useState(2); // Start with 1 shared topic as default
-    const [contributorThreshold, setContributorThreshold] = useState(1);
-    const [stargazerThreshold, setStargazerThreshold] = useState(5);
-    const [enableTopicLinking, setEnableTopicLinking] = useState(false);
-    const [enableContributorOverlap, setEnableContributorOverlap] = useState(false);
-    const [enableSharedOrganization, setEnableSharedOrganization] = useState(false);
-    const [enableCommonStargazers, setEnableCommonStargazers] = useState(false);
-    const [enableDependencies, setEnableDependencies] = useState(false);
+    // State for edge creation criteria - use navState values if available, otherwise defaults
+    const [topicThreshold, setTopicThreshold] = useState(navState.edgeCreationTopicThreshold || 2);
+    const [contributorThreshold, setContributorThreshold] = useState(navState.edgeCreationContributorThreshold || 1);
+    const [stargazerThreshold, setStargazerThreshold] = useState(navState.edgeCreationStargazerThreshold || 5);
+    const [enableTopicLinking, setEnableTopicLinking] = useState(navState.edgeCreationEnableTopicLinking || false);
+    const [enableContributorOverlap, setEnableContributorOverlap] = useState(navState.edgeCreationEnableContributorOverlap || false);
+    const [enableSharedOrganization, setEnableSharedOrganization] = useState(navState.edgeCreationEnableSharedOrganization || false);
+    const [enableCommonStargazers, setEnableCommonStargazers] = useState(navState.edgeCreationEnableCommonStargazers || false);
+    const [enableDependencies, setEnableDependencies] = useState(navState.edgeCreationEnableDependencies || false);
+
+    // Sync local state with navState when navState changes
+    useEffect(() => {
+        if (navState.edgeCreationTopicThreshold !== undefined) {
+            setTopicThreshold(navState.edgeCreationTopicThreshold);
+        }
+        if (navState.edgeCreationContributorThreshold !== undefined) {
+            setContributorThreshold(navState.edgeCreationContributorThreshold);
+        }
+        if (navState.edgeCreationStargazerThreshold !== undefined) {
+            setStargazerThreshold(navState.edgeCreationStargazerThreshold);
+        }
+        if (navState.edgeCreationEnableTopicLinking !== undefined) {
+            setEnableTopicLinking(navState.edgeCreationEnableTopicLinking);
+        }
+        if (navState.edgeCreationEnableContributorOverlap !== undefined) {
+            setEnableContributorOverlap(navState.edgeCreationEnableContributorOverlap);
+        }
+        if (navState.edgeCreationEnableSharedOrganization !== undefined) {
+            setEnableSharedOrganization(navState.edgeCreationEnableSharedOrganization);
+        }
+        if (navState.edgeCreationEnableCommonStargazers !== undefined) {
+            setEnableCommonStargazers(navState.edgeCreationEnableCommonStargazers);
+        }
+        if (navState.edgeCreationEnableDependencies !== undefined) {
+            setEnableDependencies(navState.edgeCreationEnableDependencies);
+        }
+    }, [navState]);
+
+    // Wrapper functions to update both local state and navState
+    const updateTopicThreshold = (value: number) => {
+        setTopicThreshold(value);
+        const newNavState = {
+            ...navState,
+            edgeCreationTopicThreshold: value,
+        };
+        setNavState(newNavState);
+    };
+
+    const updateContributorThreshold = (value: number) => {
+        setContributorThreshold(value);
+        setNavState({
+            ...navState,
+            edgeCreationContributorThreshold: value,
+        });
+    };
+
+    const updateStargazerThreshold = (value: number) => {
+        setStargazerThreshold(value);
+        setNavState({
+            ...navState,
+            edgeCreationStargazerThreshold: value,
+        });
+    };
+
+    const updateEnableTopicLinking = (checked: boolean) => {
+        setEnableTopicLinking(checked);
+        setNavState({
+            ...navState,
+            edgeCreationEnableTopicLinking: checked,
+        });
+    };
+
+    const updateEnableContributorOverlap = (checked: boolean) => {
+        setEnableContributorOverlap(checked);
+        setNavState({
+            ...navState,
+            edgeCreationEnableContributorOverlap: checked,
+        });
+    };
+
+    const updateEnableSharedOrganization = (checked: boolean) => {
+        setEnableSharedOrganization(checked);
+        setNavState({
+            ...navState,
+            edgeCreationEnableSharedOrganization: checked,
+        });
+    };
+
+    const updateEnableCommonStargazers = (checked: boolean) => {
+        setEnableCommonStargazers(checked);
+        setNavState({
+            ...navState,
+            edgeCreationEnableCommonStargazers: checked,
+        });
+    };
+
+    const updateEnableDependencies = (checked: boolean) => {
+        setEnableDependencies(checked);
+        setNavState({
+            ...navState,
+            edgeCreationEnableDependencies: checked,
+        });
+    };
+
+
 
     // Function to remove all edges from the graph
     const removeAllEdges = () => {
@@ -32,7 +130,6 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
             graph.dropEdge(edge);
         });
 
-        console.log(`Removed all ${edgeCount} existing edges from the graph`);
         return edgeCount;
     };
 
@@ -43,8 +140,6 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         const { graph } = data;
         const nodes = graph.nodes();
         const edgesCreated: Array<{ source: string; target: string; sharedTopics: string[] }> = [];
-
-        console.log(`Checking ${nodes.length} nodes for topic-based edges with threshold: ${topicThreshold}`);
 
         // Get all nodes with their topics and filter out nodes without topics
         const nodeTopics: Record<string, string[]> = {};
@@ -62,11 +157,8 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
             }
         });
 
-        console.log(`Found ${nodesWithTopics.length} nodes with topics out of ${nodes.length} total nodes`);
-
         // Early exit if not enough nodes with topics
         if (nodesWithTopics.length < 2) {
-            console.log('Not enough nodes with topics to create edges');
             return edgesCreated;
         }
 
@@ -142,12 +234,6 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
             }
         });
 
-        console.log(`=== Topic-based edge creation summary ===`);
-        console.log(`Threshold: ${topicThreshold} shared topics`);
-        console.log(`Nodes with topics: ${nodesWithTopics.length}`);
-        console.log(`Edges created: ${edgesCreated.length}`);
-        console.log(`========================================`);
-
         return edgesCreated;
     };
 
@@ -159,44 +245,33 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         const nodes = graph.nodes();
         const edgesCreated: Array<{ source: string; target: string; organization: string }> = [];
 
-        console.log(`Checking ${nodes.length} nodes for shared organization edges`);
-
         // Get all nodes with their organization (owner from nameWithOwner)
         const nodeOrganizations: Record<string, string> = {};
         const nodesWithOrganization: string[] = [];
 
         nodes.forEach(nodeId => {
             const nodeData = graph.getNodeAttributes(nodeId);
-            console.log(`Node ${nodeId} attributes:`, nodeData.attributes);
 
             // Try different possible field names for owner information
             const nameWithOwner = nodeData.attributes?.nameWithOwner || nodeData.attributes?.name || nodeData.attributes?.label;
-            console.log(`Node ${nodeId}: trying field = ${nameWithOwner}`);
 
             if (nameWithOwner && typeof nameWithOwner === 'string') {
                 // Check if it contains a slash (owner/repo format)
                 if (nameWithOwner.includes('/')) {
                     const owner = nameWithOwner.split('/')[0]; // Extract owner from "owner/repo" format
-                    console.log(`  Extracted owner: ${owner}`);
                     if (owner) {
                         nodeOrganizations[nodeId] = owner;
                         nodesWithOrganization.push(nodeId);
                     }
                 } else {
-                    console.log(`  No slash found in name, using as organization: ${nameWithOwner}`);
                     nodeOrganizations[nodeId] = nameWithOwner;
                     nodesWithOrganization.push(nodeId);
                 }
-            } else {
-                console.log(`  No suitable field found for organization`);
             }
         });
 
-        console.log(`Found ${nodesWithOrganization.length} nodes with organization info out of ${nodes.length} total nodes`);
-
         // Early exit if not enough nodes with organization info
         if (nodesWithOrganization.length < 2) {
-            console.log('Not enough nodes with organization info to create edges');
             return edgesCreated;
         }
 
@@ -210,7 +285,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
             organizationToNodes[organization].push(nodeId);
         });
 
-        console.log('Organization to nodes mapping:', organizationToNodes);
+
 
         // Find nodes that share the same organization
         const processedPairs = new Set<string>();
@@ -264,11 +339,6 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
             }
         });
 
-        console.log(`=== Shared organization edge creation summary ===`);
-        console.log(`Organizations found: ${Object.keys(organizationToNodes).length}`);
-        console.log(`Edges created: ${edgesCreated.length}`);
-        console.log(`===============================================`);
-
         return edgesCreated;
     };
 
@@ -310,37 +380,28 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
             organizationToNodes[organization].push(nodeId);
         });
 
-        console.log('=== Organization Analysis ===');
-        console.log('Nodes with organization info:', nodesWithOrganization);
-        console.log('Organization to nodes mapping:', organizationToNodes);
-        console.log('=============================');
+
 
         // Find nodes that share BOTH topics AND organization
         const processedPairs = new Set<string>();
 
-        console.log('=== Starting Edge Creation ===');
-        console.log(`Processing ${Object.keys(organizationToNodes).length} organizations`);
-        console.log(`Topic threshold is: ${topicThreshold}`);
+
 
         Object.entries(organizationToNodes).forEach(([organization, nodeList]) => {
-            console.log(`Processing organization: ${organization} with ${nodeList.length} nodes`);
+
 
             if (nodeList.length > 1) {
-                console.log(`  Processing ${nodeList.length} nodes in organization ${organization}:`, nodeList);
-
                 // For each pair of nodes in the same organization
                 for (let i = 0; i < nodeList.length; i++) {
                     for (let j = i + 1; j < nodeList.length; j++) {
                         const source = nodeList[i];
                         const target = nodeList[j];
-                        console.log(`    Checking pair ${i + 1}-${j + 1}: ${source} ↔ ${target}`);
 
                         const pairKey = `${source}-${target}`;
                         const reversePairKey = `${target}-${source}`;
 
                         // Skip if we've already processed this pair
                         if (processedPairs.has(pairKey) || processedPairs.has(reversePairKey)) {
-                            console.log(`      Skipping - already processed`);
                             continue;
                         }
                         processedPairs.add(pairKey);
@@ -407,26 +468,30 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                         }
                     }
                 }
-            } else {
-                console.log(`  Skipping organization ${organization} - only ${nodeList.length} node(s)`);
             }
         });
 
-        console.log(`Created ${edges.length} combined edges (topic + organization)`);
-
-        // Debug: Check if edges are actually being added to the graph
+        // Add edges to the graph
         if (edges.length > 0) {
-            console.log('=== Adding edges to graph ===');
-            edges.forEach((edge, index) => {
-                console.log(`Adding edge ${index + 1}: ${edge.source} ↔ ${edge.target}`);
-                console.log(`  Shared topics: ${edge.sharedTopics.join(', ')}`);
-                console.log(`  Organization: ${edge.organization}`);
-
+            edges.forEach((edge) => {
                 // Check if edge already exists
-                if (graph.hasEdge(edge.source, edge.target)) {
-                    console.log(`  ⚠️ Edge already exists in graph`);
-                } else {
-                    console.log(`  ➕ Edge does not exist, will be added`);
+                if (!graph.hasEdge(edge.source, edge.target)) {
+                    // Add edge to the graph
+                    graph.addEdge(edge.source, edge.target, {
+                        size: 2,
+                        rawSize: 2,
+                        color: DEFAULT_EDGE_COLOR,
+                        rawColor: DEFAULT_EDGE_COLOR,
+                        label: `Combined: ${edge.organization} + ${edge.sharedTopics.length} topics`,
+                        directed: false,
+                        hidden: false,
+                        type: undefined,
+                        attributes: {
+                            sharedTopics: edge.sharedTopics,
+                            organization: edge.organization,
+                            edgeType: 'combined'
+                        }
+                    });
                 }
             });
         }
@@ -519,81 +584,64 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         let totalEdgesCreated = 0;
 
         // Always start by removing ALL existing edges from the graph
-        console.log('=== Starting edge creation process ===');
-        const removedCount = removeAllEdges();
-        console.log(`Removed ${removedCount} existing edges`);
+        removeAllEdges();
 
-        // Debug: Check the actual values of the boolean flags
-        console.log('=== Debug: Boolean Flags ===');
-        console.log('enableTopicLinking:', enableTopicLinking);
-        console.log('enableSharedOrganization:', enableSharedOrganization);
-        console.log('enableTopicLinking && enableSharedOrganization:', enableTopicLinking && enableSharedOrganization);
-        console.log('============================');
+
 
         // Create edges based on combined criteria
         if (enableTopicLinking && enableSharedOrganization) {
-            console.log('=== Creating edges with BOTH topic-based AND shared organization criteria ===');
-
             // Create edges that satisfy BOTH conditions (AND logic)
-            console.log('Calling createCombinedEdges()...');
             const edgesCreated = createCombinedEdges();
-            console.log('createCombinedEdges returned:', edgesCreated);
 
             if (edgesCreated && edgesCreated.length > 0) {
-                console.log(`Created ${edgesCreated.length} combined edges:`, edgesCreated);
-                console.log('Calling updateGexfContent...');
                 updateGexfContent(edgesCreated, 'combined');
                 totalEdgesCreated += edgesCreated.length;
-                console.log(`Total edges created: ${totalEdgesCreated}`);
-            } else {
-                console.log("No new combined edges were created");
             }
         } else if (enableTopicLinking) {
-            console.log('=== Creating topic-based edges only ===');
-
             // Create new edges based on current threshold
             const edgesCreated = createTopicBasedEdges();
             if (edgesCreated && edgesCreated.length > 0) {
-                console.log(`Created ${edgesCreated.length} topic-based edges:`, edgesCreated);
                 updateGexfContent(edgesCreated, 'topic-based');
                 totalEdgesCreated += edgesCreated.length;
-            } else {
-                console.log("No new topic-based edges were created");
             }
         } else if (enableSharedOrganization) {
-            console.log('=== Creating shared organization edges only ===');
-
             // Create new edges based on shared organizations
             const edgesCreated = createSharedOrganizationEdges();
             if (edgesCreated && edgesCreated.length > 0) {
-                console.log(`Created ${edgesCreated.length} organization-based edges:`, edgesCreated);
                 updateGexfContent(edgesCreated, 'organization-based');
                 totalEdgesCreated += edgesCreated.length;
-            } else {
-                console.log("No new organization-based edges were created");
             }
-        } else {
-            console.log('Both topic linking and shared organization are disabled');
         }
 
         // Force graph refresh if any edges were created
         if (totalEdgesCreated > 0) {
-            setNavState({ ...navState, role: navState.role });
+            // Reset nodeSizeField to default when edges are created since PageRank values become invalid
+            const newNavState = {
+                ...navState,
+                role: navState.role,
+                nodeSizeField: undefined, // Reset to default sizing
+                // Save current edge creation conditions
+                edgeCreationTopicThreshold: topicThreshold,
+                edgeCreationContributorThreshold: contributorThreshold,
+                edgeCreationStargazerThreshold: stargazerThreshold,
+                edgeCreationEnableTopicLinking: enableTopicLinking,
+                edgeCreationEnableContributorOverlap: enableContributorOverlap,
+                edgeCreationEnableSharedOrganization: enableSharedOrganization,
+                edgeCreationEnableCommonStargazers: enableCommonStargazers,
+                edgeCreationEnableDependencies: enableDependencies,
+            };
+            setNavState(newNavState);
+
+            // Notify user that node sizing has been reset
+            if (navState.nodeSizeField === "pagerank") {
+                notify({
+                    message: "Node sizing has been reset to default since new edges were created. PageRank values are no longer valid for the updated graph structure.",
+                    type: "info"
+                });
+            }
         }
 
-        // Log all criteria for debugging
-        console.log("Creating edges with criteria:", {
-            topicThreshold,
-            contributorThreshold,
-            stargazerThreshold,
-            enableTopicLinking,
-            enableContributorOverlap,
-            enableSharedOrganization,
-            enableCommonStargazers,
-            enableDependencies
-        });
-        console.log(`Total edges created: ${totalEdgesCreated}`);
-        console.log('=== Finished edge creation process ===');
+
     };
 
 
@@ -640,7 +688,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                     type="checkbox"
                                     className="form-check-input me-2"
                                     checked={enableTopicLinking}
-                                    onChange={(e) => setEnableTopicLinking(e.target.checked)}
+                                    onChange={(e) => updateEnableTopicLinking(e.target.checked)}
                                 />
                                 <label className="form-label mb-0">Topic Based Linking</label>
                             </div>
@@ -662,7 +710,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                             5: "5",
                                             10: "10"
                                         }}
-                                        onChange={(value) => setTopicThreshold(value as number)}
+                                        onChange={(value) => updateTopicThreshold(value as number)}
                                         className="mt-2"
                                     />
                                 </div>
@@ -676,7 +724,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                     type="checkbox"
                                     className="form-check-input me-2"
                                     checked={enableContributorOverlap}
-                                    onChange={(e) => setEnableContributorOverlap(e.target.checked)}
+                                    onChange={(e) => updateEnableContributorOverlap(e.target.checked)}
                                 />
                                 <label className="form-label mb-0">Contributor Overlap</label>
                             </div>
@@ -699,7 +747,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                             10: "10",
                                             20: "20"
                                         }}
-                                        onChange={(value) => setContributorThreshold(value as number)}
+                                        onChange={(value) => updateContributorThreshold(value as number)}
                                         className="mt-2"
                                     />
                                 </div>
@@ -713,7 +761,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                     type="checkbox"
                                     className="form-check-input me-2"
                                     checked={enableSharedOrganization}
-                                    onChange={(e) => setEnableSharedOrganization(e.target.checked)}
+                                    onChange={(e) => updateEnableSharedOrganization(e.target.checked)}
                                 />
                                 <label className="form-label mb-0">Shared Organization</label>
                             </div>
@@ -729,7 +777,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                     type="checkbox"
                                     className="form-check-input me-2"
                                     checked={enableCommonStargazers}
-                                    onChange={(e) => setEnableCommonStargazers(e.target.checked)}
+                                    onChange={(e) => updateEnableCommonStargazers(e.target.checked)}
                                 />
                                 <label className="form-label mb-0">Common Stargazers</label>
                             </div>
@@ -752,7 +800,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                             50: "50",
                                             100: "100"
                                         }}
-                                        onChange={(value) => setStargazerThreshold(value as number)}
+                                        onChange={(value) => updateStargazerThreshold(value as number)}
                                         className="mt-2"
                                     />
                                 </div>
@@ -766,7 +814,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                     type="checkbox"
                                     className="form-check-input me-2"
                                     checked={enableDependencies}
-                                    onChange={(e) => setEnableDependencies(e.target.checked)}
+                                    onChange={(e) => updateEnableDependencies(e.target.checked)}
                                 />
                                 <label className="form-label mb-0">Dependencies</label>
                             </div>
