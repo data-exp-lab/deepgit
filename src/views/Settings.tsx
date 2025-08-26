@@ -1,7 +1,7 @@
 import cx from "classnames";
 import { isEqual, keyBy, uniqBy } from "lodash";
 import Slider, { SliderProps } from "rc-slider";
-import React, { FC, useContext, useState, useMemo } from "react";
+import React, { FC, useContext, useState, useMemo, useEffect } from "react";
 import { FaTimes, FaUndo } from "react-icons/fa";
 import { FaGear, FaNetworkWired } from "react-icons/fa6";
 import { VscSettings } from "react-icons/vsc";
@@ -38,6 +38,21 @@ const Settings: FC = () => {
   const maxLabelSize = typeof navState.maxLabelSize === "number" ? navState.maxLabelSize : DEFAULT_LABEL_SIZE;
   const labelThresholdRatio =
     typeof navState.labelThresholdRatio === "number" ? navState.labelThresholdRatio : DEFAULT_LABEL_THRESHOLD;
+  // Local UI state for smoother sliders
+  const [localMinLabelSize, setLocalMinLabelSize] = useState<number>(minLabelSize);
+  const [localMaxLabelSize, setLocalMaxLabelSize] = useState<number>(maxLabelSize);
+  const [localLabelThresholdRatio, setLocalLabelThresholdRatio] = useState<number>(labelThresholdRatio);
+
+  // Keep local slider values in sync if navState changes elsewhere
+  useEffect(() => {
+    setLocalMinLabelSize(minLabelSize);
+  }, [minLabelSize]);
+  useEffect(() => {
+    setLocalMaxLabelSize(maxLabelSize);
+  }, [maxLabelSize]);
+  useEffect(() => {
+    setLocalLabelThresholdRatio(labelThresholdRatio);
+  }, [labelThresholdRatio]);
 
   const { fields, fieldsIndex } = data;
 
@@ -170,20 +185,26 @@ const Settings: FC = () => {
         <div className="pb-3">
           <Slider
             range
-            value={[minLabelSize, maxLabelSize]}
+            value={[localMinLabelSize, localMaxLabelSize]}
             min={MIN_LABEL_SIZE}
             max={MAX_LABEL_SIZE}
             step={LABEL_SIZE_STEP}
             marks={{
               [MIN_LABEL_SIZE]: MIN_LABEL_SIZE,
               [MAX_LABEL_SIZE]: MAX_LABEL_SIZE,
-              [minLabelSize]: minLabelSize,
-              [maxLabelSize]: maxLabelSize,
+              [localMinLabelSize]: localMinLabelSize,
+              [localMaxLabelSize]: localMaxLabelSize,
             }}
             onChange={
-              (([minLabelSize, maxLabelSize]: number[]) => {
-                setNavState({ ...navState, minLabelSize, maxLabelSize });
+              (([minValue, maxValue]: number[]) => {
+                setLocalMinLabelSize(minValue);
+                setLocalMaxLabelSize(maxValue);
               }) as SliderProps["onChange"]
+            }
+            onAfterChange={
+              (([minValue, maxValue]: number[]) => {
+                setNavState({ ...navState, minLabelSize: minValue, maxLabelSize: maxValue });
+              }) as SliderProps["onAfterChange"]
             }
             // Styles:
             {...RANGE_STYLE}
@@ -279,7 +300,7 @@ const Settings: FC = () => {
         </h3>
         <div className="pb-3">
           <Slider
-            value={labelThresholdRatio}
+            value={localLabelThresholdRatio}
             min={MIN_LABEL_THRESHOLD}
             max={MAX_LABEL_THRESHOLD}
             step={LABEL_THRESHOLD_STEP}
@@ -300,6 +321,8 @@ const Settings: FC = () => {
             }}
             onChange={
               ((v: number) => {
+                setLocalLabelThresholdRatio(v);
+                // Update graph in real-time for better responsiveness
                 setNavState({ ...navState, labelThresholdRatio: v });
               }) as SliderProps["onChange"]
             }

@@ -45,7 +45,7 @@ export const DEFAULT_EDGE_SIZE_RATIO = 1;
 export const EDGE_SIZE_RATIO_STEP = 0.001;
 
 export const MIN_LABEL_SIZE = 5;
-export const MAX_LABEL_SIZE = 50;
+export const MAX_LABEL_SIZE = 30;
 export const DEFAULT_LABEL_SIZE = 14;
 export const LABEL_SIZE_STEP = 1;
 
