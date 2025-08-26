@@ -98,13 +98,21 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [topicCounts, setTopicCounts] = useState<{ [key: string]: number }>({});
     const [uniqueReposCount, setUniqueReposCount] = useState<number>(0);
     const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+    const [isLoadingUniqueCount, setIsLoadingUniqueCount] = useState(false);
+    const [uniqueCountError, setUniqueCountError] = useState<string | null>(null);
 
     // Function to fetch unique repository count for all finalized topics
     const fetchUniqueReposCount = async (topics: string[]) => {
         if (topics.length === 0) {
             setUniqueReposCount(0);
+            setIsLoadingUniqueCount(false);
+            setUniqueCountError(null);
             return;
         }
+
+        setIsLoadingUniqueCount(true);
+        setUniqueCountError(null);
+
         try {
             const response = await fetch(API_ENDPOINTS.GET_UNIQUE_REPOS, {
                 method: 'POST',
@@ -113,19 +121,53 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                 },
                 body: JSON.stringify({ topics }),
             });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
             const data = await response.json();
             if (data.success) {
                 setUniqueReposCount(data.count);
+                console.log('Unique repos count updated:', data.count);
+            } else {
+                throw new Error(data.message || 'Failed to get unique repos count');
             }
         } catch (error) {
             console.error('Error fetching unique repos count:', error);
+            setUniqueCountError(error instanceof Error ? error.message : 'Unknown error');
+            // Set a fallback count based on topic counts to ensure popup still works
+            const fallbackCount = topics.reduce((total, topic) => {
+                return total + (topicCounts[topic] || 0);
+            }, 0);
+            setUniqueReposCount(fallbackCount);
+        } finally {
+            setIsLoadingUniqueCount(false);
         }
     };
 
     // Update unique repos count when finalized topics change
     useEffect(() => {
+        console.log('Finalized topics changed, fetching unique repos count:', finalizedTopics);
         fetchUniqueReposCount(finalizedTopics);
     }, [finalizedTopics]);
+
+    // Also update when topicCounts change to ensure accuracy
+    useEffect(() => {
+        if (finalizedTopics.length > 0 && !isLoadingUniqueCount) {
+            // Recalculate if we have new topic counts
+            const hasAllCounts = finalizedTopics.every(topic => topicCounts[topic]);
+            if (hasAllCounts) {
+                const calculatedCount = finalizedTopics.reduce((total, topic) => {
+                    return total + (topicCounts[topic] || 0);
+                }, 0);
+                // Only update if it's significantly different to avoid unnecessary API calls
+                if (Math.abs(calculatedCount - uniqueReposCount) > 100) {
+                    setUniqueReposCount(calculatedCount);
+                }
+            }
+        }
+    }, [topicCounts, finalizedTopics, isLoadingUniqueCount, uniqueReposCount]);
 
     // Calculate total repositories for finalized topics using topicCounts
     const totalRepositories = useMemo(() => {
@@ -439,11 +481,28 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     }, []);
 
     const handleSubmitFinalizedTopics = async () => {
+        // Wait for unique count to be loaded if it's still loading
+        if (isLoadingUniqueCount) {
+            console.log('Waiting for unique count to load...');
+            // Wait a bit for the count to load
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
         // Add confirmation for large repository counts
         if (uniqueReposCount > 10000) {
+            console.log('Showing confirmation modal for large dataset:', uniqueReposCount);
             setShowConfirmationModal(true);
             return;
         }
+
+        // If we have an error but still have a count, check if it's over threshold
+        if (uniqueCountError && uniqueReposCount > 10000) {
+            console.log('Showing confirmation modal despite error, count:', uniqueReposCount);
+            setShowConfirmationModal(true);
+            return;
+        }
+
+        console.log('Proceeding with submission, unique count:', uniqueReposCount);
         await submitTopics();
     };
 
@@ -845,17 +904,54 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                     <div className="d-flex justify-content-end align-items-center mt-4 gap-3">
                         <div className="text-muted" style={{ fontSize: '0.9rem' }}>
                             <div>Total Topic Occurrences: <span className="fw-bold">{totalRepositories.toLocaleString()}</span></div>
-                            <div>Unique Repositories: <span className="fw-bold">{uniqueReposCount.toLocaleString()}</span></div>
+                            <div className="d-flex align-items-center gap-2">
+                                Unique Repositories:
+                                {isLoadingUniqueCount ? (
+                                    <span className="d-flex align-items-center gap-1">
+                                        <div className="spinner-border spinner-border-sm" role="status" style={{ width: "0.75rem", height: "0.75rem" }}>
+                                            <span className="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span className="fw-bold">Loading...</span>
+                                    </span>
+                                ) : uniqueCountError ? (
+                                    <span className="fw-bold text-danger" title={uniqueCountError}>
+                                        {uniqueReposCount.toLocaleString()} (Fallback)
+                                    </span>
+                                ) : (
+                                    <span className="fw-bold">{uniqueReposCount.toLocaleString()}</span>
+                                )}
+                            </div>
+                            {uniqueCountError && (
+                                <div className="d-flex align-items-center gap-2 mt-1">
+                                    <small className="text-danger">
+                                        ⚠️ Using fallback count due to API error
+                                    </small>
+                                    <button
+                                        className="btn btn-sm btn-outline-secondary"
+                                        onClick={() => fetchUniqueReposCount(finalizedTopics)}
+                                        disabled={isLoadingUniqueCount}
+                                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                                    >
+                                        {isLoadingUniqueCount ? (
+                                            <div className="spinner-border spinner-border-sm" role="status" style={{ width: "0.75rem", height: "0.75rem" }}>
+                                                <span className="visually-hidden">Loading...</span>
+                                            </div>
+                                        ) : (
+                                            'Retry'
+                                        )}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                         <button
                             className="btn d-flex align-items-center"
                             onClick={handleSubmitFinalizedTopics}
-                            disabled={finalizedTopics.length === 0 || isSubmitting}
+                            disabled={finalizedTopics.length === 0 || isSubmitting || isLoadingUniqueCount}
                             style={{
                                 color: 'white',
                                 backgroundColor: '#198754',  // Bootstrap's success color
                                 borderColor: '#198754',
-                                opacity: finalizedTopics.length === 0 || isSubmitting ? 0.65 : 1
+                                opacity: finalizedTopics.length === 0 || isSubmitting || isLoadingUniqueCount ? 0.65 : 1
                             }}
                         >
                             {isSubmitting ? (
@@ -1011,7 +1107,10 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                 <button
                                     type="button"
                                     className="btn-close"
-                                    onClick={() => setShowConfirmationModal(false)}
+                                    onClick={() => {
+                                        console.log('Confirmation modal closed by user');
+                                        setShowConfirmationModal(false);
+                                    }}
                                     aria-label="Close"
                                 ></button>
                             </div>
@@ -1023,13 +1122,19 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     <p className="mb-0">
                                         This may take a while to process and could impact performance. Are you sure you want to continue?
                                     </p>
+                                    <small className="d-block mt-2 text-muted">
+                                        Debug: Threshold is 10,000, current count: {uniqueReposCount}
+                                    </small>
                                 </div>
                             </div>
                             <div className="modal-footer">
                                 <button
                                     type="button"
                                     className="btn btn-secondary"
-                                    onClick={() => setShowConfirmationModal(false)}
+                                    onClick={() => {
+                                        console.log('Confirmation modal cancelled by user');
+                                        setShowConfirmationModal(false);
+                                    }}
                                 >
                                     Cancel
                                 </button>
@@ -1037,6 +1142,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn btn-danger"
                                     onClick={async () => {
+                                        console.log('Confirmation modal confirmed by user, proceeding with submission');
                                         setShowConfirmationModal(false);
                                         await submitTopics();
                                     }}

@@ -15,6 +15,7 @@ export const ARG_DATA_URI = import.meta.env.BASE_URL + "/arg_clusters.gexf";
 // Palettes
 export const PALETTES = RAW_PALETTES as Record<number, string[]>;
 export const MAX_PALETTE_SIZE = Math.max(...Object.keys(PALETTES).map((s) => +s));
+export const EXPAND_STEP_SIZE = 10; // Number of items to show when expanding
 export const GRADIENT = ["#99f3cb", "#222123"];
 
 // Graph rendering
@@ -44,7 +45,7 @@ export const DEFAULT_EDGE_SIZE_RATIO = 1;
 export const EDGE_SIZE_RATIO_STEP = 0.001;
 
 export const MIN_LABEL_SIZE = 5;
-export const MAX_LABEL_SIZE = 50;
+export const MAX_LABEL_SIZE = 30;
 export const DEFAULT_LABEL_SIZE = 14;
 export const LABEL_SIZE_STEP = 1;
 
@@ -114,6 +115,16 @@ export const RANGE_STYLE = {
 };
 export const DEFAULT_SELECT_PROPS = {
   classNamePrefix: "react-select",
+  styles: {
+    menu: (provided: any) => ({
+      ...provided,
+      zIndex: 9999,
+    }),
+    menuPortal: (provided: any) => ({
+      ...provided,
+      zIndex: 9999,
+    }),
+  },
 };
 export const DEFAULT_LINKIFY_PROPS: Partial<LinkifyProps> = {
   textDecorator: (str) => str.replace(/^https?:\/\//, ""),

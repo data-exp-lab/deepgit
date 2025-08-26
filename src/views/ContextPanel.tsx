@@ -11,7 +11,7 @@ import { useNotifications } from "../lib/notifications";
 import Filters from "./Filters";
 import GraphSumUp from "./GraphSumUp";
 import NodesAppearanceBlock from "./NodesAppearanceBlock";
-import ReadabilityBlock from "./ReadabilityBlock";
+import Settings from "./Settings";
 import SelectedNodePanel from "./SelectedNodePanel";
 
 const ContextPanel: FC = () => {
@@ -31,8 +31,8 @@ const ContextPanel: FC = () => {
   );
 
   let content: JSX.Element;
-  if (panel === "readability") {
-    content = <ReadabilityBlock />;
+  if (panel === "settings") {
+    content = <Settings />;
   } else if (selectedNode) {
     content = <SelectedNodePanel node={navState?.selectedNode as string} data={selectedNode} />;
   } else {
@@ -60,9 +60,9 @@ const ContextPanel: FC = () => {
               <MdOutlinePreview /> Explore
             </button>
             <button
-              className={cx("btn ms-2 mt-1", panel === "readability" ? selectedButtonClass : "btn-outline-dark")}
-              onClick={() => setPanel("readability")}
-              disabled={panel === "readability"}
+              className={cx("btn ms-2 mt-1", panel === "settings" ? selectedButtonClass : "btn-outline-dark")}
+              onClick={() => setPanel("settings")}
+              disabled={panel === "settings"}
             >
               <VscSettings /> Settings
             </button>
@@ -105,9 +105,9 @@ const ContextPanel: FC = () => {
               </button>
             )}
             */}
-            <Link className="btn btn-outline-dark ms-2 mt-1" title="Retina's homepage" to="/">
+            {/* <Link className="btn btn-outline-dark ms-2 mt-1" title="Retina's homepage" to="/">
               <FaHome />
-            </Link>
+            </Link> */}
           </span>
         </div>
       </div>

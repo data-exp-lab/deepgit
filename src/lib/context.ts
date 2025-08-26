@@ -6,7 +6,7 @@ import { ComputedData } from "./computedData";
 import { Data } from "./data";
 import { NavState } from "./navState";
 
-export const PANELS = ["main", "readability"] as const;
+export const PANELS = ["main", "settings"] as const;
 export type Panel = (typeof PANELS)[number];
 
 export const AppContext = createContext<{ portalTarget: HTMLDivElement }>({
@@ -27,6 +27,8 @@ type GraphContextType = {
 
   showEditionPanel: boolean;
   setShowEditionPanel: Dispatch<SetStateAction<boolean>>;
+  showEdgePanel: boolean;
+  setShowEdgePanel: Dispatch<SetStateAction<boolean>>;
 
   navState: NavState;
   computedData: ComputedData;

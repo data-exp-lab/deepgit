@@ -61,30 +61,61 @@ class GexfNodeGenerator:
         topics_lower = [t.lower() for t in topics]
         placeholders = ",".join(["?"] * len(topics_lower))
 
+        # Debug: Check what columns actually exist in the repos table
+        schema_query = "DESCRIBE repos"
+        # try:
+        #     schema_result = self.con.execute(schema_query).fetchall()
+        #     # print("Repos table schema:")
+        #     # for col in schema_result:
+        #     #     print(f"  {col}")
+        # except Exception as e:
+        #     print(f"Could not get schema: {e}")
+
         query = f"""
-            WITH repo_topics_agg AS (
-                SELECT r.nameWithOwner, 
-                       GROUP_CONCAT(t.topic, '|') as topics
+           WITH matching_repos AS (
+                SELECT DISTINCT r.nameWithOwner
                 FROM repos r
                 JOIN repo_topics t ON r.nameWithOwner = t.repo
                 WHERE LOWER(t.topic) IN ({placeholders})
+            ),
+            repo_topics_agg AS (
+                SELECT 
+                    r.nameWithOwner,
+                    GROUP_CONCAT(t.topic, '|') AS topics
+                FROM repos r
+                JOIN repo_topics t ON r.nameWithOwner = t.repo
+                JOIN matching_repos mr ON r.nameWithOwner = mr.nameWithOwner
                 GROUP BY r.nameWithOwner
             )
-            SELECT DISTINCT r.nameWithOwner, r.stars, r.forks, r.watchers, r.isFork, r.isArchived, 
-                           r.languageCount, r.pullRequests, r.issues, r.primaryLanguage, r.createdAt, 
-                           r.license, rt.topics
+            SELECT 
+                r.nameWithOwner,
+                r.stars,
+                r.forks,
+                r.watchers,
+                r.isArchived,
+                r.languageCount,
+                r.pullRequests,
+                r.issues,
+                r.primaryLanguage,
+                r.createdAt,
+                r.license,
+                rt.topics
             FROM repos r
-            JOIN repo_topics t ON r.nameWithOwner = t.repo
-            JOIN repo_topics_agg rt ON r.nameWithOwner = rt.nameWithOwner
-            WHERE LOWER(t.topic) IN ({placeholders})
+            JOIN matching_repos mr ON r.nameWithOwner = mr.nameWithOwner
+            JOIN repo_topics_agg rt ON r.nameWithOwner = rt.nameWithOwner;
         """
-        result = self.con.execute(query, topics_lower + topics_lower).fetchall()
+        result = self.con.execute(query, topics_lower).fetchall()
+        
+        # Debug: Print the first few rows to see what we're getting
+        # if result:
+        #     print(f"First row sample: {result[0]}")
+        #     print(f"Number of results: {len(result)}")
+        
         columns = [
             "nameWithOwner",
             "stars",
             "forks",
             "watchers",
-            "isFork",
             "isArchived",
             "languageCount",
             "pullRequests",
@@ -102,7 +133,6 @@ class GexfNodeGenerator:
             "stars": 0,
             "forks": 0,
             "watchers": 0,
-            "isFork": False,
             "isArchived": False,
             "languageCount": 0,
             "pullRequests": 0,
@@ -119,7 +149,6 @@ class GexfNodeGenerator:
             'stars': {'type': 'integer'},
             'forks': {'type': 'integer'},
             'watchers': {'type': 'integer'},
-            'isFork': {'type': 'boolean'},
             'isArchived': {'type': 'boolean'},
             'languageCount': {'type': 'integer'},
             'pullRequests': {'type': 'integer'},
@@ -157,6 +186,9 @@ class GexfNodeGenerator:
                 elif col == "topics":
                     # Store topics as a comma-separated string
                     node_attrs[col] = val if val else default_values[col]
+                elif col == "isArchived":
+                    # Ensure isArchived is always a boolean value
+                    node_attrs[col] = bool(val) if val is not None else False
                 else:
                     # Use default value if the value is None
                     node_attrs[col] = default_values[col] if val is None else val

@@ -45,10 +45,26 @@ export function applyNodeLabelSizes(
   const minSize = typeof minLabelSize === "number" ? minLabelSize : DEFAULT_LABEL_SIZE;
   const maxSize = typeof maxLabelSize === "number" ? maxLabelSize : DEFAULT_LABEL_SIZE;
   const extentDelta = nodeSizeExtents[1] - nodeSizeExtents[0];
-  const factor = (maxSize - minSize) / (extentDelta || 1);
+  // Guard against tiny ranges to avoid blowing up the factor
+  const safeDelta = Math.max(extentDelta, 1e-6);
   graph.forEachNode((node, nodeData) => {
-    const nodeSize = nodeSizeField ? getValue(nodeData, fieldsIndex[nodeSizeField]) : nodeData.rawSize;
-    graph.setNodeAttribute(node, "labelSize", minSize + (nodeSize - nodeSizeExtents[0]) * factor);
+    let nodeSize: number;
+    if (nodeSizeField === "pagerank") {
+      // For PageRank, we need to get the size from the node's size attribute
+      // since PageRank values are already applied as sizes
+      nodeSize = graph.getNodeAttribute(node, "size") || nodeData.rawSize;
+    } else if (nodeSizeField && fieldsIndex[nodeSizeField]) {
+      nodeSize = getValue(nodeData, fieldsIndex[nodeSizeField]);
+    } else {
+      nodeSize = nodeData.rawSize;
+    }
+    // Normalize to [0, 1]
+    const tRaw = (nodeSize - nodeSizeExtents[0]) / safeDelta;
+    const t = Math.max(0, Math.min(1, tRaw));
+    // Smoothstep easing for gradual change
+    const eased = t * t * (3 - 2 * t);
+    const label = minSize + (maxSize - minSize) * eased;
+    graph.setNodeAttribute(node, "labelSize", label);
   });
 }
 
@@ -59,10 +75,10 @@ export function applyNodeSubtitles({ graph, fieldsIndex }: Data, { subtitleField
       "subtitles",
       subtitleFields
         ? subtitleFields.flatMap((f) => {
-            const field = fieldsIndex[f];
-            const val = getValue(nodeData, field);
-            return isNil(val) ? [] : [`${field.label}: ${typeof val === "number" ? val.toLocaleString() : val}`];
-          })
+          const field = fieldsIndex[f];
+          const val = getValue(nodeData, field);
+          return isNil(val) ? [] : [`${field.label}: ${typeof val === "number" ? val.toLocaleString() : val}`];
+        })
         : [],
     ),
   );

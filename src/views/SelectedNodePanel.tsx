@@ -131,6 +131,58 @@ const SelectedNodePanel: FC<{ node: string; data: NodeData }> = ({ node, data: {
           </ul>
         </>
       )}
+
+      <hr />
+
+      {/* Shared Topics with Neighbors Section */}
+      {(() => {
+        const currentTopics = currentAttributes.attributes?.topics;
+        if (!currentTopics || typeof currentTopics !== 'string') return null;
+
+        const currentTopicsArray = currentTopics.split('|').map(t => t.trim()).filter(Boolean);
+        if (currentTopicsArray.length === 0) return null;
+
+        const allNeighbors = [...visibleNeighbors, ...hiddenNeighbors];
+        if (allNeighbors.length === 0) return null;
+
+        const neighborsWithSharedTopics = allNeighbors.map(neighbor => {
+          const neighborTopics = graph.getNodeAttributes(neighbor).attributes?.topics;
+          if (!neighborTopics || typeof neighborTopics !== 'string') return null;
+
+          const neighborTopicsArray = neighborTopics.split('|').map(t => t.trim()).filter(Boolean);
+          const sharedTopics = currentTopicsArray.filter(topic => neighborTopicsArray.includes(topic));
+
+          return {
+            neighbor,
+            sharedTopics
+          };
+        }).filter((item): item is { neighbor: string; sharedTopics: string[] } => item !== null);
+
+        if (neighborsWithSharedTopics.length === 0) return null;
+
+        // Collect all unique shared topics across all neighbors
+        const allSharedTopics = new Set<string>();
+        neighborsWithSharedTopics.forEach(({ sharedTopics }) => {
+          sharedTopics.forEach(topic => allSharedTopics.add(topic));
+        });
+
+        const uniqueSharedTopics = Array.from(allSharedTopics).sort();
+
+        return (
+          <>
+            <div className="text-muted mb-2 mt-4">
+              <strong>Shared Topics with Neighbors:</strong>
+            </div>
+            <div className="mb-3">
+              {uniqueSharedTopics.length > 0 ? (
+                <span>{uniqueSharedTopics.join(', ')}</span>
+              ) : (
+                <span className="text-muted">No shared topics</span>
+              )}
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 };

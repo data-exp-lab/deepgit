@@ -91,6 +91,16 @@ export interface NavState {
   edgeColoring?: EdgeColoring | undefined;
   edgeDirection?: EdgeDirection | undefined;
 
+  // Edge creation conditions:
+  edgeCreationTopicThreshold?: number | undefined;
+  edgeCreationContributorThreshold?: number | undefined;
+  edgeCreationStargazerThreshold?: number | undefined;
+  edgeCreationEnableTopicLinking?: boolean | undefined;
+  edgeCreationEnableContributorOverlap?: boolean | undefined;
+  edgeCreationEnableSharedOrganization?: boolean | undefined;
+  edgeCreationEnableCommonStargazers?: boolean | undefined;
+  edgeCreationEnableDependencies?: boolean | undefined;
+
   // Only for some specific transitions:
   preventBlocker?: boolean;
 }
@@ -131,6 +141,15 @@ export function cleanNavState(state: NavState, data: Data): NavState {
     labelThresholdRatio,
     disableDefaultSize,
     disableDefaultColor,
+    // Edge creation conditions
+    edgeCreationTopicThreshold,
+    edgeCreationContributorThreshold,
+    edgeCreationStargazerThreshold,
+    edgeCreationEnableTopicLinking,
+    edgeCreationEnableContributorOverlap,
+    edgeCreationEnableSharedOrganization,
+    edgeCreationEnableCommonStargazers,
+    edgeCreationEnableDependencies,
   } = state;
 
   const cleanedSubtitleFields = uniq((subtitleFields || []).filter((f) => fieldsIndex[f]));
@@ -171,7 +190,7 @@ export function cleanNavState(state: NavState, data: Data): NavState {
     subtitleFields: cleanedSubtitleFields.length ? cleanedSubtitleFields : undefined,
     // Viewer state:
     nodeSizeField:
-      (nodeSizeField && fieldsIndex[nodeSizeField] && cleanedSizeableIndex[nodeSizeField]
+      (nodeSizeField && (nodeSizeField === "pagerank" || (fieldsIndex[nodeSizeField] && cleanedSizeableIndex[nodeSizeField]))
         ? nodeSizeField
         : undefined) || (cleanedDisableDefaultSize ? cleanedSizeable[0] : undefined),
     nodeColorField:
@@ -205,9 +224,27 @@ export function cleanNavState(state: NavState, data: Data): NavState {
     maxLabelSize: cleanedMaxLabelSize !== DEFAULT_LABEL_SIZE ? cleanedMaxLabelSize : undefined,
     disableDefaultSize: cleanedDisableDefaultSize || undefined,
     disableDefaultColor: cleanedDisableDefaultColor || undefined,
+    // Edge creation conditions - preserve as-is since they don't need cleaning
+    edgeCreationTopicThreshold,
+    edgeCreationContributorThreshold,
+    edgeCreationStargazerThreshold,
+    edgeCreationEnableTopicLinking,
+    edgeCreationEnableContributorOverlap,
+    edgeCreationEnableSharedOrganization,
+    edgeCreationEnableCommonStargazers,
+    edgeCreationEnableDependencies,
   };
 
-  return omitBy(cleanedState, isNil) as NavState;
+  // Don't filter out edge creation conditions even if they're undefined initially
+  // This allows them to be set later and persist
+  const finalState = omitBy(cleanedState, (value, key) => {
+    // Don't filter out edge creation conditions
+    if (key.startsWith('edgeCreation')) return false;
+    // Filter out other undefined values
+    return isNil(value);
+  });
+
+  return finalState as NavState;
 }
 
 export function navStateToQueryURL(state: NavState): string {
@@ -247,11 +284,21 @@ export function navStateToQueryURL(state: NavState): string {
   if (state.minLabelSize) params.append("ls", state.minLabelSize + "");
   if (state.maxLabelSize) params.append("le", state.maxLabelSize + "");
 
+  // Edge creation conditions
+  if (state.edgeCreationTopicThreshold) params.append("ett", state.edgeCreationTopicThreshold + "");
+  if (state.edgeCreationContributorThreshold) params.append("ect", state.edgeCreationContributorThreshold + "");
+  if (state.edgeCreationStargazerThreshold) params.append("est", state.edgeCreationStargazerThreshold + "");
+  if (state.edgeCreationEnableTopicLinking) params.append("etl", "1");
+  if (state.edgeCreationEnableContributorOverlap) params.append("eco", "1");
+  if (state.edgeCreationEnableSharedOrganization) params.append("eso", "1");
+  if (state.edgeCreationEnableCommonStargazers) params.append("ecs", "1");
+  if (state.edgeCreationEnableDependencies) params.append("edp", "1");
+
   return urlSearchParamsToString(params);
 }
 
 export function queryURLToNavState(queryURL: string): NavState {
-  const { url, l, r, s, c, n, fa, ca, sa, le, ls, nr, er, ec, ed, gm, lt, ds, dc, st, ...query } =
+  const { url, l, r, s, c, n, fa, ca, sa, le, ls, nr, er, ec, ed, gm, lt, ds, dc, st, ett, ect, est, etl, eco, eso, ecs, edp, ...query } =
     queryStringToRecord(queryURL);
   const navState: NavState = {};
 
@@ -275,6 +322,16 @@ export function queryURLToNavState(queryURL: string): NavState {
   if (ca) navState.colorable = arrayify(ca);
   if (fa) navState.filterable = arrayify(fa);
   if (st) navState.subtitleFields = arrayify(st);
+
+  // Edge creation conditions
+  if (typeof ett === "string") navState.edgeCreationTopicThreshold = +ett;
+  if (typeof ect === "string") navState.edgeCreationContributorThreshold = +ect;
+  if (typeof est === "string") navState.edgeCreationStargazerThreshold = +est;
+  if (typeof etl === "string") navState.edgeCreationEnableTopicLinking = etl === "1";
+  if (typeof eco === "string") navState.edgeCreationEnableContributorOverlap = eco === "1";
+  if (typeof eso === "string") navState.edgeCreationEnableSharedOrganization = eso === "1";
+  if (typeof ecs === "string") navState.edgeCreationEnableCommonStargazers = ecs === "1";
+  if (typeof edp === "string") navState.edgeCreationEnableDependencies = edp === "1";
 
   const fields = groupBy(Object.keys(query), (key) => key.replace(/\.(v|t|min|max)$/, ""));
   const filters = map(fields, ([q0, q1], field): Filter => {

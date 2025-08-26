@@ -38,6 +38,7 @@ import {
 import { useNotifications } from "../lib/notifications";
 import ContextPanel from "./ContextPanel";
 import EditionPanel from "./EditionPanel";
+import EdgePanel from "./EdgePanel";
 import EventsController from "./EventsController";
 import GraphAppearance from "./GraphAppearance";
 import GraphControls from "./GraphControls";
@@ -72,10 +73,12 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
   const navState = useMemo(() => (data ? cleanNavState(rawNavState, data) : null), [rawNavState, data]);
   const setNavState = useCallback(
     (newNavState: NavState) => {
+      const cleanedState = data ? cleanNavState(newNavState, data) : newNavState;
+      const queryString = navStateToQueryURL(cleanedState);
       navigate(
         location.hash.replace(/^#/, "").replace(/\?.*/, "") +
         "?" +
-        navStateToQueryURL(data ? cleanNavState(newNavState, data) : newNavState),
+        queryString,
       );
     },
     [data, location.hash, navigate],
@@ -88,6 +91,7 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
   const [computedData, setComputedData] = useState<ComputedData | null>(null);
 
   const [showEditionPanel, setShowEditionPanel] = useState(false); // Add this state
+  const [showEdgePanel, setShowEdgePanel] = useState(false); // Add edge panel state
   // Refresh aggregations and filtered items lists:
   useEffect(() => {
     if (data) {
@@ -290,6 +294,8 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
 
         showEditionPanel,
         setShowEditionPanel,
+        showEdgePanel,
+        setShowEdgePanel,
 
         modal: modalName,
         openModal: (modal: ModalName) => {
@@ -308,6 +314,7 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
     >
       {navState.local && <LocalWarningBanner />}
       {showEditionPanel && <EditionPanel isExpanded={true} />}
+      {showEdgePanel && <EdgePanel isExpanded={true} />}
       <main className={cx("graph-view", isPanelExpanded ? "panel-expanded" : "panel-collapsed")} ref={domRoot}>
         <div className="wrapper">
           <ContextPanel />
