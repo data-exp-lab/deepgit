@@ -29,7 +29,7 @@ interface Option {
   field?: string;
 }
 
-const ReadabilityBlock: FC = () => {
+const Settings: FC = () => {
   // const { navState, setNavState } = useContext(GraphContext);
   const { navState, setNavState, setShowEditionPanel, setShowEdgePanel, data } = useContext(GraphContext);
   const [initialNavState] = useState<NavState>(navState);
@@ -62,7 +62,7 @@ const ReadabilityBlock: FC = () => {
   const cancel = () => setNavState(initialNavState);
 
   return (
-    <div className="readability-block block">
+    <div className="settings-block block">
       <h1 className="fs-4 mt-4">
         <VscSettings /> Settings
       </h1>
@@ -312,4 +312,4 @@ const ReadabilityBlock: FC = () => {
   );
 };
 
-export default ReadabilityBlock;
+export default Settings;

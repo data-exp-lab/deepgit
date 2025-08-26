@@ -10,7 +10,7 @@ import { MdBubbleChart } from "react-icons/md";
 import { RiFilterOffFill } from "react-icons/ri";
 
 import { RangeMetric, SearchMetrics, TermsMetric } from "../lib/computedData";
-import { MAX_PALETTE_SIZE, RANGE_STYLE } from "../lib/consts";
+import { MAX_PALETTE_SIZE, EXPAND_STEP_SIZE, RANGE_STYLE } from "../lib/consts";
 import { GraphContext } from "../lib/context";
 import { ContentField, QualiField, QuantiField, getFilterableFields, getValue } from "../lib/data";
 import { Filter, RangeFilter, SearchFilter, TermsFilter } from "../lib/navState";
@@ -38,11 +38,11 @@ const SearchFilterComponent: FC<{
         setFilter(
           value
             ? {
-                type: "search",
-                field: field.id,
-                value: value,
-                normalizedValue: normalize(value),
-              }
+              type: "search",
+              field: field.id,
+              value: value,
+              normalizedValue: normalize(value),
+            }
             : null,
         );
       }}
@@ -73,17 +73,30 @@ const TermsFilterComponent: FC<{
   const { data: graphData, setHovered } = useContext(GraphContext);
   const [alphaSort, setAlphaSort] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [currentLimit, setCurrentLimit] = useState(MAX_PALETTE_SIZE);
   const maxCount = max(data.values.map((v) => v.globalCount)) as number;
   const filteredValues = filter?.values ? new Set(filter.values) : null;
 
   const showExpandToggle = data.values.length > MAX_PALETTE_SIZE;
+
+  const handleExpand = () => {
+    const newLimit = Math.min(currentLimit + EXPAND_STEP_SIZE, data.values.length);
+    setCurrentLimit(newLimit);
+    setExpanded(true);
+  };
+
+  const handleCollapse = () => {
+    setCurrentLimit(MAX_PALETTE_SIZE);
+    setExpanded(false);
+  };
+
   const values = useMemo(
     () =>
       take(
         alphaSort ? sortBy(data.values, (value) => value.label.toLowerCase()) : data.values,
-        showExpandToggle && !expanded ? MAX_PALETTE_SIZE : Infinity,
+        currentLimit,
       ),
-    [showExpandToggle, expanded, alphaSort, data.values],
+    [currentLimit, alphaSort, data.values],
   );
 
   return (
@@ -172,17 +185,21 @@ const TermsFilterComponent: FC<{
         })}
       </ul>
       {showExpandToggle && (
-        <button className="btn btn-link p-0 btn-sm" onClick={() => setExpanded((v) => !v)}>
-          {expanded ? (
-            <>
-              <FiMinus /> Only show {MAX_PALETTE_SIZE} first values
-            </>
-          ) : (
-            <>
-              <FiPlus /> Show all values ({data.values.length - values.length} more)
-            </>
+        <div className="d-flex flex-column gap-2 mt-2">
+          <div className="text-muted small">
+            Showing {currentLimit} of {data.values.length} values
+          </div>
+          {currentLimit < data.values.length && (
+            <button className="btn btn-link p-0 btn-sm" onClick={handleExpand}>
+              <FiPlus /> Show {Math.min(EXPAND_STEP_SIZE, data.values.length - currentLimit)} more values ({data.values.length - currentLimit} remaining)
+            </button>
           )}
-        </button>
+          {expanded && (
+            <button className="btn btn-link p-0 btn-sm text-muted" onClick={handleCollapse}>
+              <FiMinus /> Collapse to {MAX_PALETTE_SIZE} values
+            </button>
+          )}
+        </div>
       )}
     </>
   );
@@ -207,9 +224,9 @@ const RangeFilterComponent: FC<{
     (v) =>
       v === currentMin || v === currentMax
         ? {
-            label: shortenNumber(v),
-            style: { fontWeight: "bold", background: "white", padding: "0 0.2em", zIndex: 1 },
-          }
+          label: shortenNumber(v),
+          style: { fontWeight: "bold", background: "white", padding: "0 0.2em", zIndex: 1 },
+        }
         : shortenNumber(v),
   );
   const [inputValues, setInputValues] = useState<{ min: number; max: number }>({ min: currentMin, max: currentMax });

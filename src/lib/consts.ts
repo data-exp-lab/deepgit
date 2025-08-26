@@ -15,6 +15,7 @@ export const ARG_DATA_URI = import.meta.env.BASE_URL + "/arg_clusters.gexf";
 // Palettes
 export const PALETTES = RAW_PALETTES as Record<number, string[]>;
 export const MAX_PALETTE_SIZE = Math.max(...Object.keys(PALETTES).map((s) => +s));
+export const EXPAND_STEP_SIZE = 10; // Number of items to show when expanding
 export const GRADIENT = ["#99f3cb", "#222123"];
 
 // Graph rendering

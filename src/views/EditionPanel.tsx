@@ -131,7 +131,7 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
               <button
                 type="button"
                 className="btn btn-outline-light btn-sm btn-inline"
-                onClick={() => setPanel("readability")}
+                onClick={() => setPanel("settings")}
               >
                 <VscSettings className="small" /> Settings
               </button>{" "}
