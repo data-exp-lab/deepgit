@@ -72,28 +72,44 @@ class GexfNodeGenerator:
         #     print(f"Could not get schema: {e}")
 
         query = f"""
-            WITH repo_topics_agg AS (
-                SELECT r.nameWithOwner, 
-                       GROUP_CONCAT(t.topic, '|') as topics
+           WITH matching_repos AS (
+                SELECT DISTINCT r.nameWithOwner
                 FROM repos r
                 JOIN repo_topics t ON r.nameWithOwner = t.repo
                 WHERE LOWER(t.topic) IN ({placeholders})
+            ),
+            repo_topics_agg AS (
+                SELECT 
+                    r.nameWithOwner,
+                    GROUP_CONCAT(t.topic, '|') AS topics
+                FROM repos r
+                JOIN repo_topics t ON r.nameWithOwner = t.repo
+                JOIN matching_repos mr ON r.nameWithOwner = mr.nameWithOwner
                 GROUP BY r.nameWithOwner
             )
-            SELECT DISTINCT r.nameWithOwner, r.stars, r.forks, r.watchers, r.isArchived, 
-                           r.languageCount, r.pullRequests, r.issues, r.primaryLanguage, r.createdAt, 
-                           r.license, rt.topics
+            SELECT 
+                r.nameWithOwner,
+                r.stars,
+                r.forks,
+                r.watchers,
+                r.isArchived,
+                r.languageCount,
+                r.pullRequests,
+                r.issues,
+                r.primaryLanguage,
+                r.createdAt,
+                r.license,
+                rt.topics
             FROM repos r
-            JOIN repo_topics t ON r.nameWithOwner = t.repo
-            JOIN repo_topics_agg rt ON r.nameWithOwner = rt.nameWithOwner
-            WHERE LOWER(t.topic) IN ({placeholders})
+            JOIN matching_repos mr ON r.nameWithOwner = mr.nameWithOwner
+            JOIN repo_topics_agg rt ON r.nameWithOwner = rt.nameWithOwner;
         """
-        result = self.con.execute(query, topics_lower + topics_lower).fetchall()
+        result = self.con.execute(query, topics_lower).fetchall()
         
         # Debug: Print the first few rows to see what we're getting
-        if result:
-            print(f"First row sample: {result[0]}")
-            print(f"Number of results: {len(result)}")
+        # if result:
+        #     print(f"First row sample: {result[0]}")
+        #     print(f"Number of results: {len(result)}")
         
         columns = [
             "nameWithOwner",
