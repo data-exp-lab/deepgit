@@ -84,13 +84,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         });
     };
 
-    const updateEnableContributorOverlap = (checked: boolean) => {
-        setEnableContributorOverlap(checked);
-        setNavState({
-            ...navState,
-            edgeCreationEnableContributorOverlap: checked,
-        });
-    };
+
 
     const updateEnableSharedOrganization = (checked: boolean) => {
         setEnableSharedOrganization(checked);
@@ -100,21 +94,9 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         });
     };
 
-    const updateEnableCommonStargazers = (checked: boolean) => {
-        setEnableCommonStargazers(checked);
-        setNavState({
-            ...navState,
-            edgeCreationEnableCommonStargazers: checked,
-        });
-    };
 
-    const updateEnableDependencies = (checked: boolean) => {
-        setEnableDependencies(checked);
-        setNavState({
-            ...navState,
-            edgeCreationEnableDependencies: checked,
-        });
-    };
+
+
 
 
 
@@ -710,7 +692,8 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                             5: "5",
                                             10: "10"
                                         }}
-                                        onChange={(value) => updateTopicThreshold(value as number)}
+                                        onChange={(value) => setTopicThreshold(value as number)}
+                                        onAfterChange={(value) => updateTopicThreshold(value as number)}
                                         className="mt-2"
                                     />
                                 </div>
@@ -718,13 +701,13 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                         </div>
 
                         {/* Contributor Overlap */}
-                        <div className="mb-4">
+                        <div className="mb-4 opacity-50">
                             <div className="d-flex align-items-center mb-2">
                                 <input
                                     type="checkbox"
                                     className="form-check-input me-2"
-                                    checked={enableContributorOverlap}
-                                    onChange={(e) => updateEnableContributorOverlap(e.target.checked)}
+                                    checked={false}
+                                    disabled
                                 />
                                 <label className="form-label mb-0">Contributor Overlap</label>
                             </div>
@@ -747,7 +730,8 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                             10: "10",
                                             20: "20"
                                         }}
-                                        onChange={(value) => updateContributorThreshold(value as number)}
+                                        onChange={(value) => setContributorThreshold(value as number)}
+                                        onAfterChange={(value) => updateContributorThreshold(value as number)}
                                         className="mt-2"
                                     />
                                 </div>
@@ -771,13 +755,13 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                         </div>
 
                         {/* Common Stargazers */}
-                        <div className="mb-4">
+                        <div className="mb-4 opacity-50">
                             <div className="d-flex align-items-center mb-2">
                                 <input
                                     type="checkbox"
                                     className="form-check-input me-2"
-                                    checked={enableCommonStargazers}
-                                    onChange={(e) => updateEnableCommonStargazers(e.target.checked)}
+                                    checked={false}
+                                    disabled
                                 />
                                 <label className="form-label mb-0">Common Stargazers</label>
                             </div>
@@ -800,7 +784,8 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                             50: "50",
                                             100: "100"
                                         }}
-                                        onChange={(value) => updateStargazerThreshold(value as number)}
+                                        onChange={(value) => setStargazerThreshold(value as number)}
+                                        onAfterChange={(value) => updateStargazerThreshold(value as number)}
                                         className="mt-2"
                                     />
                                 </div>
@@ -808,13 +793,13 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                         </div>
 
                         {/* Dependencies */}
-                        <div className="mb-4">
+                        <div className="mb-4 opacity-50">
                             <div className="d-flex align-items-center mb-2">
                                 <input
                                     type="checkbox"
                                     className="form-check-input me-2"
-                                    checked={enableDependencies}
-                                    onChange={(e) => updateEnableDependencies(e.target.checked)}
+                                    checked={false}
+                                    disabled
                                 />
                                 <label className="form-label mb-0">Dependencies</label>
                             </div>
@@ -831,6 +816,19 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                             >
                                 Apply Edge Creation Rules
                             </button>
+                            <p className="text-white-50 small text-center mt-2">
+                                Have other relationship ideas? Create a discussion topic at
+                                {' '}
+                                <a
+                                    href="https://github.com/data-exp-lab/deepgit/discussions"
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                    className="link-light"
+                                >
+                                    github.com/data-exp-lab/deepgit/discussions
+                                </a>
+                                .
+                            </p>
                         </div>
                     </div>
                 </div>
