@@ -478,7 +478,19 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         setSuggestionsByModel([]);
         // Don't clear parent state
         // setLlmSuggestions([]);
-    }, []);
+
+        // Ensure search term is included in both selected and finalized topics
+        if (searchTerm && !selectedTopics.includes(searchTerm)) {
+            setSelectedTopics([...selectedTopics, searchTerm]);
+        }
+        if (searchTerm && !finalizedTopics.includes(searchTerm)) {
+            setFinalizedTopics([...finalizedTopics, searchTerm]);
+            // Fetch topic count for the search term if not already available
+            if (!topicCounts[searchTerm]) {
+                fetchTopicCount(searchTerm);
+            }
+        }
+    }, [searchTerm, selectedTopics, finalizedTopics, setSelectedTopics, setFinalizedTopics]);
 
     const handleSubmitFinalizedTopics = async () => {
         // Wait for unique count to be loaded if it's still loading
