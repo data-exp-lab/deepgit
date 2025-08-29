@@ -182,6 +182,9 @@ const TopicHistogram: FC = () => {
     // State for extracted topics and their frequencies
     const [extractedTopics, setExtractedTopics] = useState<Array<{ name: string; count: number }>>([]);
 
+    // State for the original topic's repository count
+    const [originalTopicCount, setOriginalTopicCount] = useState<number>(0);
+
     // State for selected topics (from frequency range)
     const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
@@ -478,6 +481,24 @@ const TopicHistogram: FC = () => {
         window.location.href = window.location.origin;
     };
 
+    // Function to fetch repository count for the original topic
+    const fetchOriginalTopicCount = async (topic: string) => {
+        try {
+            const response = await fetch(`${API_ENDPOINTS.SUGGEST_TOPICS}?query=${encodeURIComponent(topic)}`);
+            const data = await response.json();
+            if (data.success && data.suggestions.length > 0) {
+                const suggestion = data.suggestions.find((s: { name: string; count: number }) =>
+                    s.name.toLowerCase() === topic.toLowerCase()
+                );
+                if (suggestion) {
+                    setOriginalTopicCount(suggestion.count);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching original topic count:', error);
+        }
+    };
+
     // Effect to handle topic extraction when search term changes
     useEffect(() => {
         // Add a check for extractedTopics length to prevent refetching
@@ -533,6 +554,7 @@ const TopicHistogram: FC = () => {
             navigate('/');
         } else {
             setOriginalTopic(userTopic);
+            fetchOriginalTopicCount(userTopic); // Fetch count when search term is set
         }
     }, [searchTerm, userTopic, navigate, notify]);
 
@@ -698,7 +720,8 @@ const TopicHistogram: FC = () => {
                             <span className="badge bg-primary" style={{ fontSize: '1rem' }}>
                                 {originalTopic}
                             </span>
-                            &nbsp;Topics with higher frequency are more common in related repositories.
+                            &nbsp;({originalTopicCount ? originalTopicCount.toLocaleString() : 'Loading...'} repositories)&nbsp;
+                            Topics with higher frequency are more common in related repositories.
                         </p>
 
                         {isLoading ? (
