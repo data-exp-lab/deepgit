@@ -9,6 +9,11 @@ from datetime import datetime, timedelta
 # Initialize BigQuery client
 client = bigquery.Client()
 
+# BigQuery configuration
+BQ_PROJECT = 'deepgit'  # Replace with your actual project ID
+BQ_DATASET = 'githubwithstar'     # Replace with your actual dataset name
+REPO_LIST_TABLE = f'{BQ_PROJECT}.{BQ_DATASET}.repo_list'
+
 # Paths
 json_path = '../../public/data/repo_metadata.json'
 db_path = 'github_metadata_star.duckdb'
@@ -25,93 +30,99 @@ repo_ids = [repo.get("nameWithOwner") for repo in data]
 print(f"Total repos to process: {len(repo_ids)}")
 
 # -----------------------------------
-# Helper: chunked list with much larger chunks
+# Create repo_list table in BigQuery first
 # -----------------------------------
-def chunked(lst, n):
-    for i in range(0, len(lst), n):
-        yield lst[i:i+n]
-
-# -----------------------------------
-# Optimized BigQuery query function
-# -----------------------------------
-def process_chunk(chunk):
-    """Process a chunk of repos with optimized queries"""
+def create_repo_list_table():
+    """Create a temporary repo_list table in BigQuery for efficient JOINs"""
     try:
-        job_config = bigquery.QueryJobConfig(
-            query_parameters=[bigquery.ArrayQueryParameter("repo_ids", "STRING", chunk)]
+        # Create the repo_list table
+        create_table_query = f"""
+        CREATE OR REPLACE TABLE `{REPO_LIST_TABLE}` (
+            repo_name STRING
         )
-        
-        # Combined query for both contributors and stargazers - much more efficient!
-        combined_query = """
-            SELECT 
-                repo.name AS repo,
-                type,
-                actor.login AS username
-            FROM `githubarchive.month.*`
-            WHERE (type = 'PullRequestEvent' OR type = 'WatchEvent')
-              AND repo.name IN UNNEST(@repo_ids)
-              AND _TABLE_SUFFIX >= '2015'
-            GROUP BY repo, type, actor.login
         """
         
-        df = client.query(combined_query, job_config=job_config).to_dataframe()
+        print("Creating repo_list table in BigQuery...")
+        client.query(create_table_query).result()
+        
+        # Insert repo IDs into the table
+        if repo_ids:
+            # Convert repo_ids to a format suitable for BigQuery
+            repo_values = [f"('{repo}')" for repo in repo_ids]
+            insert_query = f"""
+            INSERT INTO `{REPO_LIST_TABLE}` (repo_name)
+            VALUES {','.join(repo_values)}
+            """
+            
+            print(f"Inserting {len(repo_ids)} repos into repo_list table...")
+            client.query(insert_query).result()
+            print("repo_list table created and populated successfully!")
+        else:
+            print("No repo IDs to insert!")
+            
+    except Exception as e:
+        print(f"Error creating repo_list table: {e}")
+        raise
+
+# -----------------------------------
+# Single BigQuery query function using JOIN
+# -----------------------------------
+def get_contributors_and_stargazers():
+    """Get all contributors and stargazers using JOIN with repo_list table"""
+    try:
+        # Use JOIN instead of IN UNNEST for better performance
+        combined_query = f"""
+            SELECT
+                t1.repo.name AS repo,
+                t1.type,
+                t1.actor.login AS username
+            FROM
+                `githubarchive.month.*` AS t1
+            JOIN
+                `{REPO_LIST_TABLE}` AS t2
+            ON
+                t1.repo.name = t2.repo_name
+            WHERE
+                t1.type IN ('PullRequestEvent', 'WatchEvent')
+                AND t1._TABLE_SUFFIX >= '2015'
+            GROUP BY
+                repo,
+                type,
+                username
+        """
+        
+        print("Executing BigQuery query using JOIN with repo_list table...")
+        df = client.query(combined_query).to_dataframe()
         
         # Separate contributors and stargazers
-        contributors = df[df.type == 'PullRequestEvent'][['repo', 'username']].rename(columns={'username': 'contributor'})
-        stargazers = df[df.type == 'WatchEvent'][['repo', 'username']].rename(columns={'username': 'stargazer'})
+        if not df.empty:
+            contributors = df[df.type == 'PullRequestEvent'][['repo', 'username']].rename(columns={'username': 'contributor'})
+            stargazers = df[df.type == 'WatchEvent'][['repo', 'username']].rename(columns={'username': 'stargazer'})
+        else:
+            contributors = pd.DataFrame(columns=['repo', 'contributor'])
+            stargazers = pd.DataFrame(columns=['repo', 'stargazer'])
         
         return contributors, stargazers
         
     except Exception as e:
-        print(f"Error processing chunk: {e}")
+        print(f"Error in BigQuery query: {e}")
         return pd.DataFrame(), pd.DataFrame()
 
 # -----------------------------------
-# Run BigQuery queries with much larger chunks and parallel processing
+# Execute BigQuery operations
 # -----------------------------------
-print("Starting BigQuery processing...")
+print("Starting BigQuery operations...")
 start_time = datetime.now()
 
-CHUNK_SIZE = 500000 
-chunks = list(chunked(repo_ids, CHUNK_SIZE))
-print(f"Processing {len(chunks)} chunks of {CHUNK_SIZE} repos each")
+# Step 1: Create and populate repo_list table
+create_repo_list_table()
 
-all_contribs = []
-all_stars = []
-
-# Process chunks in parallel for much faster execution
-with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-    # Submit all chunks to the thread pool
-    future_to_chunk = {executor.submit(process_chunk, chunk): chunk for chunk in chunks}
-    
-    # Process completed chunks with progress bar
-    for future in tqdm(concurrent.futures.as_completed(future_to_chunk), 
-                      total=len(chunks), 
-                      desc="BigQuery chunks"):
-        chunk = future_to_chunk[future]
-        try:
-            contributors, stargazers = future.result()
-            if not contributors.empty:
-                all_contribs.append(contributors)
-            if not stargazers.empty:
-                all_stars.append(stargazers)
-        except Exception as e:
-            print(f"Chunk failed: {e}")
+# Step 2: Execute query using JOIN
+contributors_df, stargazers_df = get_contributors_and_stargazers()
 
 end_time = datetime.now()
 processing_time = end_time - start_time
-print(f"BigQuery processing completed in: {processing_time}")
-
-# Merge results from all chunks
-if all_contribs:
-    contributors_df = pd.concat(all_contribs, ignore_index=True)
-else:
-    contributors_df = pd.DataFrame(columns=['repo', 'contributor'])
-
-if all_stars:
-    stargazers_df = pd.concat(all_stars, ignore_index=True)
-else:
-    stargazers_df = pd.DataFrame(columns=['repo', 'stargazer'])
+print(f"BigQuery operations completed in: {processing_time}")
 
 print(f"Total contributors found: {len(contributors_df)}")
 print(f"Total stargazers found: {len(stargazers_df)}")
