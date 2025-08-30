@@ -174,7 +174,7 @@ const GraphSearch: FC = () => {
 const GraphControls: FC = () => {
   const sigma = useSigma();
   const graph = sigma.getGraph();
-  const { graphFile } = useContext(GraphContext);
+  const { graphFile, navState, hovered, computedData } = useContext(GraphContext);
 
   const zoom = useCallback(
     (ratio?: number): void => {
@@ -201,17 +201,121 @@ const GraphControls: FC = () => {
 
   const downloadGraph = useCallback(() => {
     if (graphFile) {
-      const blob = new Blob([graphFile.textContent], { type: "application/xml" });
+      // Parse the existing GEXF content
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(graphFile.textContent, "text/xml");
+
+      // Get the graph element
+      const graphElement = xmlDoc.querySelector('graph');
+      if (!graphElement) return;
+
+      // Create sets for highlighted nodes and edges
+      const highlightedNodesSet = new Set<string>();
+      const highlightedEdgesSet = new Set<string>();
+
+      // Add selected node
+      if (navState.selectedNode) {
+        highlightedNodesSet.add(navState.selectedNode);
+      }
+
+      // Add hovered nodes
+      if (typeof hovered === "string") {
+        highlightedNodesSet.add(hovered);
+      } else if (hovered instanceof Set) {
+        hovered.forEach(node => highlightedNodesSet.add(node));
+      }
+
+      // If no nodes are highlighted from context, use filtered nodes (exclude faded ones)
+      if (highlightedNodesSet.size === 0 && computedData.filteredNodes) {
+        // Use the filtered nodes as the base - these are the active/visible nodes
+        computedData.filteredNodes.forEach(node => {
+          highlightedNodesSet.add(node);
+        });
+      }
+
+      // Only include the specifically highlighted nodes (no neighbors)
+      const nodesToAdd = new Set<string>();
+      highlightedNodesSet.forEach(node => {
+        if (graph.hasNode(node)) {
+          nodesToAdd.add(node);
+        }
+      });
+
+      // Add edges where BOTH source AND target nodes are visible (to avoid orphaned edges)
+      graph.forEachEdge((edge, attributes, source, target) => {
+        if (nodesToAdd.has(source) && nodesToAdd.has(target)) {
+          // Additional check: only include edges that are actually visible in the current filtered view
+          // This excludes edges that were created but are now hidden due to filtering
+          if (computedData.filteredEdges && computedData.filteredEdges.has(edge)) {
+            highlightedEdgesSet.add(edge);
+          } else if (!computedData.filteredEdges) {
+            // If no filtered edges exist, include all edges between visible nodes
+            highlightedEdgesSet.add(edge);
+          }
+        }
+      });
+
+
+
+      // If no nodes are highlighted, download the entire graph
+      if (nodesToAdd.size === 0) {
+        const blob = new Blob([graphFile.textContent], { type: "application/xml" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = graphFile.name || "graph.gexf";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      // Create a new XML document for the filtered graph
+      const newXmlDoc = parser.parseFromString(graphFile.textContent, "text/xml");
+      const newGraphElement = newXmlDoc.querySelector('graph');
+      if (!newGraphElement) return;
+
+      // Remove all existing nodes and edges
+      const existingNodes = newXmlDoc.querySelectorAll('node');
+      const existingEdges = newXmlDoc.querySelectorAll('edge');
+
+      existingNodes.forEach(node => {
+        const nodeId = node.getAttribute('id');
+        if (nodeId && !nodesToAdd.has(nodeId)) {
+          node.remove();
+        }
+      });
+
+      existingEdges.forEach(edge => {
+        const edgeId = edge.getAttribute('id');
+        if (edgeId && !highlightedEdgesSet.has(edgeId)) {
+          edge.remove();
+        }
+      });
+
+      // Serialize the filtered XML
+      const serializer = new XMLSerializer();
+      const filteredGexfContent = serializer.serializeToString(newXmlDoc);
+
+      // Create and download the filtered file
+      const blob = new Blob([filteredGexfContent], { type: "application/xml" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = graphFile.name || "graph.gexf";
+
+      // Create filename with indication that it's filtered
+      const baseName = graphFile.name || "graph";
+      const extension = graphFile.extension || "gexf";
+      const filteredName = `${baseName}_highlighted.${extension}`;
+
+      a.download = filteredName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
-  }, [graphFile]);
+  }, [graphFile, graph, navState.selectedNode, hovered]);
 
   return (
     <>
@@ -233,7 +337,7 @@ const GraphControls: FC = () => {
         <FaFileImage />
       </button>
 
-      <button className="btn btn-outline-dark graph-button mt-3" onClick={downloadGraph} title="Download graph file (.gexf)">
+      <button className="btn btn-outline-dark graph-button mt-3" onClick={downloadGraph} title="Download highlighted graph file (.gexf)">
         <FaDownload />
       </button>
     </>
