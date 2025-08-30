@@ -99,7 +99,9 @@ class GexfNodeGenerator:
                 r.primaryLanguage,
                 r.createdAt,
                 r.license,
-                rt.topics
+                rt.topics,
+                r.bigquery_contributors,
+                r.bigquery_stargazers
             FROM repos r
             JOIN matching_repos mr ON r.nameWithOwner = mr.nameWithOwner
             JOIN repo_topics_agg rt ON r.nameWithOwner = rt.nameWithOwner;
@@ -124,6 +126,8 @@ class GexfNodeGenerator:
             "createdAt",
             "license",
             "topics",
+            "bigquery_contributors",
+            "bigquery_stargazers"
         ]
         G = nx.Graph()
         G.graph['has_edges'] = False  # Add this attribute to indicate no edges in this graph
@@ -141,6 +145,8 @@ class GexfNodeGenerator:
             "createdAt_year": 0,  # Keep only year
             "license": "",
             "topics": "",  # Default empty string for topics
+            "contributors": "",  # Default empty string for contributors
+            "stargazers": ""     # Default empty string for stargazers
         }
 
         # Add attributes to the graph
@@ -157,6 +163,8 @@ class GexfNodeGenerator:
             'license': {'type': 'string'},
             'github_url': {'type': 'string'},
             'topics': {'type': 'string'},  # Add topics as a string attribute
+            'contributors': {'type': 'string'},  # Add contributors as a string attribute
+            'stargazers': {'type': 'string'},  # Add stargazers as a string attribute
         }
 
         for row in result:
@@ -186,6 +194,18 @@ class GexfNodeGenerator:
                 elif col == "topics":
                     # Store topics as a comma-separated string
                     node_attrs[col] = val if val else default_values[col]
+                elif col == "bigquery_contributors":
+                    # Store contributors as a comma-separated string
+                    if val and isinstance(val, list):
+                        node_attrs["contributors"] = ",".join(val)
+                    else:
+                        node_attrs["contributors"] = ""
+                elif col == "bigquery_stargazers":
+                    # Store stargazers as a comma-separated string
+                    if val and isinstance(val, list):
+                        node_attrs["stargazers"] = ",".join(val)
+                    else:
+                        node_attrs["stargazers"] = ""
                 elif col == "isArchived":
                     # Ensure isArchived is always a boolean value
                     node_attrs[col] = bool(val) if val is not None else False

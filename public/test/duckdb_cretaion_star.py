@@ -3,15 +3,14 @@ import pandas as pd
 import json
 from google.cloud import bigquery
 from tqdm import tqdm
-import concurrent.futures
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Initialize BigQuery client
 client = bigquery.Client()
 
 # BigQuery configuration
-BQ_PROJECT = 'deepgit'  # Replace with your actual project ID
-BQ_DATASET = 'githubwithstar'     # Replace with your actual dataset name
+BQ_PROJECT = 'deepgit'  
+BQ_DATASET = 'githubwithstar'     
 REPO_LIST_TABLE = f'{BQ_PROJECT}.{BQ_DATASET}.repo_list'
 
 # Paths
@@ -30,150 +29,103 @@ repo_ids = [repo.get("nameWithOwner") for repo in data]
 print(f"Total repos to process: {len(repo_ids)}")
 
 # -----------------------------------
-# Create repo_list table in BigQuery first
+# Create repo_list table in BigQuery
 # -----------------------------------
-def create_repo_list_table():
-    """Create a temporary repo_list table in BigQuery for efficient JOINs"""
+def create_dataset_and_table():
+    """Create BigQuery dataset and repo_list table using efficient methods."""
     try:
-        # Create the repo_list table
-        create_table_query = f"""
-        CREATE OR REPLACE TABLE `{REPO_LIST_TABLE}` (
-            repo_name STRING
+        dataset_id = bigquery.Dataset(f"{BQ_PROJECT}.{BQ_DATASET}")
+        dataset_id.location = "US"
+        client.create_dataset(dataset_id, exists_ok=True)
+        print(f"Dataset {BQ_DATASET} is ready.")
+
+        df_repo_list = pd.DataFrame(repo_ids, columns=['repo_name'])
+
+        job_config = bigquery.LoadJobConfig()
+        job_config.schema = [
+            bigquery.SchemaField("repo_name", "STRING")
+        ]
+        job_config.write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE
+        
+        print(f"Loading {len(df_repo_list)} repos to BigQuery table `{REPO_LIST_TABLE}`...")
+        
+        load_job = client.load_table_from_dataframe(
+            df_repo_list,
+            REPO_LIST_TABLE,
+            job_config=job_config
         )
-        """
+        load_job.result()  # Wait for the job to complete
         
-        print("Creating repo_list table in BigQuery...")
-        client.query(create_table_query).result()
+        print("repo_list table created and populated successfully!")
         
-        # Insert repo IDs into the table
-        if repo_ids:
-            # Convert repo_ids to a format suitable for BigQuery
-            repo_values = [f"('{repo}')" for repo in repo_ids]
-            insert_query = f"""
-            INSERT INTO `{REPO_LIST_TABLE}` (repo_name)
-            VALUES {','.join(repo_values)}
-            """
-            
-            print(f"Inserting {len(repo_ids)} repos into repo_list table...")
-            client.query(insert_query).result()
-            print("repo_list table created and populated successfully!")
-        else:
-            print("No repo IDs to insert!")
-            
     except Exception as e:
-        print(f"Error creating repo_list table: {e}")
+        print(f"Error setting up BigQuery environment: {e}")
         raise
 
 # -----------------------------------
-# Single BigQuery query function using JOIN
+# Single BigQuery query function using JOIN and AGGREGATION
 # -----------------------------------
-def get_contributors_and_stargazers():
-    """Get all contributors and stargazers using JOIN with repo_list table"""
+def get_contributors_and_stargazers_optimized():
+    """Get all contributors and stargazers using an optimized JOIN and aggregation query."""
     try:
-        # Use JOIN instead of IN UNNEST for better performance
         combined_query = f"""
             SELECT
-                t1.repo.name AS repo,
-                t1.type,
-                t1.actor.login AS username
+                t2.repo_name AS repo,
+                STRING_AGG(DISTINCT CASE WHEN t1.type = 'PullRequestEvent' THEN t1.actor.login END, ',') AS contributors,
+                STRING_AGG(DISTINCT CASE WHEN t1.type = 'WatchEvent' THEN t1.actor.login END, ',') AS stargazers
             FROM
                 `githubarchive.month.*` AS t1
             JOIN
                 `{REPO_LIST_TABLE}` AS t2
             ON
-                t1.repo.name = t2.repo_name
+                LOWER(t1.repo.name) = LOWER(t2.repo_name)
             WHERE
                 t1.type IN ('PullRequestEvent', 'WatchEvent')
                 AND t1._TABLE_SUFFIX >= '2015'
             GROUP BY
-                repo,
-                type,
-                username
+                repo
         """
         
-        print("Executing BigQuery query using JOIN with repo_list table...")
+        print("Executing BigQuery query with aggregation...")
+        # Use to_dataframe with a large chunk size or no chunking
         df = client.query(combined_query).to_dataframe()
         
-        # Separate contributors and stargazers
+        # Split the aggregated strings back into lists
         if not df.empty:
-            contributors = df[df.type == 'PullRequestEvent'][['repo', 'username']].rename(columns={'username': 'contributor'})
-            stargazers = df[df.type == 'WatchEvent'][['repo', 'username']].rename(columns={'username': 'stargazer'})
-        else:
-            contributors = pd.DataFrame(columns=['repo', 'contributor'])
-            stargazers = pd.DataFrame(columns=['repo', 'stargazer'])
+            df['contributors'] = df['contributors'].apply(lambda x: x.split(',') if pd.notna(x) else [])
+            df['stargazers'] = df['stargazers'].apply(lambda x: x.split(',') if pd.notna(x) else [])
         
-        return contributors, stargazers
+        return df
         
     except Exception as e:
         print(f"Error in BigQuery query: {e}")
-        return pd.DataFrame(), pd.DataFrame()
+        return pd.DataFrame()
 
 # -----------------------------------
-# Execute BigQuery operations
+# Main execution flow
 # -----------------------------------
 print("Starting BigQuery operations...")
 start_time = datetime.now()
 
 # Step 1: Create and populate repo_list table
-create_repo_list_table()
+create_dataset_and_table()
 
-# Step 2: Execute query using JOIN
-contributors_df, stargazers_df = get_contributors_and_stargazers()
+# Step 2: Execute optimized query
+bigquery_df = get_contributors_and_stargazers_optimized()
 
 end_time = datetime.now()
 processing_time = end_time - start_time
 print(f"BigQuery operations completed in: {processing_time}")
 
-print(f"Total contributors found: {len(contributors_df)}")
-print(f"Total stargazers found: {len(stargazers_df)}")
-
-# Show results for the first repo
-if not contributors_df.empty and not stargazers_df.empty:
-    first_repo = repo_ids[0]
-    print(f"\n=== BigQuery Results for First Repo: {first_repo} ===")
-    
-    # Get contributors for first repo
-    first_repo_contribs = contributors_df[contributors_df.repo == first_repo]
-    if not first_repo_contribs.empty:
-        print(f"Contributors ({len(first_repo_contribs)}):")
-        for _, row in first_repo_contribs.iterrows():
-            print(f"  - {row.contributor}")
-    else:
-        print("Contributors: 0 (no data found)")
-    
-    # Get stargazers for first repo
-    first_repo_stars = stargazers_df[stargazers_df.repo == first_repo]
-    if not first_repo_stars.empty:
-        print(f"\nStargazers ({len(first_repo_stars)}):")
-        for _, row in first_repo_stars.iterrows():
-            print(f"  - {row.stargazer}")
-    else:
-        print("Stargazers: 0 (no data found)")
-    
-    print("=" * 50)
-
-# Build lookup maps - now we need to group by repo and get lists
-contributors_map = {}
-stargazers_map = {}
-
-for repo in contributors_df.repo.unique():
-    repo_contribs = contributors_df[contributors_df.repo == repo]['contributor'].tolist()
-    contributors_map[repo] = repo_contribs
-
-for repo in stargazers_df.repo.unique():
-    repo_stars = stargazers_df[stargazers_df.repo == repo]['stargazer'].tolist()
-    stargazers_map[repo] = repo_stars
-
 # -----------------------------------
-# Flatten repo metadata (with progress bar)
+# Flatten repo metadata and merge
 # -----------------------------------
 repos, languages, topics = [], [], []
 
 for repo in tqdm(data, desc="Processing repos"):
-    repo_id = repo.get("nameWithOwner")
-
     repos.append({
-        "nameWithOwner": repo_id,
+        "nameWithOwner": repo.get("nameWithOwner"),
+        # ... all other fields from your original script ...
         "owner": repo.get("owner"),
         "name": repo.get("name"),
         "stars": repo.get("stars"),
@@ -195,14 +147,12 @@ for repo in tqdm(data, desc="Processing repos"):
         "assignableUserCount": repo.get("assignableUserCount"),
         "codeOfConduct": str(repo.get("codeOfConduct")),
         "forkingAllowed": repo.get("forkingAllowed"),
-        "parent": str(repo.get("parent")),
-        "bigquery_contributors": contributors_map.get(repo_id, []),
-        "bigquery_stargazers": stargazers_map.get(repo_id, []),
+        "parent": str(repo.get("parent"))
     })
-
+    
     for lang in repo.get("languages", []):
         languages.append({
-            "repo": repo_id,
+            "repo": repo.get("nameWithOwner"),
             "language": lang.get("name"),
             "size": lang.get("size")
         })
@@ -213,34 +163,48 @@ for repo in tqdm(data, desc="Processing repos"):
         if topic_name and topic_name not in seen_topics:
             seen_topics.add(topic_name)
             topics.append({
-                "repo": repo_id,
+                "repo": repo.get("nameWithOwner"),
                 "topic": topic_name,
                 "stars": topic.get("stars")
             })
 
-# -----------------------------------
-# Convert to DataFrames
-# -----------------------------------
 df_repos = pd.DataFrame(repos)
 df_languages = pd.DataFrame(languages)
 df_topics = pd.DataFrame(topics)
 
+# Perform a single, efficient merge
+print("Merging BigQuery data with main repository metadata...")
+df_repos = pd.merge(df_repos, bigquery_df, 
+                    left_on='nameWithOwner', right_on='repo', how='left')
+df_repos.drop('repo', axis=1, inplace=True)
+df_repos.rename(columns={'contributors': 'bigquery_contributors', 'stargazers': 'bigquery_stargazers'}, inplace=True)
+# Fill NaN lists with empty lists
+df_repos['bigquery_contributors'] = df_repos['bigquery_contributors'].apply(lambda x: x if isinstance(x, list) else [])
+df_repos['bigquery_stargazers'] = df_repos['bigquery_stargazers'].apply(lambda x: x if isinstance(x, list) else [])
+
 # -----------------------------------
-# Write to DuckDB
+# Write to DuckDB (more efficiently)
 # -----------------------------------
 con = duckdb.connect(db_path)
 con.execute("SET threads TO 4;")
 
-con.register('df_repos', df_repos)
-con.execute("CREATE OR REPLACE TABLE repos AS SELECT * FROM df_repos;")
+# Helper to insert directly
+def insert_df(df, table_name):
+    print(f"Writing {len(df)} rows to {table_name}...")
+    # Use DuckDB's built-in function to register and write
+    # This is much faster than manual chunking and INSERT
+    con.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM df;")
 
+# Write repos
+insert_df(df_repos, "repos")
+
+# Write languages (if any)
 if not df_languages.empty:
-    con.register('df_languages', df_languages)
-    con.execute("CREATE OR REPLACE TABLE repo_languages AS SELECT * FROM df_languages;")
+    insert_df(df_languages, "repo_languages")
 
+# Write topics (if any)
 if not df_topics.empty:
-    con.register('df_topics', df_topics)
-    con.execute("CREATE OR REPLACE TABLE repo_topics AS SELECT * FROM df_topics;")
+    insert_df(df_topics, "repo_topics")
 
 con.close()
 print(f"DuckDB database created at {db_path}")
