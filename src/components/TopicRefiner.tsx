@@ -100,6 +100,9 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [showConfirmationModal, setShowConfirmationModal] = useState(false);
     const [isLoadingUniqueCount, setIsLoadingUniqueCount] = useState(false);
     const [uniqueCountError, setUniqueCountError] = useState<string | null>(null);
+    const [searchTermRemoved, setSearchTermRemoved] = useState(false);
+    const [submitProgress, setSubmitProgress] = useState(0);
+    const [submitStatus, setSubmitStatus] = useState<string>('');
 
     // Function to fetch unique repository count for all finalized topics
     const fetchUniqueReposCount = async (topics: string[]) => {
@@ -239,6 +242,10 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             delete newCounts[topic];
             return newCounts;
         });
+        // If removing the search term, mark it as removed
+        if (topic === searchTerm) {
+            setSearchTermRemoved(true);
+        }
     };
 
     useEffect(() => {
@@ -483,7 +490,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         if (searchTerm && !selectedTopics.includes(searchTerm)) {
             setSelectedTopics([...selectedTopics, searchTerm]);
         }
-        if (searchTerm && !finalizedTopics.includes(searchTerm)) {
+        if (searchTerm && !finalizedTopics.includes(searchTerm) && !searchTermRemoved) {
             setFinalizedTopics([...finalizedTopics, searchTerm]);
             // Fetch topic count for the search term if not already available
             if (!topicCounts[searchTerm]) {
@@ -521,6 +528,20 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const submitTopics = async () => {
         try {
             setIsSubmitting(true);  // Start loading state
+            setSubmitProgress(0);
+            setSubmitStatus('Initializing...');
+
+            // Simulate progress updates
+            const progressInterval = setInterval(() => {
+                setSubmitProgress(prev => {
+                    if (prev >= 90) return prev;
+                    return prev + Math.random() * 15;
+                });
+            }, 500);
+
+            setSubmitStatus('Generating graph data...');
+            setSubmitProgress(25);
+
             const response = await fetch(`${API_ENDPOINTS.GENERATED_NODES}`, {
                 method: 'POST',
                 headers: {
@@ -528,6 +549,10 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                 },
                 body: JSON.stringify({ topics: finalizedTopics }),
             });
+
+            clearInterval(progressInterval);
+            setSubmitProgress(90);
+            setSubmitStatus('Finalizing...');
 
             if (!response.ok) {
                 throw new Error('Failed to generate GEXF file');
@@ -537,6 +562,9 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             if (!data.success) {
                 throw new Error('Failed to generate GEXF file');
             }
+
+            setSubmitProgress(100);
+            setSubmitStatus('Complete!');
 
             const file = new File([data.gexfContent], "generated_nodes.gexf", { type: "application/xml" });
             // Use replace: false to ensure proper history entry is created
@@ -548,6 +576,8 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             console.error('Error submitting finalized topics:', error);
             alert('Failed to generate graph. Please try again.');
             setIsSubmitting(false);  // Reset loading state on error
+            setSubmitProgress(0);
+            setSubmitStatus('');
         }
     };
 
@@ -955,21 +985,63 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                 </div>
                             )}
                         </div>
-                        <button
-                            className="btn d-flex align-items-center"
-                            onClick={handleSubmitFinalizedTopics}
-                            disabled={finalizedTopics.length === 0 || isSubmitting || isLoadingUniqueCount}
+                        <div
+                            className="position-relative d-flex align-items-center justify-content-center"
                             style={{
-                                color: 'white',
-                                backgroundColor: '#198754',  // Bootstrap's success color
-                                borderColor: '#198754',
-                                opacity: finalizedTopics.length === 0 || isSubmitting || isLoadingUniqueCount ? 0.65 : 1
+                                minWidth: '200px',
+                                height: '38px',
+                                borderRadius: '6px',
+                                border: '1px solid #198754',
+                                backgroundColor: isSubmitting ? '#f8f9fa' : '#198754',
+                                color: isSubmitting ? '#6c757d' : 'white',
+                                cursor: isSubmitting ? 'default' : 'pointer',
+                                transition: 'all 0.3s ease',
+                                opacity: finalizedTopics.length === 0 || isLoadingUniqueCount ? 0.65 : 1
                             }}
+                            onClick={!isSubmitting ? handleSubmitFinalizedTopics : undefined}
                         >
                             {isSubmitting ? (
                                 <>
-                                    <Loader2 size={16} className="me-2 animate-spin" />
-                                    Generating Graph...
+                                    {/* Progress bar background */}
+                                    <div
+                                        className="position-absolute"
+                                        style={{
+                                            top: 0,
+                                            left: 0,
+                                            height: '100%',
+                                            width: '100%',
+                                            borderRadius: '6px',
+                                            backgroundColor: '#e9ecef'
+                                        }}
+                                    />
+                                    {/* Progress bar fill */}
+                                    <div
+                                        className="position-absolute"
+                                        style={{
+                                            top: 0,
+                                            left: 0,
+                                            height: '100%',
+                                            width: `${submitProgress}%`,
+                                            borderRadius: '6px',
+                                            backgroundColor: '#198754',
+                                            transition: 'width 0.3s ease'
+                                        }}
+                                    />
+                                    {/* Content overlay */}
+                                    <div className="position-relative d-flex align-items-center">
+                                        <Loader2
+                                            size={16}
+                                            className="me-2 animate-spin"
+                                            style={{
+                                                color: submitStatus === 'Generating graph data...' ? 'white' : '#6c757d'
+                                            }}
+                                        />
+                                        <span style={{
+                                            color: submitStatus === 'Generating graph data...' ? 'white' : '#6c757d'
+                                        }}>
+                                            {submitStatus || 'Processing...'}
+                                        </span>
+                                    </div>
                                 </>
                             ) : (
                                 <>
@@ -977,7 +1049,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     Submit Topics
                                 </>
                             )}
-                        </button>
+                        </div>
                     </div>
                 </div>
             </div>
