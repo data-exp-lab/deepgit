@@ -9,7 +9,7 @@ import { DEFAULT_EDGE_COLOR } from "../lib/consts";
 import { useNotifications } from "../lib/notifications";
 
 const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
-    const { navState, setNavState, setShowEdgePanel, data, graphFile } = useContext(GraphContext);
+    const { navState, setNavState, setShowEdgePanel, data, graphFile, computedData } = useContext(GraphContext);
     const { notify } = useNotifications();
 
     // State for edge creation criteria - use navState values if available, otherwise defaults
@@ -136,7 +136,10 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         if (!data || !data.graph) return;
 
         const { graph } = data;
-        const nodes = graph.nodes();
+        // Use filtered nodes if available, otherwise use all nodes
+        const nodes = computedData?.filteredNodes ?
+            Array.from(computedData.filteredNodes) :
+            graph.nodes();
         const edgesCreated: Array<{ source: string; target: string; sharedTopics: string[] }> = [];
 
         // Get all nodes with their topics and filter out nodes without topics
@@ -237,7 +240,10 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         if (!data || !data.graph) return;
 
         const { graph } = data;
-        const nodes = graph.nodes();
+        // Use filtered nodes if available, otherwise use all nodes
+        const nodes = computedData?.filteredNodes ?
+            Array.from(computedData.filteredNodes) :
+            graph.nodes();
         const edgesCreated: Array<{ source: string; target: string; organization: string }> = [];
 
         // Get all nodes with their organization (owner from nameWithOwner)
@@ -337,7 +343,10 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         if (!data || !data.graph) return [];
 
         const { graph } = data;
-        const nodes = graph.nodes();
+        // Use filtered nodes if available, otherwise use all nodes
+        const nodes = computedData?.filteredNodes ?
+            Array.from(computedData.filteredNodes) :
+            graph.nodes();
 
         // Debug: Log overall data structure
         console.log('Graph data structure:', data);
@@ -455,7 +464,10 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         if (!data || !data.graph) return [];
 
         const { graph } = data;
-        const nodes = graph.nodes();
+        // Use filtered nodes if available, otherwise use all nodes
+        const nodes = computedData?.filteredNodes ?
+            Array.from(computedData.filteredNodes) :
+            graph.nodes();
 
         // Debug: Log overall data structure
         console.log('Stargazer - Graph data structure:', data);
@@ -583,7 +595,10 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
             edgeType: string;
         }> = [];
 
-        const nodes = graph.nodes();
+        // Use filtered nodes if available, otherwise use all nodes
+        const nodes = computedData?.filteredNodes ?
+            Array.from(computedData.filteredNodes) :
+            graph.nodes();
         const processedPairs = new Set<string>();
 
         // Process all pairs of nodes
@@ -1104,6 +1119,12 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
 
                         {/* Apply Button */}
                         <div className="mb-3">
+                            {computedData?.filteredNodes && (
+                                <div className="alert alert-info small mb-3">
+                                    <strong>Note:</strong> Edge creation will only consider currently visible nodes ({computedData.filteredNodes.size} of {data?.graph?.order || 0} total).
+                                    Hidden/filtered nodes will not participate in edge creation.
+                                </div>
+                            )}
                             <button
                                 className="btn btn-light w-100 text-center"
                                 onClick={handleApplyEdgeCreation}

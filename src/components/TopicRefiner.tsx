@@ -129,7 +129,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             const data = await response.json();
             if (data.success) {
                 setUniqueReposCount(data.count);
-                console.log('Unique repos count updated:', data.count);
+                // console.log('Unique repos count updated:', data.count);
             } else {
                 throw new Error(data.message || 'Failed to get unique repos count');
             }
@@ -148,7 +148,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
     // Update unique repos count when finalized topics change
     useEffect(() => {
-        console.log('Finalized topics changed, fetching unique repos count:', finalizedTopics);
+        // console.log('Finalized topics changed, fetching unique repos count:', finalizedTopics);
         fetchUniqueReposCount(finalizedTopics);
     }, [finalizedTopics]);
 
@@ -514,7 +514,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             return;
         }
 
-        console.log('Proceeding with submission, unique count:', uniqueReposCount);
+        // console.log('Proceeding with submission, unique count:', uniqueReposCount);
         await submitTopics();
     };
 
