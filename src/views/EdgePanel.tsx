@@ -9,7 +9,7 @@ import { DEFAULT_EDGE_COLOR } from "../lib/consts";
 import { useNotifications } from "../lib/notifications";
 
 const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
-    const { navState, setNavState, setShowEdgePanel, data, graphFile } = useContext(GraphContext);
+    const { navState, setNavState, setShowEdgePanel, data, graphFile, computedData } = useContext(GraphContext);
     const { notify } = useNotifications();
 
     // State for edge creation criteria - use navState values if available, otherwise defaults
@@ -84,7 +84,13 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         });
     };
 
-
+    const updateEnableContributorOverlap = (checked: boolean) => {
+        setEnableContributorOverlap(checked);
+        setNavState({
+            ...navState,
+            edgeCreationEnableContributorOverlap: checked,
+        });
+    };
 
     const updateEnableSharedOrganization = (checked: boolean) => {
         setEnableSharedOrganization(checked);
@@ -94,11 +100,21 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         });
     };
 
+    const updateEnableCommonStargazers = (checked: boolean) => {
+        setEnableCommonStargazers(checked);
+        setNavState({
+            ...navState,
+            edgeCreationEnableCommonStargazers: checked,
+        });
+    };
 
-
-
-
-
+    const updateEnableDependencies = (checked: boolean) => {
+        setEnableDependencies(checked);
+        setNavState({
+            ...navState,
+            edgeCreationEnableDependencies: checked,
+        });
+    }
 
     // Function to remove all edges from the graph
     const removeAllEdges = () => {
@@ -120,7 +136,10 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         if (!data || !data.graph) return;
 
         const { graph } = data;
-        const nodes = graph.nodes();
+        // Use filtered nodes if available, otherwise use all nodes
+        const nodes = computedData?.filteredNodes ?
+            Array.from(computedData.filteredNodes) :
+            graph.nodes();
         const edgesCreated: Array<{ source: string; target: string; sharedTopics: string[] }> = [];
 
         // Get all nodes with their topics and filter out nodes without topics
@@ -181,35 +200,32 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
 
                         // Only create edge if we meet the threshold
                         if (commonTopics.length >= topicThreshold) {
-                            // Check if edge already exists
-                            if (!graph.hasEdge(node1, node2)) {
-                                // Create edge attributes
-                                const edgeAttributes: EdgeData = {
-                                    size: 2,
-                                    rawSize: 2,
-                                    color: DEFAULT_EDGE_COLOR,
-                                    rawColor: DEFAULT_EDGE_COLOR,
-                                    label: `Shared topics: ${commonTopics.join(', ')}`,
-                                    directed: false,
-                                    hidden: false,
-                                    type: undefined,
-                                    attributes: {
-                                        sharedTopics: commonTopics.join('|'),
-                                        edgeType: 'topic-based',
-                                        topicCount: commonTopics.length
-                                    }
-                                };
+                            // Create edge attributes
+                            const edgeAttributes: EdgeData = {
+                                size: 2,
+                                rawSize: 2,
+                                color: DEFAULT_EDGE_COLOR,
+                                rawColor: DEFAULT_EDGE_COLOR,
+                                label: `Shared topics: ${commonTopics.join(', ')}`,
+                                directed: false,
+                                hidden: false,
+                                type: undefined,
+                                attributes: {
+                                    sharedTopics: commonTopics.join('|'),
+                                    edgeType: 'topic-based',
+                                    topicCount: commonTopics.length
+                                }
+                            };
 
-                                // Add undirected edge
-                                const edgeKey = `topic_edge_${node1}_${node2}`;
-                                graph.addUndirectedEdgeWithKey(edgeKey, node1, node2, edgeAttributes);
+                            // Add undirected edge
+                            const edgeKey = `topic_edge_${node1}_${node2}`;
+                            graph.addUndirectedEdgeWithKey(edgeKey, node1, node2, edgeAttributes);
 
-                                edgesCreated.push({
-                                    source: node1,
-                                    target: node2,
-                                    sharedTopics: commonTopics
-                                });
-                            }
+                            edgesCreated.push({
+                                source: node1,
+                                target: node2,
+                                sharedTopics: commonTopics
+                            });
                         }
                     }
                 }
@@ -224,7 +240,10 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         if (!data || !data.graph) return;
 
         const { graph } = data;
-        const nodes = graph.nodes();
+        // Use filtered nodes if available, otherwise use all nodes
+        const nodes = computedData?.filteredNodes ?
+            Array.from(computedData.filteredNodes) :
+            graph.nodes();
         const edgesCreated: Array<{ source: string; target: string; organization: string }> = [];
 
         // Get all nodes with their organization (owner from nameWithOwner)
@@ -267,8 +286,6 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
             organizationToNodes[organization].push(nodeId);
         });
 
-
-
         // Find nodes that share the same organization
         const processedPairs = new Set<string>();
 
@@ -287,35 +304,32 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                         if (processedPairs.has(pairKey)) continue;
                         processedPairs.add(pairKey);
 
-                        // Check if edge already exists
-                        if (!graph.hasEdge(node1, node2)) {
-                            // Create edge attributes
-                            const edgeAttributes: EdgeData = {
-                                size: 2,
-                                rawSize: 2,
-                                color: DEFAULT_EDGE_COLOR,
-                                rawColor: DEFAULT_EDGE_COLOR,
-                                label: `Shared organization: ${organization}`,
-                                directed: false,
-                                hidden: false,
-                                type: undefined,
-                                attributes: {
-                                    sharedOrganization: organization,
-                                    edgeType: 'organization-based',
-                                    organization: organization
-                                }
-                            };
-
-                            // Add undirected edge
-                            const edgeKey = `org_edge_${node1}_${node2}`;
-                            graph.addUndirectedEdgeWithKey(edgeKey, node1, node2, edgeAttributes);
-
-                            edgesCreated.push({
-                                source: node1,
-                                target: node2,
+                        // Create edge attributes
+                        const edgeAttributes: EdgeData = {
+                            size: 2,
+                            rawSize: 2,
+                            color: DEFAULT_EDGE_COLOR,
+                            rawColor: DEFAULT_EDGE_COLOR,
+                            label: `Shared organization: ${organization}`,
+                            directed: false,
+                            hidden: false,
+                            type: undefined,
+                            attributes: {
+                                sharedOrganization: organization,
+                                edgeType: 'organization-based',
                                 organization: organization
-                            });
-                        }
+                            }
+                        };
+
+                        // Add undirected edge
+                        const edgeKey = `org_edge_${node1}_${node2}`;
+                        graph.addUndirectedEdgeWithKey(edgeKey, node1, node2, edgeAttributes);
+
+                        edgesCreated.push({
+                            source: node1,
+                            target: node2,
+                            organization: organization
+                        });
                     }
                 }
             }
@@ -324,165 +338,412 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         return edgesCreated;
     };
 
-    // Function to create edges that satisfy BOTH topic-based AND shared organization criteria
-    const createCombinedEdges = () => {
+    // Function to create contributor overlap edges
+    const createContributorOverlapEdges = () => {
         if (!data || !data.graph) return [];
 
         const { graph } = data;
-        const edges: Array<{ source: string; target: string; sharedTopics: string[]; organization: string }> = [];
-        const nodeOrganizations: Record<string, string> = {};
-        const nodesWithOrganization: string[] = [];
+        // Use filtered nodes if available, otherwise use all nodes
+        const nodes = computedData?.filteredNodes ?
+            Array.from(computedData.filteredNodes) :
+            graph.nodes();
 
-        // First pass: collect all nodes and their organizations
-        graph.forEachNode((nodeId) => {
+        // Debug: Log overall data structure
+        console.log('Graph data structure:', data);
+        console.log('Total nodes in graph:', nodes.length);
+
+        // Check if contributor/stargazer data exists in the overall data
+        console.log('Available data keys:', Object.keys(data));
+        if (data.graph) {
+            console.log('Graph structure:', data.graph);
+        }
+
+        if (nodes.length > 0) {
+            const firstNode = nodes[0];
+            const firstNodeData = graph.getNodeAttributes(firstNode);
+            console.log('First node data structure:', firstNodeData);
+            console.log('First node attributes:', firstNodeData.attributes);
+        }
+
+        const edgesCreated: Array<{ source: string; target: string; sharedContributors: string[] }> = [];
+
+        // Get all nodes with their contributors and filter out nodes without contributors
+        const nodeContributors: Record<string, string[]> = {};
+        const nodesWithContributors: string[] = [];
+
+        nodes.forEach(nodeId => {
             const nodeData = graph.getNodeAttributes(nodeId);
-            const nameWithOwner = nodeData.attributes?.nameWithOwner || nodeData.attributes?.name || nodeData.attributes?.label;
+            // Check both possible field names for contributors
+            const contributors = nodeData.attributes?.bigquery_contributors || nodeData.attributes?.contributors;
+            if (contributors) {
+                let contributorArray: string[] = [];
 
-            if (nameWithOwner && typeof nameWithOwner === 'string') {
-                if (nameWithOwner.includes('/')) {
-                    const owner = nameWithOwner.split('/')[0];
-                    if (owner) {
-                        nodeOrganizations[nodeId] = owner;
-                        nodesWithOrganization.push(nodeId);
-                    }
-                } else {
-                    nodeOrganizations[nodeId] = nameWithOwner;
-                    nodesWithOrganization.push(nodeId);
+                if (Array.isArray(contributors)) {
+                    // If it's already an array, use it directly
+                    contributorArray = contributors;
+                } else if (typeof contributors === 'string') {
+                    // If it's a string, split by comma
+                    contributorArray = contributors.split(',').map(c => c.trim()).filter(Boolean);
+                }
+
+                if (contributorArray.length > 0) {
+                    nodeContributors[nodeId] = contributorArray;
+                    nodesWithContributors.push(nodeId);
                 }
             }
         });
 
-        // Create reverse index: organization -> list of nodes
-        const organizationToNodes: Record<string, string[]> = {};
-        nodesWithOrganization.forEach(nodeId => {
-            const organization = nodeOrganizations[nodeId];
-            if (!organizationToNodes[organization]) {
-                organizationToNodes[organization] = [];
-            }
-            organizationToNodes[organization].push(nodeId);
-        });
+        // Debug: Log what we found
+        console.log(`Found ${nodesWithContributors.length} nodes with contributors`);
+        if (nodesWithContributors.length > 0) {
+            console.log('Sample contributor data:', nodeContributors[nodesWithContributors[0]]);
+        }
 
+        // Early exit if not enough nodes with contributors
+        if (nodesWithContributors.length < 2) {
+            console.log('Not enough nodes with contributors to create edges');
+            return edgesCreated;
+        }
 
-
-        // Find nodes that share BOTH topics AND organization
+        // Find nodes that share contributors
         const processedPairs = new Set<string>();
 
+        for (let i = 0; i < nodesWithContributors.length; i++) {
+            for (let j = i + 1; j < nodesWithContributors.length; j++) {
+                const node1 = nodesWithContributors[i];
+                const node2 = nodesWithContributors[j];
 
+                // Create a unique key for this pair to avoid duplicates
+                const pairKey = node1 < node2 ? `${node1}-${node2}` : `${node2}-${node1}`;
 
-        Object.entries(organizationToNodes).forEach(([organization, nodeList]) => {
+                if (processedPairs.has(pairKey)) continue;
+                processedPairs.add(pairKey);
 
+                // Find common contributors between these two nodes
+                const contributors1 = nodeContributors[node1];
+                const contributors2 = nodeContributors[node2];
+                const commonContributors = contributors1.filter(c => contributors2.includes(c));
 
-            if (nodeList.length > 1) {
-                // For each pair of nodes in the same organization
-                for (let i = 0; i < nodeList.length; i++) {
-                    for (let j = i + 1; j < nodeList.length; j++) {
-                        const source = nodeList[i];
-                        const target = nodeList[j];
-
-                        const pairKey = `${source}-${target}`;
-                        const reversePairKey = `${target}-${source}`;
-
-                        // Skip if we've already processed this pair
-                        if (processedPairs.has(pairKey) || processedPairs.has(reversePairKey)) {
-                            continue;
-                        }
-                        processedPairs.add(pairKey);
-                        processedPairs.add(reversePairKey);
-
-                        try {
-                            // Check if they share topics
-                            const sourceData = graph.getNodeAttributes(source);
-                            const targetData = graph.getNodeAttributes(target);
-
-                            // Convert pipe-separated string to array if needed
-                            const sourceTopicsRaw = sourceData.attributes?.topics || [];
-                            const targetTopicsRaw = targetData.attributes?.topics || [];
-
-                            // Handle both string and array formats
-                            const sourceTopics = Array.isArray(sourceTopicsRaw)
-                                ? sourceTopicsRaw
-                                : (typeof sourceTopicsRaw === 'string' ? sourceTopicsRaw.split('|') : []);
-                            const targetTopics = Array.isArray(targetTopicsRaw)
-                                ? targetTopicsRaw
-                                : (typeof targetTopicsRaw === 'string' ? targetTopicsRaw.split('|') : []);
-
-                            // Find common topics
-                            const commonTopics = sourceTopics.filter((topic: string) =>
-                                targetTopics.includes(topic)
-                            );
-
-                            // Only create edge if BOTH conditions are met:
-                            // 1. They share the same organization
-                            // 2. They share at least the minimum number of topics
-                            if (commonTopics.length >= topicThreshold && commonTopics.length > 0) {
-                                // Add the edge to the graph
-                                const edgeAttributes = {
-                                    size: 2,
-                                    rawSize: 2,
-                                    color: DEFAULT_EDGE_COLOR,
-                                    rawColor: DEFAULT_EDGE_COLOR,
-                                    label: `Combined: ${organization} + ${commonTopics.length} topics`,
-                                    directed: false,
-                                    hidden: false,
-                                    type: undefined,
-                                    attributes: {
-                                        edgeType: 'combined',
-                                        sharedTopics: commonTopics.join('|'),
-                                        organization: organization,
-                                        topicCount: commonTopics.length
-                                    }
-                                };
-
-                                // Add undirected edge to the graph
-                                const edgeKey = `combined_edge_${source}_${target}`;
-                                graph.addUndirectedEdgeWithKey(edgeKey, source, target, edgeAttributes);
-
-                                // Also store the edge data for GEXF update
-                                edges.push({
-                                    source,
-                                    target,
-                                    sharedTopics: commonTopics,
-                                    organization: organization
-                                });
-                            }
-                        } catch (error) {
-                            console.error(`Error processing pair ${source} ↔ ${target}:`, error);
-                        }
-                    }
-                }
-            }
-        });
-
-        // Add edges to the graph
-        if (edges.length > 0) {
-            edges.forEach((edge) => {
-                // Check if edge already exists
-                if (!graph.hasEdge(edge.source, edge.target)) {
-                    // Add edge to the graph
-                    graph.addEdge(edge.source, edge.target, {
+                // Only create edge if we meet the threshold
+                if (commonContributors.length >= contributorThreshold) {
+                    // Create edge attributes
+                    const edgeAttributes: EdgeData = {
                         size: 2,
                         rawSize: 2,
                         color: DEFAULT_EDGE_COLOR,
                         rawColor: DEFAULT_EDGE_COLOR,
-                        label: `Combined: ${edge.organization} + ${edge.sharedTopics.length} topics`,
+                        label: `Shared contributors: ${commonContributors.join(', ')}`,
                         directed: false,
                         hidden: false,
                         type: undefined,
                         attributes: {
-                            sharedTopics: edge.sharedTopics,
-                            organization: edge.organization,
-                            edgeType: 'combined'
+                            sharedContributors: commonContributors.join('|'),
+                            edgeType: 'contributor-based',
+                            contributorCount: commonContributors.length
                         }
+                    };
+
+                    // Add undirected edge
+                    const edgeKey = `contributor_edge_${node1}_${node2}`;
+                    graph.addUndirectedEdgeWithKey(edgeKey, node1, node2, edgeAttributes);
+
+                    edgesCreated.push({
+                        source: node1,
+                        target: node2,
+                        sharedContributors: commonContributors
                     });
                 }
-            });
+            }
+        }
+
+        return edgesCreated;
+    };
+
+    // Function to create common stargazer edges
+    const createCommonStargazerEdges = () => {
+        if (!data || !data.graph) return [];
+
+        const { graph } = data;
+        // Use filtered nodes if available, otherwise use all nodes
+        const nodes = computedData?.filteredNodes ?
+            Array.from(computedData.filteredNodes) :
+            graph.nodes();
+
+        // Debug: Log overall data structure
+        console.log('Stargazer - Graph data structure:', data);
+        console.log('Stargazer - Total nodes in graph:', nodes.length);
+
+        // Check if contributor/stargazer data exists in the overall data
+        console.log('Stargazer - Available data keys:', Object.keys(data));
+        if (data.graph) {
+            console.log('Stargazer - Graph structure:', data.graph);
+        }
+
+        if (nodes.length > 0) {
+            const firstNode = nodes[0];
+            const firstNodeData = graph.getNodeAttributes(firstNode);
+            console.log('Stargazer - First node data structure:', firstNodeData);
+            console.log('Stargazer - First node attributes:', firstNodeData.attributes);
+        }
+
+        const edgesCreated: Array<{ source: string; target: string; sharedStargazers: string[] }> = [];
+
+        // Get all nodes with their stargazers and filter out nodes without stargazers
+        const nodeStargazers: Record<string, string[]> = {};
+        const nodesWithStargazers: string[] = [];
+
+        nodes.forEach(nodeId => {
+            const nodeData = graph.getNodeAttributes(nodeId);
+            // Check both possible field names for stargazers
+            const stargazers = nodeData.attributes?.bigquery_stargazers || nodeData.attributes?.stargazers;
+            if (stargazers) {
+                let stargazerArray: string[] = [];
+
+                if (Array.isArray(stargazers)) {
+                    // If it's already an array, use it directly
+                    stargazerArray = stargazers;
+                } else if (typeof stargazers === 'string') {
+                    // If it's a string, split by comma
+                    stargazerArray = stargazers.split(',').map(s => s.trim()).filter(Boolean);
+                }
+
+                if (stargazerArray.length > 0) {
+                    nodeStargazers[nodeId] = stargazerArray;
+                    nodesWithStargazers.push(nodeId);
+                }
+            }
+        });
+
+        // Debug: Log what we found
+        console.log(`Found ${nodesWithStargazers.length} nodes with stargazers`);
+        if (nodesWithStargazers.length > 0) {
+            console.log('Sample stargazer data:', nodeStargazers[nodesWithStargazers[0]]);
+        }
+
+        // Early exit if not enough nodes with stargazers
+        if (nodesWithStargazers.length < 2) {
+            console.log('Not enough nodes with stargazers to create edges');
+            return edgesCreated;
+        }
+
+        // Find nodes that share stargazers
+        const processedPairs = new Set<string>();
+
+        for (let i = 0; i < nodesWithStargazers.length; i++) {
+            for (let j = i + 1; j < nodesWithStargazers.length; j++) {
+                const node1 = nodesWithStargazers[i];
+                const node2 = nodesWithStargazers[j];
+
+                // Create a unique key for this pair to avoid duplicates
+                const pairKey = node1 < node2 ? `${node1}-${node2}` : `${node2}-${node1}`;
+
+                if (processedPairs.has(pairKey)) continue;
+                processedPairs.add(pairKey);
+
+                // Find common stargazers between these two nodes
+                const stargazers1 = nodeStargazers[node1];
+                const stargazers2 = nodeStargazers[node2];
+                const commonStargazers = stargazers1.filter(s => stargazers2.includes(s));
+
+                // Only create edge if we meet the threshold
+                if (commonStargazers.length >= stargazerThreshold) {
+                    // Create edge attributes
+                    const edgeAttributes: EdgeData = {
+                        size: 2,
+                        rawSize: 2,
+                        color: DEFAULT_EDGE_COLOR,
+                        rawColor: DEFAULT_EDGE_COLOR,
+                        label: `Shared stargazers: ${commonStargazers.length}`,
+                        directed: false,
+                        hidden: false,
+                        type: undefined,
+                        attributes: {
+                            sharedStargazers: commonStargazers.join('|'),
+                            edgeType: 'stargazer-based',
+                            stargazerCount: commonStargazers.length
+                        }
+                    };
+
+                    // Add undirected edge
+                    const edgeKey = `stargazer_edge_${node1}_${node2}`;
+                    graph.addUndirectedEdgeWithKey(edgeKey, node1, node2, edgeAttributes);
+
+                    edgesCreated.push({
+                        source: node1,
+                        target: node2,
+                        sharedStargazers: commonStargazers
+                    });
+                }
+            }
+        }
+
+        return edgesCreated;
+    };
+
+    // Function to create edges that satisfy ALL enabled criteria simultaneously
+    const createCombinedCriteriaEdges = () => {
+        if (!data || !data.graph) return [];
+
+        const { graph } = data;
+        const edges: Array<{
+            source: string;
+            target: string;
+            sharedTopics?: string[];
+            organization?: string;
+            sharedContributors?: string[];
+            sharedStargazers?: string[];
+            edgeType: string;
+        }> = [];
+
+        // Use filtered nodes if available, otherwise use all nodes
+        const nodes = computedData?.filteredNodes ?
+            Array.from(computedData.filteredNodes) :
+            graph.nodes();
+        const processedPairs = new Set<string>();
+
+        // Process all pairs of nodes
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const node1 = nodes[i];
+                const node2 = nodes[j];
+
+                // Create a unique key for this pair to avoid duplicates
+                const pairKey = node1 < node2 ? `${node1}-${node2}` : `${node2}-${node1}`;
+                if (processedPairs.has(pairKey)) continue;
+                processedPairs.add(pairKey);
+
+                const node1Data = graph.getNodeAttributes(node1);
+                const node2Data = graph.getNodeAttributes(node2);
+
+                let meetsAllCriteria = true;
+                const edgeData: any = {
+                    source: node1,
+                    target: node2,
+                    edgeType: 'combined'
+                };
+
+                // Check topic-based criterion
+                if (enableTopicLinking) {
+                    const topics1 = node1Data.attributes?.topics;
+                    const topics2 = node2Data.attributes?.topics;
+
+                    if (topics1 && topics2) {
+                        const topics1Array = typeof topics1 === 'string' ? topics1.split('|').map((t: string) => t.trim()).filter(Boolean) : topics1;
+                        const topics2Array = typeof topics2 === 'string' ? topics2.split('|').map((t: string) => t.trim()).filter(Boolean) : topics2;
+                        const commonTopics = topics1Array.filter((t: string) => topics2Array.includes(t));
+
+                        if (commonTopics.length >= topicThreshold) {
+                            edgeData.sharedTopics = commonTopics;
+                        } else {
+                            meetsAllCriteria = false;
+                        }
+                    } else {
+                        meetsAllCriteria = false;
+                    }
+                }
+
+                // Check shared organization criterion
+                if (enableSharedOrganization && meetsAllCriteria) {
+                    const nameWithOwner1 = node1Data.attributes?.nameWithOwner || node1Data.attributes?.name || node1Data.attributes?.label;
+                    const nameWithOwner2 = node2Data.attributes?.nameWithOwner || node2Data.attributes?.name || node2Data.attributes?.label;
+
+                    if (nameWithOwner1 && nameWithOwner2) {
+                        const owner1 = nameWithOwner1.includes('/') ? nameWithOwner1.split('/')[0] : nameWithOwner1;
+                        const owner2 = nameWithOwner2.includes('/') ? nameWithOwner2.split('/')[0] : nameWithOwner2;
+
+                        if (owner1 === owner2) {
+                            edgeData.organization = owner1;
+                        } else {
+                            meetsAllCriteria = false;
+                        }
+                    } else {
+                        meetsAllCriteria = false;
+                    }
+                }
+
+                // Check contributor overlap criterion
+                if (enableContributorOverlap && meetsAllCriteria) {
+                    const contributors1 = node1Data.attributes?.bigquery_contributors || node1Data.attributes?.contributors;
+                    const contributors2 = node2Data.attributes?.bigquery_stargazers || node2Data.attributes?.contributors;
+
+                    if (contributors1 && contributors2) {
+                        const contrib1Array = Array.isArray(contributors1) ? contributors1 : contributors1.split(',').map((c: string) => c.trim()).filter(Boolean);
+                        const contrib2Array = Array.isArray(contributors2) ? contributors2 : contributors2.split(',').map((c: string) => c.trim()).filter(Boolean);
+                        const commonContributors = contrib1Array.filter((c: string) => contrib2Array.includes(c));
+
+                        if (commonContributors.length >= contributorThreshold) {
+                            edgeData.sharedContributors = commonContributors;
+                        } else {
+                            meetsAllCriteria = false;
+                        }
+                    } else {
+                        meetsAllCriteria = false;
+                    }
+                }
+
+                // Check common stargazers criterion
+                if (enableCommonStargazers && meetsAllCriteria) {
+                    const stargazers1 = node1Data.attributes?.bigquery_stargazers || node1Data.attributes?.stargazers;
+                    const stargazers2 = node2Data.attributes?.bigquery_stargazers || node2Data.attributes?.stargazers;
+
+                    if (stargazers1 && stargazers2) {
+                        const stargazers1Array = Array.isArray(stargazers1) ? stargazers1 : stargazers1.split(',').map((s: string) => s.trim()).filter(Boolean);
+                        const stargazers2Array = Array.isArray(stargazers2) ? stargazers2 : stargazers2.split(',').map((s: string) => s.trim()).filter(Boolean);
+                        const commonStargazers = stargazers1Array.filter((s: string) => stargazers2Array.includes(s));
+
+                        if (commonStargazers.length >= stargazerThreshold) {
+                            edgeData.sharedStargazers = commonStargazers;
+                        } else {
+                            meetsAllCriteria = false;
+                        }
+                    } else {
+                        meetsAllCriteria = false;
+                    }
+                }
+
+                // If all criteria are met, create the edge
+                if (meetsAllCriteria) {
+                    // Create edge attributes
+                    const edgeAttributes: EdgeData = {
+                        size: 2,
+                        rawSize: 2,
+                        color: DEFAULT_EDGE_COLOR,
+                        rawColor: DEFAULT_EDGE_COLOR,
+                        label: `Combined criteria`,
+                        directed: false,
+                        hidden: false,
+                        type: undefined,
+                        attributes: {
+                            edgeType: 'combined',
+                            ...edgeData
+                        }
+                    };
+
+                    // Remove source and target from attributes
+                    delete edgeAttributes.attributes.source;
+                    delete edgeAttributes.attributes.target;
+
+                    // Add undirected edge
+                    const edgeKey = `combined_edge_${node1}_${node2}`;
+                    graph.addUndirectedEdgeWithKey(edgeKey, node1, node2, edgeAttributes);
+
+                    edges.push(edgeData);
+                }
+            }
         }
 
         return edges;
     };
 
     // Function to update GEXF content with new edges
-    const updateGexfContent = (edgesCreated: Array<{ source: string; target: string; sharedTopics?: string[]; organization?: string }>, edgeType: string) => {
+    const updateGexfContent = (edgesCreated: Array<{
+        source: string;
+        target: string;
+        sharedTopics?: string[];
+        organization?: string;
+        sharedContributors?: string[];
+        sharedStargazers?: string[];
+    }>, edgeType: string) => {
         if (!graphFile || !edgesCreated.length) return;
 
         // Parse the existing GEXF content
@@ -503,6 +764,10 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                 edgeId = `topic_edge_${edge.source}_${edge.target}`;
             } else if (edgeType === 'organization-based') {
                 edgeId = `org_edge_${edge.source}_${edge.target}`;
+            } else if (edgeType === 'contributor-based') {
+                edgeId = `contributor_edge_${edge.source}_${edge.target}`;
+            } else if (edgeType === 'stargazer-based') {
+                edgeId = `stargazer_edge_${edge.source}_${edge.target}`;
             } else if (edgeType === 'combined') {
                 edgeId = `combined_edge_${edge.source}_${edge.target}`;
             } else {
@@ -529,17 +794,44 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                 orgAttr.setAttribute('for', 'sharedOrganization');
                 orgAttr.setAttribute('value', edge.organization);
                 attrsElement.appendChild(orgAttr);
-            } else if (edgeType === 'combined' && edge.sharedTopics && edge.organization) {
-                // Combined edge attributes - both topics and organization
-                const topicAttr = xmlDoc.createElement('attvalue');
-                topicAttr.setAttribute('for', 'sharedTopics');
-                topicAttr.setAttribute('value', edge.sharedTopics.join('|'));
-                attrsElement.appendChild(topicAttr);
-
-                const orgAttr = xmlDoc.createElement('attvalue');
-                orgAttr.setAttribute('for', 'sharedOrganization');
-                orgAttr.setAttribute('value', edge.organization);
-                attrsElement.appendChild(orgAttr);
+            } else if (edgeType === 'contributor-based' && edge.sharedContributors) {
+                // Shared contributors attribute
+                const contributorAttr = xmlDoc.createElement('attvalue');
+                contributorAttr.setAttribute('for', 'sharedContributors');
+                contributorAttr.setAttribute('value', edge.sharedContributors.join('|'));
+                attrsElement.appendChild(contributorAttr);
+            } else if (edgeType === 'stargazer-based' && edge.sharedStargazers) {
+                // Shared stargazers attribute
+                const stargazerAttr = xmlDoc.createElement('attvalue');
+                stargazerAttr.setAttribute('for', 'sharedStargazers');
+                stargazerAttr.setAttribute('value', edge.sharedStargazers.join('|'));
+                attrsElement.appendChild(stargazerAttr);
+            } else if (edgeType === 'combined') {
+                // Combined edge attributes - add all available attributes
+                if (edge.sharedTopics) {
+                    const topicAttr = xmlDoc.createElement('attvalue');
+                    topicAttr.setAttribute('for', 'sharedTopics');
+                    topicAttr.setAttribute('value', edge.sharedTopics.join('|'));
+                    attrsElement.appendChild(topicAttr);
+                }
+                if (edge.organization) {
+                    const orgAttr = xmlDoc.createElement('attvalue');
+                    orgAttr.setAttribute('for', 'sharedOrganization');
+                    orgAttr.setAttribute('value', edge.organization);
+                    attrsElement.appendChild(orgAttr);
+                }
+                if (edge.sharedContributors) {
+                    const contributorAttr = xmlDoc.createElement('attvalue');
+                    contributorAttr.setAttribute('for', 'sharedContributors');
+                    contributorAttr.setAttribute('value', edge.sharedContributors.join('|'));
+                    attrsElement.appendChild(contributorAttr);
+                }
+                if (edge.sharedStargazers) {
+                    const stargazerAttr = xmlDoc.createElement('attvalue');
+                    stargazerAttr.setAttribute('for', 'sharedStargazers');
+                    stargazerAttr.setAttribute('value', edge.sharedStargazers.join('|'));
+                    attrsElement.appendChild(stargazerAttr);
+                }
             }
 
             // Edge type attribute
@@ -568,29 +860,50 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         // Always start by removing ALL existing edges from the graph
         removeAllEdges();
 
+        // Count how many criteria are enabled
+        const enabledCriteria = [
+            enableTopicLinking,
+            enableSharedOrganization,
+            enableContributorOverlap,
+            enableCommonStargazers
+        ].filter(Boolean).length;
 
+        if (enabledCriteria === 0) {
+            return; // No criteria enabled
+        }
 
-        // Create edges based on combined criteria
-        if (enableTopicLinking && enableSharedOrganization) {
-            // Create edges that satisfy BOTH conditions (AND logic)
-            const edgesCreated = createCombinedEdges();
-
+        if (enabledCriteria === 1) {
+            // Single criterion - use individual functions
+            if (enableTopicLinking) {
+                const edgesCreated = createTopicBasedEdges();
+                if (edgesCreated && edgesCreated.length > 0) {
+                    updateGexfContent(edgesCreated, 'topic-based');
+                    totalEdgesCreated += edgesCreated.length;
+                }
+            } else if (enableSharedOrganization) {
+                const edgesCreated = createSharedOrganizationEdges();
+                if (edgesCreated && edgesCreated.length > 0) {
+                    updateGexfContent(edgesCreated, 'organization-based');
+                    totalEdgesCreated += edgesCreated.length;
+                }
+            } else if (enableContributorOverlap) {
+                const edgesCreated = createContributorOverlapEdges();
+                if (edgesCreated && edgesCreated.length > 0) {
+                    updateGexfContent(edgesCreated, 'contributor-based');
+                    totalEdgesCreated += edgesCreated.length;
+                }
+            } else if (enableCommonStargazers) {
+                const edgesCreated = createCommonStargazerEdges();
+                if (edgesCreated && edgesCreated.length > 0) {
+                    updateGexfContent(edgesCreated, 'stargazer-based');
+                    totalEdgesCreated += edgesCreated.length;
+                }
+            }
+        } else {
+            // Multiple criteria - create edges that satisfy ALL enabled criteria
+            const edgesCreated = createCombinedCriteriaEdges();
             if (edgesCreated && edgesCreated.length > 0) {
                 updateGexfContent(edgesCreated, 'combined');
-                totalEdgesCreated += edgesCreated.length;
-            }
-        } else if (enableTopicLinking) {
-            // Create new edges based on current threshold
-            const edgesCreated = createTopicBasedEdges();
-            if (edgesCreated && edgesCreated.length > 0) {
-                updateGexfContent(edgesCreated, 'topic-based');
-                totalEdgesCreated += edgesCreated.length;
-            }
-        } else if (enableSharedOrganization) {
-            // Create new edges based on shared organizations
-            const edgesCreated = createSharedOrganizationEdges();
-            if (edgesCreated && edgesCreated.length > 0) {
-                updateGexfContent(edgesCreated, 'organization-based');
                 totalEdgesCreated += edgesCreated.length;
             }
         }
@@ -622,11 +935,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                 });
             }
         }
-
-
     };
-
-
 
     return (
         <section
@@ -701,15 +1010,15 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                         </div>
 
                         {/* Contributor Overlap */}
-                        <div className="mb-4 opacity-50">
+                        <div className="mb-4">
                             <div className="d-flex align-items-center mb-2">
                                 <input
                                     type="checkbox"
                                     className="form-check-input me-2"
-                                    checked={false}
-                                    disabled
+                                    checked={enableContributorOverlap}
+                                    onChange={(e) => updateEnableContributorOverlap(e.target.checked)}
                                 />
-                                <label className="form-label mb-0">Contributor Overlap</label>
+                                <label className="form-check-label mb-0">Contributor Overlap</label>
                             </div>
                             <p className="text-white small mb-2 ms-4">
                                 Repositories will be linked if they share a sufficient number of contributors
@@ -738,7 +1047,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                             )}
                         </div>
 
-                        {/* Shared Organization */}
+                        {/* Shared Organization/Creator */}
                         <div className="mb-4">
                             <div className="d-flex align-items-center mb-2">
                                 <input
@@ -747,23 +1056,23 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                     checked={enableSharedOrganization}
                                     onChange={(e) => updateEnableSharedOrganization(e.target.checked)}
                                 />
-                                <label className="form-label mb-0">Shared Organization</label>
+                                <label className="form-check-label mb-0">Shared Organization/Creator</label>
                             </div>
                             <p className="text-white small mb-2 ms-4">
-                                Repositories maintained within the same GitHub organization will be linked. This helps identify repositories that are part of the same project ecosystem or company.
+                                Repositories maintained by the same GitHub organization or individual creator will be linked. This helps identify repositories that are part of the same project ecosystem, company, or maintained by the same person.
                             </p>
                         </div>
 
                         {/* Common Stargazers */}
-                        <div className="mb-4 opacity-50">
+                        <div className="mb-4">
                             <div className="d-flex align-items-center mb-2">
                                 <input
                                     type="checkbox"
                                     className="form-check-input me-2"
-                                    checked={false}
-                                    disabled
+                                    checked={enableCommonStargazers}
+                                    onChange={(e) => updateEnableCommonStargazers(e.target.checked)}
                                 />
-                                <label className="form-label mb-0">Common Stargazers</label>
+                                <label className="form-check-label mb-0">Common Stargazers</label>
                             </div>
                             <p className="text-white small mb-2 ms-4">
                                 Repositories are linked if they share a sufficient number of stargazers
@@ -798,10 +1107,10 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                 <input
                                     type="checkbox"
                                     className="form-check-input me-2"
-                                    checked={false}
-                                    disabled
+                                    checked={enableDependencies}
+                                    onChange={(e) => updateEnableDependencies(e.target.checked)}
                                 />
-                                <label className="form-label mb-0">Dependencies</label>
+                                <label className="form-check-label mb-0">Dependencies</label>
                             </div>
                             <p className="text-white small mb-2 ms-4">
                                 If a repository depends on another, it will be linked (this creates direct edges). This shows the actual dependency relationships between projects, such as when one project imports or uses another.
@@ -810,6 +1119,12 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
 
                         {/* Apply Button */}
                         <div className="mb-3">
+                            {computedData?.filteredNodes && (
+                                <div className="alert alert-info small mb-3">
+                                    <strong>Note:</strong> Edge creation will only consider currently visible nodes ({computedData.filteredNodes.size} of {data?.graph?.order || 0} total).
+                                    Hidden/filtered nodes will not participate in edge creation.
+                                </div>
+                            )}
                             <button
                                 className="btn btn-light w-100 text-center"
                                 onClick={handleApplyEdgeCreation}
@@ -822,7 +1137,7 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                                 <a
                                     href="https://github.com/data-exp-lab/deepgit/discussions"
                                     target="_blank"
-                                    rel="noreferrer noopener"
+                                    rel="noopener noreferrer"
                                     className="link-light"
                                 >
                                     github.com/data-exp-lab/deepgit/discussions

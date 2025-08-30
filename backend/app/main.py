@@ -2,10 +2,12 @@ from flask import Flask, jsonify, request, send_file, url_for
 from flask_cors import CORS
 from services.topic_service import TopicService
 from services.ai_service import AITopicProcessor
-from services.gexy_node_service import GexfNodeGenerator
+from services.gexf_node_service import GexfNodeGenerator
+from services.edge_generation_service import EdgeGenerationService
 import os
 import asyncio
 import re
+import json
 
 app = Flask(__name__, static_folder='gexf', static_url_path='/gexf')
 CORS(
@@ -21,7 +23,8 @@ CORS(
 
 topic_service = TopicService()
 ai_processor = AITopicProcessor()
-gexy_node_service = GexfNodeGenerator()
+gexf_node_service = GexfNodeGenerator()
+edge_generation_service = EdgeGenerationService()
 
 
 @app.route("/api/process-topics", methods=["GET", "POST"])
@@ -241,7 +244,7 @@ def suggest_topics():
 def finalized_node_gexf():
     data = request.get_json()
     topics = data.get("topics", [])
-    gexf_path = gexy_node_service.generate_gexf_nodes_for_topics(topics)
+    gexf_path = gexf_node_service.generate_gexf_nodes_for_topics(topics)
     # print(topics)
     # Read the GEXF file content
     with open(gexf_path, "r", encoding="utf-8") as f:
@@ -250,6 +253,197 @@ def finalized_node_gexf():
     return jsonify({
         "success": True,
         "gexfContent": gexf_content
+    })
+
+
+@app.route("/api/generate-graph-with-edges", methods=["POST"])
+def generate_graph_with_edges():
+    """
+    Generate a graph with edges based on multiple criteria working in combination.
+    
+    Expected request body:
+    {
+        "topics": ["topic1", "topic2"],
+        "criteria_config": {
+            "topic_based_linking": true,
+            "contributor_overlap_enabled": true,
+            "contributor_overlap_threshold": 2,
+            "shared_organization_enabled": false,
+            "common_stargazers_enabled": true,
+            "stargazer_overlap_threshold": 3
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+        topics = data.get("topics", [])
+        criteria_config = data.get("criteria_config", {})
+        
+        if not topics:
+            return jsonify({
+                "success": False,
+                "error": "No topics provided"
+            }), 400
+        
+        # Generate graph with edges based on criteria
+        G, edge_stats = edge_generation_service.generate_edges_with_criteria(topics, criteria_config)
+        
+        if not G.nodes():
+            return jsonify({
+                "success": False,
+                "error": "No repositories found for the given topics"
+            }), 404
+        
+        # Generate unique filename for this graph
+        import hashlib
+        from datetime import datetime
+        
+        # Create hash from topics and criteria
+        criteria_str = json.dumps(criteria_config, sort_keys=True)
+        topics_str = "|".join(sorted(topics))
+        combined_str = f"{topics_str}_{criteria_str}"
+        hash_object = hashlib.md5(combined_str.encode())
+        hash_hex = hash_object.hexdigest()[:12]
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"graph_with_edges_{hash_hex}_{timestamp}.gexf"
+        
+        # Save to gexf directory
+        gexf_dir = os.path.join(os.path.dirname(__file__), "gexf")
+        os.makedirs(gexf_dir, exist_ok=True)
+        gexf_path = os.path.join(gexf_dir, filename)
+        
+        # Save graph with edges
+        edge_generation_service.save_graph_with_edges(G, gexf_path)
+        
+        # Read the GEXF file content
+        with open(gexf_path, "r", encoding="utf-8") as f:
+            gexf_content = f.read()
+        
+        # Get comprehensive statistics
+        graph_stats = edge_generation_service.get_edge_statistics(G)
+        
+        return jsonify({
+            "success": True,
+            "gexfContent": gexf_content,
+            "filename": filename,
+            "edge_statistics": edge_stats,
+            "graph_statistics": graph_stats
+        })
+        
+    except Exception as e:
+        print(f"Error generating graph with edges: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred while generating the graph with edges"
+        }), 500
+
+
+@app.route("/api/edge-generation-criteria", methods=["GET"])
+def get_edge_generation_criteria():
+    """
+    Get information about available edge generation criteria and their descriptions.
+    """
+    criteria_info = {
+        "topic_based_linking": {
+            "description": "Create edges between repositories that share common topics",
+            "type": "boolean",
+            "default": True,
+            "category": "Content-based"
+        },
+        "contributor_overlap_enabled": {
+            "description": "Create edges between repositories that have overlapping contributors",
+            "type": "boolean",
+            "default": False,
+            "category": "Collaboration-based"
+        },
+        "contributor_overlap_threshold": {
+            "description": "Minimum number of shared contributors required to create an edge",
+            "type": "integer",
+            "default": 2,
+            "min": 1,
+            "max": 100,
+            "category": "Collaboration-based"
+        },
+        "shared_organization_enabled": {
+            "description": "Create edges between repositories owned by the same organization",
+            "type": "boolean",
+            "default": False,
+            "category": "Organizational"
+        },
+        "common_stargazers_enabled": {
+            "description": "Create edges between repositories that have overlapping stargazers",
+            "type": "boolean",
+            "default": False,
+            "category": "Interest-based"
+        },
+        "stargazer_overlap_threshold": {
+            "description": "Minimum number of shared stargazers required to create an edge",
+            "type": "integer",
+            "default": 2,
+            "min": 1,
+            "max": 1000,
+            "category": "Interest-based"
+        },
+        "use_and_logic": {
+            "description": "Use AND logic to require multiple criteria to be satisfied for an edge",
+            "type": "boolean",
+            "default": False,
+            "category": "Logic Control"
+        }
+    }
+    
+    return jsonify({
+        "success": True,
+        "criteria": criteria_info,
+        "usage_examples": [
+            {
+                "name": "Topic + Contributor Overlap",
+                "description": "Connect repositories by both shared topics and contributor overlap",
+                "config": {
+                    "topic_based_linking": True,
+                    "contributor_overlap_enabled": True,
+                    "contributor_overlap_threshold": 2,
+                    "shared_organization_enabled": False,
+                    "common_stargazers_enabled": False
+                }
+            },
+            {
+                "name": "Organization + Stargazer Overlap",
+                "description": "Connect repositories by organization ownership and stargazer overlap",
+                "config": {
+                    "topic_based_linking": False,
+                    "contributor_overlap_enabled": False,
+                    "shared_organization_enabled": True,
+                    "common_stargazers_enabled": True,
+                    "stargazer_overlap_threshold": 3
+                }
+            },
+            {
+                "name": "All Criteria Combined",
+                "description": "Use all available criteria to create comprehensive connections",
+                "config": {
+                    "topic_based_linking": True,
+                    "contributor_overlap_enabled": True,
+                    "contributor_overlap_threshold": 2,
+                    "shared_organization_enabled": True,
+                    "common_stargazers_enabled": True,
+                    "stargazer_overlap_threshold": 2
+                }
+            },
+            {
+                "name": "Contributor + Organization (AND Logic)",
+                "description": "Only create edges when BOTH contributor overlap AND shared organization criteria are satisfied",
+                "config": {
+                    "topic_based_linking": False,
+                    "contributor_overlap_enabled": True,
+                    "contributor_overlap_threshold": 2,
+                    "shared_organization_enabled": True,
+                    "common_stargazers_enabled": False,
+                    "use_and_logic": True
+                }
+            }
+        ]
     })
 
 
