@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request, send_file, url_for
 from flask_cors import CORS
 from services.topic_service import TopicService
 from services.ai_service import AITopicProcessor
-from services.gexy_node_service import GexfNodeGenerator
+from services.gexf_node_service import GexfNodeGenerator
 from services.edge_generation_service import EdgeGenerationService
 import os
 import asyncio
