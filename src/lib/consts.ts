@@ -3,7 +3,7 @@ import { Attributes } from "graphology-types";
 import RAW_PALETTES from "iwanthue/precomputed/k-means-fancy-light";
 import { createElement } from "react";
 import { Props as LinkifyProps } from "react-linkify";
-import { NodeCircleProgram } from "sigma/rendering";
+
 import { Settings } from "sigma/settings";
 
 export const WIKIPEDIA_DATA_URI = import.meta.env.BASE_URL + "/dataset.gexf";
@@ -63,9 +63,8 @@ export const BASE_SIGMA_SETTINGS: Partial<Settings> = {
   zIndex: true,
   nodeReducer: hiddenReducer,
   edgeReducer: hiddenReducer,
-  defaultNodeType: "circle",
+
   nodeProgramClasses: {
-    circle: NodeCircleProgram,
     bordered: createNodeBorderProgram({
       borders: [
         { size: { value: 0.2 }, color: { attribute: "borderColor" } },

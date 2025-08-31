@@ -123,11 +123,17 @@ class GexfNodeGenerator:
 
         df['github_url'] = 'https://github.com/' + df['nameWithOwner']
         
+        # Reorder columns to put github_url first
+        column_order = ['nameWithOwner', 'github_url', 'stars', 'forks', 'watchers', 'isArchived', 
+                       'languageCount', 'pullRequests', 'issues', 'primaryLanguage', 'createdAt_year', 
+                       'license', 'topics', 'contributors', 'stargazers']
+        df = df[column_order]
+        
         G = nx.Graph()
         G.graph['has_edges'] = False
 
         G.graph['node_attributes'] = {
-            'createdAt_year': {'type': 'integer'},
+            'github_url': {'type': 'string'},
             'stars': {'type': 'integer'},
             'forks': {'type': 'integer'},
             'watchers': {'type': 'integer'},
@@ -136,8 +142,8 @@ class GexfNodeGenerator:
             'pullRequests': {'type': 'integer'},
             'issues': {'type': 'integer'},
             'primaryLanguage': {'type': 'string'},
+            'createdAt_year': {'type': 'integer'},
             'license': {'type': 'string'},
-            'github_url': {'type': 'string'},
             'topics': {'type': 'string'},
             'contributors': {'type': 'string'},
             'stargazers': {'type': 'string'},

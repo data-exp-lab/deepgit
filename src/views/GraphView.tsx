@@ -288,6 +288,7 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
         setNavState,
         hovered,
         setHovered,
+        setData,
 
         isPanelExpanded,
         setIsPanelExpanded,
@@ -320,6 +321,7 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
           <ContextPanel />
           <section className="graph">
             <SigmaContainer
+              key={`sigma-${data.graph.size}-${data.graph.order}`}
               className={cx("sigma-wrapper", !!hovered && "cursor-pointer")}
               graph={data.graph}
               settings={BASE_SIGMA_SETTINGS}

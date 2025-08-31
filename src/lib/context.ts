@@ -36,6 +36,7 @@ type GraphContextType = {
 
   setNavState: (newNavState: NavState) => void;
   setHovered: (hovered?: string | Set<string>) => void;
+  setData: (data: Data) => void;
 
   panel: Panel;
   setPanel: (panel: Panel) => void;
