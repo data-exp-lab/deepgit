@@ -201,10 +201,10 @@ const Settings: FC = () => {
                 setLocalMaxLabelSize(maxValue);
               }) as SliderProps["onChange"]
             }
-            onAfterChange={
+            onChangeComplete={
               (([minValue, maxValue]: number[]) => {
                 setNavState({ ...navState, minLabelSize: minValue, maxLabelSize: maxValue });
-              }) as SliderProps["onAfterChange"]
+              }) as SliderProps["onChangeComplete"]
             }
             // Styles:
             {...RANGE_STYLE}

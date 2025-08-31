@@ -193,7 +193,12 @@ def suggest_topics():
         # 2. Prioritizes exact matches and high-frequency topics
         # 3. Uses word boundary matching for better relevance
         sql_query = """
-            WITH ranked_topics AS (
+            WITH split_topics AS (
+                SELECT 
+                    unnest(string_split(topics, '|')) as topic
+                FROM repo_topics
+            ),
+            ranked_topics AS (
                 SELECT 
                     topic,
                     COUNT(*) as count,
@@ -202,7 +207,7 @@ def suggest_topics():
                         WHEN LOWER(topic) LIKE ? THEN 2  -- Starts with query gets second priority
                         ELSE 1  -- Contains query gets lowest priority
                     END as match_priority
-                FROM repo_topics
+                FROM split_topics
                 WHERE LOWER(topic) LIKE ?
                 GROUP BY topic
             )
@@ -246,6 +251,13 @@ def finalized_node_gexf():
     topics = data.get("topics", [])
     gexf_path = gexf_node_service.generate_gexf_nodes_for_topics(topics)
     # print(topics)
+    
+    if gexf_path is None:
+        return jsonify({
+            "success": False,
+            "error": "No repositories found for the given topics"
+        }), 404
+    
     # Read the GEXF file content
     with open(gexf_path, "r", encoding="utf-8") as f:
         gexf_content = f.read()
@@ -463,14 +475,16 @@ def get_unique_repos():
         placeholders = ",".join(["?"] * len(topics_lower))
 
         # Query to get unique repositories that have ANY of the given topics
-        query = f"""
+        # Create a single search pattern that matches any of the topics
+        search_pattern = '%' + '%'.join(topics_lower) + '%'
+        query = """
             SELECT COUNT(DISTINCT r.nameWithOwner) as count
             FROM repos r
             JOIN repo_topics t ON r.nameWithOwner = t.repo
-            WHERE LOWER(t.topic) IN ({placeholders})
+            WHERE LOWER(t.topics) LIKE ?
         """
         
-        result = topic_service.con.execute(query, topics_lower).fetchone()
+        result = topic_service.con.execute(query, [search_pattern]).fetchone()
         count = result[0] if result else 0
 
         return jsonify({
@@ -482,6 +496,124 @@ def get_unique_repos():
         return jsonify({
             "success": False,
             "error": str(e)
+        }), 500
+
+
+@app.route("/api/create-edges-on-graph", methods=["POST"])
+def create_edges_on_graph():
+    """
+    Create edges on an existing graph based on specified criteria.
+    
+    Expected request body:
+    {
+        "gexfContent": "existing GEXF content",
+        "criteria_config": {
+            "topic_based_linking": true,
+            "topic_threshold": 2,
+            "contributor_overlap_enabled": true,
+            "contributor_threshold": 1,
+            "shared_organization_enabled": false,
+            "common_stargazers_enabled": true,
+            "stargazer_threshold": 5,
+            "use_and_logic": false
+        }
+    }
+    """
+    try:
+        data = request.get_json()
+        gexf_content = data.get("gexfContent", "")
+        criteria_config = data.get("criteria_config", {})
+        
+        if not gexf_content:
+            return jsonify({
+                "success": False,
+                "error": "No GEXF content provided"
+            }), 400
+        
+        # Parse the existing GEXF content
+        import tempfile
+        import networkx as nx
+        
+        # Create a temporary file to parse the GEXF
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.gexf', delete=False) as temp_file:
+            temp_file.write(gexf_content)
+            temp_file_path = temp_file.name
+        
+        try:
+            # Read the existing graph
+            G = nx.read_gexf(temp_file_path)
+        finally:
+            # Clean up temporary file
+            import os
+            os.unlink(temp_file_path)
+        
+        if not G.nodes():
+            return jsonify({
+                "success": False,
+                "error": "No nodes found in the provided GEXF content"
+            }), 404
+        
+        # Validate that at least one criterion is enabled
+        enabled_criteria = [
+            criteria_config.get('topic_based_linking', False),
+            criteria_config.get('contributor_overlap_enabled', False),
+            criteria_config.get('shared_organization_enabled', False),
+            criteria_config.get('common_stargazers_enabled', False)
+        ]
+        
+        if not any(enabled_criteria):
+            return jsonify({
+                "success": False,
+                "error": "At least one edge creation criterion must be enabled"
+            }), 400
+        
+        # Create a new service instance for edge creation on existing graphs
+        from services.edge_generation_service import EdgeGenerationService
+        edge_service = EdgeGenerationService()
+        
+        # Create edges based on the criteria
+        edges_created = edge_service.create_edges_on_existing_graph(G, criteria_config)
+        
+        # Save the updated graph
+        import hashlib
+        from datetime import datetime
+        
+        # Create hash from criteria
+        criteria_str = json.dumps(criteria_config, sort_keys=True)
+        hash_object = hashlib.md5(criteria_str.encode())
+        hash_hex = hash_object.hexdigest()[:12]
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"updated_graph_{hash_hex}_{timestamp}.gexf"
+        
+        # Save to gexf directory
+        gexf_dir = os.path.join(os.path.dirname(__file__), "gexf")
+        os.makedirs(gexf_dir, exist_ok=True)
+        gexf_path = os.path.join(gexf_dir, filename)
+        
+        # Save updated graph
+        edge_service.save_graph_with_edges(G, gexf_path)
+        
+        # Read the updated GEXF file content
+        with open(gexf_path, "r", encoding="utf-8") as f:
+            updated_gexf_content = f.read()
+        
+        # Get statistics
+        graph_stats = edge_service.get_edge_statistics(G)
+        
+        return jsonify({
+            "success": True,
+            "gexfContent": updated_gexf_content,
+            "filename": filename,
+            "edgesCreated": edges_created,
+            "graph_statistics": graph_stats
+        })
+        
+    except Exception as e:
+        print(f"Error creating edges on graph: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred while creating edges on the graph"
         }), 500
 
 

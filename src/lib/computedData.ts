@@ -258,11 +258,14 @@ export function getMetrics(
 
   // 2. Count metrics:
   allFilterable?.forEach((field) => {
+    if (!field) return; // Skip if field is undefined
     const oldMetric = currentMetrics![field.id];
 
     switch (field.type) {
       case "quali": {
-        const globalCounts: Record<string, number> = oldMetric
+        const globalCounts: Record<string, number> = oldMetric &&
+          (oldMetric as TermsMetric).values &&
+          Array.isArray((oldMetric as TermsMetric).values)
           ? (oldMetric as TermsMetric).values.reduce((iter, v) => ({ ...iter, [v.id]: v.globalCount }), {})
           : countTerms(graph, field);
         const counts = nodesArray ? countTerms(graph, field, nodesArray) : globalCounts;
@@ -270,7 +273,7 @@ export function getMetrics(
           type: "quali",
           field: field.id,
           values: sortBy(
-            Object.values(field.values).map((value) => ({
+            Object.values(field.values || {}).map((value) => ({
               id: value.id,
               label: value.label,
               globalCount: globalCounts[value.id] || 0,
@@ -282,9 +285,9 @@ export function getMetrics(
         break;
       }
       case "quanti": {
-        if (oldMetric) {
+        if (oldMetric && (oldMetric as RangeMetric).ranges) {
           const { unit, ranges, min, max } = oldMetric as RangeMetric;
-          const newRanges = ranges.map((v) => [v.min, v.max] as [number, number]);
+          const newRanges = Array.isArray(ranges) ? ranges.map((v) => [v.min, v.max] as [number, number]) : [];
           const counts = nodesArray ? countRanges(graph, field, newRanges, nodesArray) : null;
           metrics[field.id] = {
             type: "quanti",
@@ -292,15 +295,15 @@ export function getMetrics(
             unit,
             min,
             max,
-            ranges: ranges.map((v, i) => ({
+            ranges: Array.isArray(ranges) ? ranges.map((v, i) => ({
               ...v,
-              filteredCount: (counts ? counts[i] : v.globalCount) || 0,
-            })),
+              filteredCount: (Array.isArray(counts) ? counts[i] : v.globalCount) || 0,
+            })) : [],
           };
         } else {
           const { ranges, unit } = findRanges(field.min, field.max);
           const globalCounts = countRanges(graph, field, ranges);
-          const counts = nodesArray ? countRanges(graph, field, ranges, nodesArray) : globalCounts;
+          const counts = nodesArray ? countRanges(graph, field, ranges, nodesArray) : (Array.isArray(globalCounts) ? globalCounts : []);
           const values = graph
             .mapNodes((_n, nodeData) => getValue(nodeData, field))
             .filter((v) => typeof v === "number");
@@ -312,13 +315,13 @@ export function getMetrics(
               unit,
               min: min(values) as number,
               max: max(values) as number,
-              ranges: ranges.map(([min, max], i) => ({
+              ranges: Array.isArray(ranges) ? ranges.map(([min, max], i) => ({
                 min,
                 max,
                 label: `${min} - ${max}`,
-                globalCount: globalCounts[i],
-                filteredCount: counts[i],
-              })),
+                globalCount: Array.isArray(globalCounts) ? globalCounts[i] : 0,
+                filteredCount: Array.isArray(counts) ? counts[i] : 0,
+              })) : [],
             };
         }
         break;
