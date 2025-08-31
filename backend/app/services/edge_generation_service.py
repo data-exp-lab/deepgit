@@ -108,6 +108,12 @@ class EdgeGenerationService:
         edge_stats['criteria_used'] = [k for k, v in criteria_config.items() if v]
         edge_stats['combination_logic_applied'] = True
         
+        # Debug information
+        print(f"Generated {len(all_edges)} total edges")
+        print(f"Final edges after combination logic: {len(final_edges)}")
+        print(f"Edges in graph: {total_edges}")
+        print(f"Edge stats: {edge_stats}")
+        
         return G, edge_stats
 
     def _get_repos_for_topics(self, topics: List[str]) -> List[Dict]:
@@ -118,12 +124,17 @@ class EdgeGenerationService:
         topics_lower = [t.lower() for t in topics]
         placeholders = ",".join(["?"] * len(topics_lower))
         
+        # Create a more flexible search pattern using OR conditions
+        conditions = []
+        for topic in topics_lower:
+            conditions.append(f"LOWER(t.topics) LIKE '%{topic}%'")
+        
         query = f"""
             WITH matching_repos AS (
                 SELECT DISTINCT r.nameWithOwner
                 FROM repos r
                 JOIN repo_topics t ON r.nameWithOwner = t.repo
-                WHERE LOWER(t.topic) IN ({placeholders})
+                WHERE ({" OR ".join(conditions)})
             ),
             repo_data AS (
                 SELECT 
@@ -136,22 +147,19 @@ class EdgeGenerationService:
                     r.pullRequests,
                     r.issues,
                     r.primaryLanguage,
-                    r.createdAt,
+                    r.createdAt_year,
                     r.license,
                     r.bigquery_contributors,
                     r.bigquery_stargazers,
-                    GROUP_CONCAT(t.topic, '|') AS topics
+                    t.topics
                 FROM repos r
                 JOIN repo_topics t ON r.nameWithOwner = t.repo
                 JOIN matching_repos mr ON r.nameWithOwner = mr.nameWithOwner
-                GROUP BY r.nameWithOwner, r.stars, r.forks, r.watchers, r.isArchived, 
-                         r.languageCount, r.pullRequests, r.issues, r.primaryLanguage, 
-                         r.createdAt, r.license, r.bigquery_contributors, r.bigquery_stargazers
             )
             SELECT * FROM repo_data
         """
         
-        result = self.con.execute(query, topics_lower).fetchall()
+        result = self.con.execute(query).fetchall()
         
         columns = [
             "nameWithOwner", "stars", "forks", "watchers", "isArchived",
@@ -188,18 +196,27 @@ class EdgeGenerationService:
         if not date_val:
             return 0
         try:
-            if isinstance(date_val, str):
+            if isinstance(date_val, int):
+                return date_val
+            elif isinstance(date_val, str):
                 date = datetime.strptime(date_val.split('T')[0], "%Y-%m-%d")
+                return date.year
             else:
-                date = date_val
-            return date.year
+                return date_val.year
         except (ValueError, TypeError):
             return 0
 
     def _format_list_data(self, data) -> str:
         """Format list data as comma-separated string."""
-        if data and isinstance(data, list):
+        if not data:
+            return ""
+        if isinstance(data, list):
             return ",".join(data)
+        elif isinstance(data, str):
+            # Handle string representation of list
+            if data.startswith('[') and data.endswith(']'):
+                # Remove brackets and split by comma
+                return data[1:-1]
         return ""
 
     def _generate_topic_based_edges(self, G: nx.Graph, repos: List[Dict]) -> List[Tuple]:
@@ -423,6 +440,18 @@ class EdgeGenerationService:
         # Set graph attributes
         G.graph['has_edges'] = True
         G.graph['edge_generation_criteria'] = 'Multiple criteria combination'
+        
+        # Ensure edge attributes are properly set
+        for u, v, data in G.edges(data=True):
+            # Convert complex data structures to strings for GEXF compatibility
+            if 'shared_topics' in data and isinstance(data['shared_topics'], list):
+                data['shared_topics'] = '|'.join(data['shared_topics'])
+            if 'shared_contributors' in data and isinstance(data['shared_contributors'], list):
+                data['shared_contributors'] = '|'.join(data['shared_contributors'])
+            if 'shared_stargazers' in data and isinstance(data['shared_stargazers'], list):
+                data['shared_stargazers'] = '|'.join(data['shared_stargazers'])
+            if 'criteria_satisfied' in data and isinstance(data['criteria_satisfied'], list):
+                data['criteria_satisfied'] = '|'.join(data['criteria_satisfied'])
         
         # Write to GEXF file
         nx.write_gexf(G, output_path)

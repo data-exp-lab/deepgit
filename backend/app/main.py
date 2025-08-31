@@ -193,7 +193,12 @@ def suggest_topics():
         # 2. Prioritizes exact matches and high-frequency topics
         # 3. Uses word boundary matching for better relevance
         sql_query = """
-            WITH ranked_topics AS (
+            WITH split_topics AS (
+                SELECT 
+                    unnest(string_split(topics, '|')) as topic
+                FROM repo_topics
+            ),
+            ranked_topics AS (
                 SELECT 
                     topic,
                     COUNT(*) as count,
@@ -202,7 +207,7 @@ def suggest_topics():
                         WHEN LOWER(topic) LIKE ? THEN 2  -- Starts with query gets second priority
                         ELSE 1  -- Contains query gets lowest priority
                     END as match_priority
-                FROM repo_topics
+                FROM split_topics
                 WHERE LOWER(topic) LIKE ?
                 GROUP BY topic
             )
@@ -246,6 +251,13 @@ def finalized_node_gexf():
     topics = data.get("topics", [])
     gexf_path = gexf_node_service.generate_gexf_nodes_for_topics(topics)
     # print(topics)
+    
+    if gexf_path is None:
+        return jsonify({
+            "success": False,
+            "error": "No repositories found for the given topics"
+        }), 404
+    
     # Read the GEXF file content
     with open(gexf_path, "r", encoding="utf-8") as f:
         gexf_content = f.read()
@@ -463,14 +475,16 @@ def get_unique_repos():
         placeholders = ",".join(["?"] * len(topics_lower))
 
         # Query to get unique repositories that have ANY of the given topics
-        query = f"""
+        # Create a single search pattern that matches any of the topics
+        search_pattern = '%' + '%'.join(topics_lower) + '%'
+        query = """
             SELECT COUNT(DISTINCT r.nameWithOwner) as count
             FROM repos r
             JOIN repo_topics t ON r.nameWithOwner = t.repo
-            WHERE LOWER(t.topic) IN ({placeholders})
+            WHERE LOWER(t.topics) LIKE ?
         """
         
-        result = topic_service.con.execute(query, topics_lower).fetchone()
+        result = topic_service.con.execute(query, [search_pattern]).fetchone()
         count = result[0] if result else 0
 
         return jsonify({

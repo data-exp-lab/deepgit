@@ -1,9 +1,12 @@
+import os
 import duckdb
 import pandas as pd
 import json
 from google.cloud import bigquery
 from tqdm import tqdm
 from datetime import datetime
+import time
+from sqlalchemy import create_engine, text
 
 # Initialize BigQuery client
 client = bigquery.Client()
@@ -17,56 +20,116 @@ REPO_LIST_TABLE = f'{BQ_PROJECT}.{BQ_DATASET}.repo_list'
 json_path = '../../public/data/repo_metadata.json'
 db_path = 'github_metadata_star.duckdb'
 
-# Load JSON data
-with open(json_path, 'r') as f:
-    data = json.load(f)
+# -----------------------------------
+# Data Loading and Initial Processing
+# -----------------------------------
+start_load_time = time.time()
+try:
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+    if isinstance(data, dict):
+        data = [data]
+    print(f"Loaded {len(data)} repositories from JSON file.")
+except FileNotFoundError:
+    print(f"Error: JSON file not found at {json_path}")
+    exit()
 
-if isinstance(data, dict):
-    data = [data]
+repos_list = []
+languages_list = []
+topics_list = []
 
-# Collect all repo IDs
-repo_ids = [repo.get("nameWithOwner") for repo in data]
-print(f"Total repos to process: {len(repo_ids)}")
+print("Flattening and pre-processing JSON data into DataFrames...")
+for repo in tqdm(data, desc="Pre-processing repo data"):
+    repo_owner = repo.get("nameWithOwner")
+    
+    # Pre-process fields for direct writing to DuckDB
+    created_at_year = datetime.strptime(repo.get("createdAt"), "%Y-%m-%dT%H:%M:%SZ").year if repo.get("createdAt") else 0
+    license_str = str(repo.get("license", ''))
+    
+    repos_list.append({
+        "nameWithOwner": repo_owner,
+        "owner": repo.get("owner"),
+        "name": repo.get("name"),
+        "stars": repo.get("stars", 0),
+        "forks": repo.get("forks", 0),
+        "watchers": repo.get("watchers", 0),
+        "isFork": repo.get("isFork", False),
+        "isArchived": repo.get("isArchived", False),
+        "languageCount": repo.get("languageCount", 0),
+        "topicCount": repo.get("topicCount", 0),
+        "diskUsageKb": repo.get("diskUsageKb", 0),
+        "pullRequests": repo.get("pullRequests", 0),
+        "issues": repo.get("issues", 0),
+        "description": repo.get("description", ''),
+        "primaryLanguage": repo.get("primaryLanguage", ''),
+        "createdAt_year": created_at_year, # Store pre-converted year
+        "pushedAt": repo.get("pushedAt", ''),
+        "defaultBranchCommitCount": repo.get("defaultBranchCommitCount", 0),
+        "license": license_str, # Store pre-converted string
+        "assignableUserCount": repo.get("assignableUserCount", 0),
+        "codeOfConduct": str(repo.get("codeOfConduct", '')),
+        "forkingAllowed": repo.get("forkingAllowed", False),
+        "parent": str(repo.get("parent", ''))
+    })
+    
+    if "languages" in repo and repo["languages"]:
+        for lang in repo["languages"]:
+            languages_list.append({
+                "repo": repo_owner,
+                "language": lang.get("name", ''),
+                "size": lang.get("size", 0)
+            })
+
+    if "topics" in repo and repo["topics"]:
+        seen_topics = set()
+        for topic in repo["topics"]:
+            topic_name = topic.get("name")
+            if topic_name and topic_name not in seen_topics:
+                seen_topics.add(topic_name)
+                topics_list.append({
+                    "repo": repo_owner,
+                    "topic": topic_name.lower(), # Store topics in lowercase
+                    "stars": topic.get("stars", 0)
+                })
+
+df_repos = pd.DataFrame(repos_list)
+df_languages = pd.DataFrame(languages_list)
+df_topics = pd.DataFrame(topics_list)
+
+end_load_time = time.time()
+print(f"JSON data flattening and pre-processing took {end_load_time - start_load_time:.2f} seconds.")
 
 # -----------------------------------
-# Create repo_list table in BigQuery
+# BigQuery Operations
 # -----------------------------------
-def create_dataset_and_table():
-    """Create BigQuery dataset and repo_list table using efficient methods."""
+def create_bigquery_tables(repos_df):
+    start_bq_setup = time.time()
     try:
         dataset_id = bigquery.Dataset(f"{BQ_PROJECT}.{BQ_DATASET}")
         dataset_id.location = "US"
         client.create_dataset(dataset_id, exists_ok=True)
         print(f"Dataset {BQ_DATASET} is ready.")
 
-        df_repo_list = pd.DataFrame(repo_ids, columns=['repo_name'])
+        repo_names_df = repos_df[['nameWithOwner']].copy()
+        repo_names_df.rename(columns={'nameWithOwner': 'repo_name'}, inplace=True)
 
-        job_config = bigquery.LoadJobConfig()
-        job_config.schema = [
-            bigquery.SchemaField("repo_name", "STRING")
-        ]
-        job_config.write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE
-        
-        print(f"Loading {len(df_repo_list)} repos to BigQuery table `{REPO_LIST_TABLE}`...")
-        
-        load_job = client.load_table_from_dataframe(
-            df_repo_list,
-            REPO_LIST_TABLE,
-            job_config=job_config
+        job_config = bigquery.LoadJobConfig(
+            schema=[bigquery.SchemaField("repo_name", "STRING")],
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE
         )
-        load_job.result()  # Wait for the job to complete
         
-        print("repo_list table created and populated successfully!")
+        load_job = client.load_table_from_dataframe(repo_names_df, REPO_LIST_TABLE, job_config=job_config)
+        load_job.result()
+        print(f"BigQuery setup completed in {time.time() - start_bq_setup:.2f} seconds.")
         
     except Exception as e:
         print(f"Error setting up BigQuery environment: {e}")
         raise
 
-# -----------------------------------
-# Single BigQuery query function using JOIN and AGGREGATION
-# -----------------------------------
-def get_contributors_and_stargazers_optimized():
-    """Get all contributors and stargazers using an optimized JOIN and aggregation query."""
+def get_bq_data_optimized(repos_df):
+    create_bigquery_tables(repos_df)
+    
+    start_bq_query = time.time()
     try:
         combined_query = f"""
             SELECT
@@ -74,26 +137,24 @@ def get_contributors_and_stargazers_optimized():
                 STRING_AGG(DISTINCT CASE WHEN t1.type = 'PullRequestEvent' THEN t1.actor.login END, ',') AS contributors,
                 STRING_AGG(DISTINCT CASE WHEN t1.type = 'WatchEvent' THEN t1.actor.login END, ',') AS stargazers
             FROM
-                `githubarchive.month.*` AS t1
+                `githubarchive.month.2024*` AS t1
             JOIN
                 `{REPO_LIST_TABLE}` AS t2
             ON
                 LOWER(t1.repo.name) = LOWER(t2.repo_name)
             WHERE
                 t1.type IN ('PullRequestEvent', 'WatchEvent')
-                AND t1._TABLE_SUFFIX >= '2015'
             GROUP BY
                 repo
         """
         
         print("Executing BigQuery query with aggregation...")
-        # Use to_dataframe with a large chunk size or no chunking
         df = client.query(combined_query).to_dataframe()
         
-        # Split the aggregated strings back into lists
         if not df.empty:
             df['contributors'] = df['contributors'].apply(lambda x: x.split(',') if pd.notna(x) else [])
             df['stargazers'] = df['stargazers'].apply(lambda x: x.split(',') if pd.notna(x) else [])
+            print(f"BigQuery query and DataFrame creation took {time.time() - start_bq_query:.2f} seconds.")
         
         return df
         
@@ -104,107 +165,50 @@ def get_contributors_and_stargazers_optimized():
 # -----------------------------------
 # Main execution flow
 # -----------------------------------
-print("Starting BigQuery operations...")
-start_time = datetime.now()
+start_total_time = time.time()
+print("Starting all operations...")
 
-# Step 1: Create and populate repo_list table
-create_dataset_and_table()
+bigquery_df = get_bq_data_optimized(df_repos)
 
-# Step 2: Execute optimized query
-bigquery_df = get_contributors_and_stargazers_optimized()
-
-end_time = datetime.now()
-processing_time = end_time - start_time
-print(f"BigQuery operations completed in: {processing_time}")
-
-# -----------------------------------
-# Flatten repo metadata and merge
-# -----------------------------------
-repos, languages, topics = [], [], []
-
-for repo in tqdm(data, desc="Processing repos"):
-    repos.append({
-        "nameWithOwner": repo.get("nameWithOwner"),
-        # ... all other fields from your original script ...
-        "owner": repo.get("owner"),
-        "name": repo.get("name"),
-        "stars": repo.get("stars"),
-        "forks": repo.get("forks"),
-        "watchers": repo.get("watchers"),
-        "isFork": repo.get("isFork"),
-        "isArchived": repo.get("isArchived"),
-        "languageCount": repo.get("languageCount"),
-        "topicCount": repo.get("topicCount"),
-        "diskUsageKb": repo.get("diskUsageKb"),
-        "pullRequests": repo.get("pullRequests"),
-        "issues": repo.get("issues"),
-        "description": repo.get("description"),
-        "primaryLanguage": repo.get("primaryLanguage"),
-        "createdAt": repo.get("createdAt"),
-        "pushedAt": repo.get("pushedAt"),
-        "defaultBranchCommitCount": repo.get("defaultBranchCommitCount"),
-        "license": str(repo.get("license")),
-        "assignableUserCount": repo.get("assignableUserCount"),
-        "codeOfConduct": str(repo.get("codeOfConduct")),
-        "forkingAllowed": repo.get("forkingAllowed"),
-        "parent": str(repo.get("parent"))
-    })
-    
-    for lang in repo.get("languages", []):
-        languages.append({
-            "repo": repo.get("nameWithOwner"),
-            "language": lang.get("name"),
-            "size": lang.get("size")
-        })
-
-    seen_topics = set()
-    for topic in repo.get("topics", []):
-        topic_name = topic.get("name")
-        if topic_name and topic_name not in seen_topics:
-            seen_topics.add(topic_name)
-            topics.append({
-                "repo": repo.get("nameWithOwner"),
-                "topic": topic_name,
-                "stars": topic.get("stars")
-            })
-
-df_repos = pd.DataFrame(repos)
-df_languages = pd.DataFrame(languages)
-df_topics = pd.DataFrame(topics)
-
-# Perform a single, efficient merge
 print("Merging BigQuery data with main repository metadata...")
 df_repos = pd.merge(df_repos, bigquery_df, 
                     left_on='nameWithOwner', right_on='repo', how='left')
+
 df_repos.drop('repo', axis=1, inplace=True)
 df_repos.rename(columns={'contributors': 'bigquery_contributors', 'stargazers': 'bigquery_stargazers'}, inplace=True)
-# Fill NaN lists with empty lists
-df_repos['bigquery_contributors'] = df_repos['bigquery_contributors'].apply(lambda x: x if isinstance(x, list) else [])
-df_repos['bigquery_stargazers'] = df_repos['bigquery_stargazers'].apply(lambda x: x if isinstance(x, list) else [])
+
+df_repos.loc[:, 'bigquery_contributors'] = df_repos['bigquery_contributors'].apply(lambda x: x if isinstance(x, list) else [])
+df_repos.loc[:, 'bigquery_stargazers'] = df_repos['bigquery_stargazers'].apply(lambda x: x if isinstance(x, list) else [])
 
 # -----------------------------------
-# Write to DuckDB (more efficiently)
+# Final DataFrame Preparation
 # -----------------------------------
-con = duckdb.connect(db_path)
-con.execute("SET threads TO 4;")
+# Pre-aggregate topics before writing to DuckDB
+print("Pre-aggregating topics DataFrame...")
+df_topics_agg = df_topics.groupby('repo')['topic'].apply(lambda x: '|'.join(x)).reset_index(name='topics')
 
-# Helper to insert directly
-def insert_df(df, table_name):
-    print(f"Writing {len(df)} rows to {table_name}...")
-    # Use DuckDB's built-in function to register and write
-    # This is much faster than manual chunking and INSERT
-    con.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM df;")
+# -----------------------------------
+# Write to DuckDB with INDEXING (Using SQLAlchemy)
+# -----------------------------------
+start_duckdb_time = time.time()
+print("Connecting to DuckDB using SQLAlchemy...")
+engine = create_engine(f"duckdb:///{db_path}")
+con = engine.connect()
 
-# Write repos
-insert_df(df_repos, "repos")
+print("Writing DataFrames to DuckDB...")
+df_repos.to_sql("repos", con, if_exists='replace', index=False)
+df_languages.to_sql("repo_languages", con, if_exists='replace', index=False)
+df_topics_agg.to_sql("repo_topics", con, if_exists='replace', index=False)
 
-# Write languages (if any)
-if not df_languages.empty:
-    insert_df(df_languages, "repo_languages")
-
-# Write topics (if any)
-if not df_topics.empty:
-    insert_df(df_topics, "repo_topics")
+# --- ADDED INDEXING STEP (Still crucial) ---
+print("Creating index on repo_topics table...")
+con.execute(text("CREATE INDEX topic_idx ON repo_topics (topics);"))
+print("Index created successfully!")
+# ---------------------------
 
 con.close()
+end_duckdb_time = time.time()
+print(f"DuckDB database creation took {end_duckdb_time - start_duckdb_time:.2f} seconds.")
+print(f"Total script execution time: {time.time() - start_total_time:.2f} seconds.")
+
 print(f"DuckDB database created at {db_path}")

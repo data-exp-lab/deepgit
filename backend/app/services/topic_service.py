@@ -59,13 +59,15 @@ class TopicService:
                     SELECT DISTINCT r.nameWithOwner
                     FROM repos r
                     JOIN repo_topics t ON r.nameWithOwner = t.repo
-                    WHERE LOWER(t.topic) = ?
+                    WHERE LOWER(t.topics) LIKE '%' || ? || '%'
                 )
-                SELECT t.topic, COUNT(*) as count
+                SELECT 
+                    unnest(string_split(t.topics, '|')) as topic,
+                    COUNT(*) as count
                 FROM filtered_repos fr
                 JOIN repo_topics t ON fr.nameWithOwner = t.repo
-                WHERE LOWER(t.topic) != ?
-                GROUP BY t.topic
+                WHERE LOWER(unnest(string_split(t.topics, '|'))) != ?
+                GROUP BY unnest(string_split(t.topics, '|'))
                 HAVING COUNT(*) > 2
                 ORDER BY count DESC
             """
