@@ -4,12 +4,7 @@
 </div>
 
 # Overview
-DeepGit is a free, open-source web application designed to help researchers and research software engineers discover and explore research software within specific domains. It is a joint effort between the University of Illinois Urbana-Champaign's [Data Exploration Lab](https://github.com/data-exp-lab) and NumFOCUS's [Map of Open Source Science](https://www.opensource.science/moss)
-
-<p align="center">
-  <img src="./public/dxl_logo.png" width="120" />
-  <img src="./public/ossci_logo.jpg" width="120" />
-</p>
+DeepGit is a free, open-source web application designed to help researchers and research software engineers discover and explore research software within specific domains. 
 
 # Development
 
@@ -42,10 +37,24 @@ cd ..
 bash start.sh
 ```
 # Acknowledgment
+This work is supported by the Google Academic Research Grants (No.406556141), and the Gemini Academic Program.
+
 DeepGit is built upon [Retina](https://ouestware.gitlab.io/retina/1.0.0-beta.4/#/) developed by [OuestWare](https://www.ouestware.com/en/)
+
+# Citation
+If you use DeepGit in your research, please cite:
+```bibtex
+@inproceedings{deepgit,
+  title={DeepGit: Promoting Exploration and Discovery of Research Software with Human-Curated Graphs},
+  author={Yilin Xia and Shin-Rong Tsai and Matthew Turk},
+  booktitle={VLDB 2025 Workshop: DaSH: Data Science with Human in the Loop},
+  year={2025},
+  url={https://www.vldb.org/2025/Workshops/VLDB-Workshops-2025/DaSH/DaSH25_4.pdf}
+}
+```
 
 # License 
 The software is available under [GNU GPLv3 license](https://gitlab.com/ouestware/retina/-/blob/main/LICENSE).
 
 # Contact
-For any queries, please [open an issue](https://github.com/data-exp-lab/deepgit/issues) on GitHub
+For any queries, please [open an issue](https://github.com/data-exp-lab/deepgit/issues) on GitHub or contact [Yilin Xia](https://github.com/yilinxia).
