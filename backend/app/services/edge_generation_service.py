@@ -212,10 +212,10 @@ class EdgeGenerationService:
         topics_lower = [t.lower() for t in topics]
         placeholders = ",".join(["?"] * len(topics_lower))
         
-        # Create a more flexible search pattern using OR conditions
+        # Create exact topic matching conditions
         conditions = []
         for topic in topics_lower:
-            conditions.append(f"LOWER(t.topics) LIKE '%{topic}%'")
+            conditions.append(f"LOWER(t.topics) LIKE '%|{topic}|%' OR LOWER(t.topics) LIKE '{topic}|%' OR LOWER(t.topics) LIKE '%|{topic}' OR LOWER(t.topics) = '{topic}'")
         
         query = f"""
             WITH matching_repos AS (

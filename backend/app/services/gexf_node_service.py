@@ -77,10 +77,10 @@ class GexfNodeGenerator:
                 WHERE (
             """
             
-            # Add each topic as a separate OR condition
+            # Add each topic as a separate OR condition with exact matching
             conditions = []
             for topic in topics_lower:
-                conditions.append(f"LOWER(t.topics) LIKE '%{topic}%'")
+                conditions.append(f"LOWER(t.topics) LIKE '%|{topic}|%' OR LOWER(t.topics) LIKE '{topic}|%' OR LOWER(t.topics) LIKE '%|{topic}' OR LOWER(t.topics) = '{topic}'")
             
             temp_table_query += " OR ".join(conditions) + ");"
             self.con.execute(temp_table_query)

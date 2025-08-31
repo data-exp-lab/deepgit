@@ -474,17 +474,19 @@ def get_unique_repos():
         topics_lower = [t.lower() for t in topics]
         placeholders = ",".join(["?"] * len(topics_lower))
 
-        # Query to get unique repositories that have ANY of the given topics
-        # Create a single search pattern that matches any of the topics
-        search_pattern = '%' + '%'.join(topics_lower) + '%'
-        query = """
+        # Query to get unique repositories that have ANY of the given topics using exact matching
+        conditions = []
+        for topic in topics_lower:
+            conditions.append(f"LOWER(t.topics) LIKE '%|{topic}|%' OR LOWER(t.topics) LIKE '{topic}|%' OR LOWER(t.topics) LIKE '%|{topic}' OR LOWER(t.topics) = '{topic}'")
+        
+        query = f"""
             SELECT COUNT(DISTINCT r.nameWithOwner) as count
             FROM repos r
             JOIN repo_topics t ON r.nameWithOwner = t.repo
-            WHERE LOWER(t.topics) LIKE ?
+            WHERE ({" OR ".join(conditions)})
         """
         
-        result = topic_service.con.execute(query, [search_pattern]).fetchone()
+        result = topic_service.con.execute(query).fetchone()
         count = result[0] if result else 0
 
         return jsonify({
