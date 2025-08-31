@@ -115,101 +115,57 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         });
     }
 
-    // Function to restore original graph without edges
+    // Function to restore original graph without edges - OPTIMIZED
     const restoreOriginalGraph = async (): Promise<void> => {
         try {
-            // Import the necessary functions to reload the graph
-            const { readGraph, prepareGraph, enrichData } = await import('../lib/data');
-
-            // Reload the graph with the original content (no edges)
-            const rawGraph = await readGraph({
-                name: graphFile.name,
-                extension: graphFile.extension,
-                textContent: graphFile.textContent
-            });
-
-            if (!rawGraph) {
-                throw new Error("Failed to parse original graph");
-            }
-
-            // Process the graph and create new data
-            const { graph, hasEdges } = prepareGraph(rawGraph);
-
-            // Preserve existing node positions from current graph
+            // Quick toggle: just remove all edges from current graph
             if (data && data.graph) {
                 const currentGraph = data.graph;
-                const preservedPositions: Record<string, { x: number; y: number; size: number; color: string; label: string }> = {};
 
-                // First, collect all current positions
-                const currentNodes = currentGraph.nodes();
-                for (let i = 0; i < currentNodes.length; i++) {
-                    const nodeId = currentNodes[i];
-                    const currentNodeData = currentGraph.getNodeAttributes(nodeId);
-                    preservedPositions[nodeId] = {
-                        x: currentNodeData.x || 0,
-                        y: currentNodeData.y || 0,
-                        size: currentNodeData.size || 5,
-                        color: currentNodeData.color || "#aaa",
-                        label: currentNodeData.label || nodeId
-                    };
+                // Remove all edges
+                const edges = currentGraph.edges();
+                for (let i = 0; i < edges.length; i++) {
+                    currentGraph.dropEdge(edges[i]);
                 }
 
-                // Then apply preserved positions to new graph
-                const newNodes = graph.nodes();
-                for (let i = 0; i < newNodes.length; i++) {
-                    const nodeId = newNodes[i];
-                    if (preservedPositions[nodeId]) {
-                        const preserved = preservedPositions[nodeId];
-                        graph.setNodeAttribute(nodeId, "x", preserved.x);
-                        graph.setNodeAttribute(nodeId, "y", preserved.y);
-                        graph.setNodeAttribute(nodeId, "size", preserved.size);
-                        graph.setNodeAttribute(nodeId, "color", preserved.color);
-                        graph.setNodeAttribute(nodeId, "label", preserved.label);
-                    }
-                }
-            }
+                // Update the graph context to reflect no edges
+                const newNavState = {
+                    ...navState,
+                    role: navState.role,
+                    nodeSizeField: undefined, // Reset to default sizing
+                    // Save current edge creation conditions
+                    edgeCreationTopicThreshold: topicThreshold,
+                    edgeCreationContributorThreshold: contributorThreshold,
+                    edgeCreationStargazerThreshold: stargazerThreshold,
+                    edgeCreationEnableTopicLinking: enableTopicLinking,
+                    edgeCreationEnableContributorOverlap: enableContributorOverlap,
+                    edgeCreationEnableSharedOrganization: enableSharedOrganization,
+                    edgeCreationEnableCommonStargazers: enableCommonStargazers,
+                    edgeCreationEnableDependencies: enableDependencies,
+                };
+                setNavState(newNavState);
 
-            // Create rich data with minimal processing
-            const richData = enrichData(graph, hasEdges);
-
-            // Update the graph data directly
-            setData(richData);
-
-            // Update the graph context
-            const newNavState = {
-                ...navState,
-                role: navState.role,
-                nodeSizeField: undefined, // Reset to default sizing
-                // Save current edge creation conditions
-                edgeCreationTopicThreshold: topicThreshold,
-                edgeCreationContributorThreshold: contributorThreshold,
-                edgeCreationStargazerThreshold: stargazerThreshold,
-                edgeCreationEnableTopicLinking: enableTopicLinking,
-                edgeCreationEnableContributorOverlap: enableContributorOverlap,
-                edgeCreationEnableSharedOrganization: enableSharedOrganization,
-                edgeCreationEnableCommonStargazers: enableCommonStargazers,
-                edgeCreationEnableDependencies: enableDependencies,
-            };
-            setNavState(newNavState);
-
-            // Notify user of success
-            notify({
-                message: "Graph restored to original state without edges",
-                type: "success"
-            });
-
-            // Notify user that node sizing has been reset
-            if (navState.nodeSizeField === "pagerank") {
+                // Notify user of success
                 notify({
-                    message: "Node sizing has been reset to default since the graph structure was updated.",
-                    type: "info"
+                    message: "All edges removed from graph",
+                    type: "success"
                 });
+
+                // Notify user that node sizing has been reset
+                if (navState.nodeSizeField === "pagerank") {
+                    notify({
+                        message: "Node sizing has been reset to default since edges were removed.",
+                        type: "info"
+                    });
+                }
+            } else {
+                throw new Error("No graph data available");
             }
 
         } catch (error) {
-            console.error('Error restoring original graph:', error);
+            console.error('Error removing edges:', error);
             notify({
-                message: "Failed to restore original graph. Please refresh the page.",
+                message: "Failed to remove edges. Please refresh the page.",
                 type: "error"
             });
         }
@@ -400,9 +356,15 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
         }
     };
 
-    // Handle apply button click
+    // Handle apply button click with debounce
     const handleApplyEdgeCreation = () => {
-        createEdgesViaBackend();
+        // Prevent rapid clicking
+        if (isLoading) return;
+
+        // Add a small delay to prevent UI lag
+        setTimeout(() => {
+            createEdgesViaBackend();
+        }, 100);
     };
 
     return (
