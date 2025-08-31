@@ -103,6 +103,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [searchTermRemoved, setSearchTermRemoved] = useState(false);
     const [submitProgress, setSubmitProgress] = useState(0);
     const [submitStatus, setSubmitStatus] = useState<string>('');
+    const [showMemoryLimitModal, setShowMemoryLimitModal] = useState(false);
 
     // Function to fetch unique repository count for all finalized topics
     const fetchUniqueReposCount = async (topics: string[]) => {
@@ -507,17 +508,17 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             await new Promise(resolve => setTimeout(resolve, 500));
         }
 
-        // Add confirmation for large repository counts
-        if (uniqueReposCount > 10000) {
-            console.log('Showing confirmation modal for large dataset:', uniqueReposCount);
-            setShowConfirmationModal(true);
+        // Show memory limit warning for large repository counts
+        if (uniqueReposCount > 2500) {
+            console.log('Showing memory limit modal for large dataset:', uniqueReposCount);
+            setShowMemoryLimitModal(true);
             return;
         }
 
         // If we have an error but still have a count, check if it's over threshold
-        if (uniqueCountError && uniqueReposCount > 10000) {
-            console.log('Showing confirmation modal despite error, count:', uniqueReposCount);
-            setShowConfirmationModal(true);
+        if (uniqueCountError && uniqueReposCount > 2500) {
+            console.log('Showing memory limit modal despite error, count:', uniqueReposCount);
+            setShowMemoryLimitModal(true);
             return;
         }
 
@@ -960,7 +961,12 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                         {uniqueReposCount.toLocaleString()} (Fallback)
                                     </span>
                                 ) : (
-                                    <span className="fw-bold">{uniqueReposCount.toLocaleString()}</span>
+                                    <span className={`fw-bold ${uniqueReposCount > 2500 ? 'text-danger' : ''}`}>
+                                        {uniqueReposCount.toLocaleString()}
+                                        {uniqueReposCount > 2500 && (
+                                            <i className="fas fa-exclamation-triangle text-warning ms-1" title="Large dataset - may cause performance issues"></i>
+                                        )}
+                                    </span>
                                 )}
                             </div>
                             {uniqueCountError && (
@@ -1185,8 +1191,8 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title d-flex align-items-center">
-                                    <i className="fas fa-exclamation-circle text-danger me-2"></i>
-                                    Large Dataset Warning
+                                    <i className="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Performance Warning - Large Dataset
                                 </h5>
                                 <button
                                     type="button"
@@ -1199,15 +1205,15 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                 ></button>
                             </div>
                             <div className="modal-body">
-                                <div className="alert alert-danger mb-0">
+                                <div className="alert alert-warning mb-0">
                                     <p className="mb-2">
                                         You are about to generate a graph with <strong>{uniqueReposCount.toLocaleString()}</strong> unique repositories.
                                     </p>
                                     <p className="mb-0">
-                                        This may take a while to process and could impact performance. Are you sure you want to continue?
+                                        <strong>Warning:</strong> Graphs with more than 2,000 repositories may cause significant performance issues and slow down your browser. Consider reducing the number of topics to improve performance.
                                     </p>
                                     <small className="d-block mt-2 text-muted">
-                                        Debug: Threshold is 10,000, current count: {uniqueReposCount}
+                                        Debug: Threshold is 2,500, current count: {uniqueReposCount}
                                     </small>
                                 </div>
                             </div>
@@ -1224,14 +1230,68 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                 </button>
                                 <button
                                     type="button"
-                                    className="btn btn-danger"
-                                    onClick={async () => {
-                                        console.log('Confirmation modal confirmed by user, proceeding with submission');
+                                    className="btn btn-warning"
+                                    onClick={() => {
+                                        console.log('User chose to change dataset');
                                         setShowConfirmationModal(false);
-                                        await submitTopics();
+                                        // Focus on the topic selection area or scroll to it
+                                        const topicInput = document.querySelector('input[placeholder="Add a custom topic"]') as HTMLInputElement;
+                                        if (topicInput) {
+                                            topicInput.focus();
+                                        }
                                     }}
                                 >
-                                    Continue
+                                    Change Dataset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Memory Limit Modal */}
+            {showMemoryLimitModal && (
+                <div className="modal show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title d-flex align-items-center">
+                                    <i className="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Memory Limit Reached
+                                </h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => {
+                                        console.log('Memory limit modal closed by user');
+                                        setShowMemoryLimitModal(false);
+                                    }}
+                                    aria-label="Close"
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="alert alert-warning mb-0">
+                                    <p className="mb-2">
+                                        Due to the current memory limitation, we only support graphs with 2,500 nodes or below.
+                                    </p>
+                                    <p className="mb-0">
+                                        We are keeping optimize the node scalability.
+                                    </p>
+                                    <small className="d-block mt-2 text-muted">
+                                        Current repository count: {uniqueReposCount.toLocaleString()}
+                                    </small>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                        console.log('Memory limit modal closed by user');
+                                        setShowMemoryLimitModal(false);
+                                    }}
+                                >
+                                    OK
                                 </button>
                             </div>
                         </div>
