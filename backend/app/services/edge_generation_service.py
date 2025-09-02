@@ -92,14 +92,52 @@ class EdgeGenerationService:
         
         # Apply combination logic: edges are created when ANY enabled criterion is satisfied
         # But we can also implement AND logic for specific combinations
-        final_edges = self._apply_combination_logic(all_edges, criteria_config)
-        
-        # Apply AND logic for specific combinations if requested
-        if criteria_config.get('use_and_logic', False):
-            final_edges = self._apply_and_logic(final_edges, criteria_config)
+        if criteria_config.get('strict_and_logic', False):
+            # Apply strict AND logic (all criteria must be satisfied)
+            final_edges = self._apply_strict_and_logic(all_edges, criteria_config)
+        elif criteria_config.get('min_criteria_required', 0) > 1:
+            # Apply flexible AND logic (at least N criteria must be satisfied)
+            final_edges = self._apply_flexible_and_logic(all_edges, criteria_config)
+        elif criteria_config.get('use_and_logic', False):
+            # Apply regular AND logic (multiple criteria required)
+            final_edges = self._apply_combination_logic(all_edges, criteria_config)
+            
+            # Filter to only keep combined edges (edges that satisfy multiple criteria)
+            filtered_edges = []
+            for edge in final_edges:
+                if len(edge) >= 3:
+                    edge_data = edge[2]
+                    edge_type = edge_data.get('edge_type', 'unknown')
+                    if edge_type == 'combined':
+                        filtered_edges.append(edge)
+            
+            final_edges = filtered_edges
+        else:
+            # Apply OR logic (any criterion creates an edge)
+            final_edges = self._apply_combination_logic(all_edges, criteria_config)
         
         # Add final edges to graph
-        G.add_edges_from(final_edges)
+        # Filter out None edges and ensure proper structure
+        valid_edges = []
+        for edge in final_edges:
+            if edge is not None and len(edge) == 3:
+                repo1, repo2, edge_data = edge
+                if isinstance(edge_data, dict):
+                    # Clean the edge data to ensure it's compatible with NetworkX
+                    cleaned_edge_data = {}
+                    for key, value in edge_data.items():
+                        if isinstance(value, list):
+                            # Convert lists to strings for NetworkX compatibility
+                            cleaned_edge_data[key] = '|'.join([str(item) for item in value])
+                        else:
+                            cleaned_edge_data[key] = str(value)
+                    valid_edges.append((repo1, repo2, cleaned_edge_data))
+                else:
+                    pass
+            elif edge is not None:
+                pass
+        
+        G.add_edges_from(valid_edges)
         
         # Calculate total edges and statistics
         total_edges = len(G.edges())
@@ -107,12 +145,6 @@ class EdgeGenerationService:
         edge_stats['total_nodes'] = len(G.nodes())
         edge_stats['criteria_used'] = [k for k, v in criteria_config.items() if v]
         edge_stats['combination_logic_applied'] = True
-        
-        # Debug information
-        print(f"Generated {len(all_edges)} total edges")
-        print(f"Final edges after combination logic: {len(final_edges)}")
-        print(f"Edges in graph: {total_edges}")
-        print(f"Edge stats: {edge_stats}")
         
         return G, edge_stats
 
@@ -187,13 +219,52 @@ class EdgeGenerationService:
             all_edges.extend(stargazer_edges)
         
         # Apply combination logic
-        if use_and_logic:
-            final_edges = self._apply_and_logic_for_existing_graph(all_edges, criteria_config)
+        if criteria_config.get('strict_and_logic', False):
+            # Apply strict AND logic (all criteria must be satisfied)
+            final_edges = self._apply_strict_and_logic(all_edges, criteria_config)
+        elif criteria_config.get('min_criteria_required', 0) > 1:
+            # Apply flexible AND logic (at least N criteria must be satisfied)
+            final_edges = self._apply_flexible_and_logic(all_edges, criteria_config)
+        elif use_and_logic:
+            # Apply regular AND logic (multiple criteria required)
+            final_edges = self._apply_combination_logic(all_edges, criteria_config)
+            
+            # Filter to only keep combined edges (edges that satisfy multiple criteria)
+            filtered_edges = []
+            for edge in final_edges:
+                if len(edge) >= 3:
+                    edge_data = edge[2]
+                    edge_type = edge_data.get('edge_type', 'unknown')
+                    if edge_type == 'combined':
+                        filtered_edges.append(edge)
+            
+            final_edges = filtered_edges
         else:
+            # Apply OR logic (any criterion creates an edge)
             final_edges = self._apply_combination_logic(all_edges, criteria_config)
         
         # Add final edges to graph
-        G.add_edges_from(final_edges)
+        # Filter out None edges and ensure proper structure
+        valid_edges = []
+        for i, edge in enumerate(final_edges):
+            if edge is not None and len(edge) == 3:
+                repo1, repo2, edge_data = edge
+                if isinstance(edge_data, dict):
+                    # Clean the edge data to ensure it's compatible with NetworkX
+                    cleaned_edge_data = {}
+                    for key, value in edge_data.items():
+                        if isinstance(value, list):
+                            # Convert lists to strings for NetworkX compatibility
+                            cleaned_edge_data[key] = '|'.join([str(item) for item in value])
+                        else:
+                            cleaned_edge_data[key] = str(value)
+                    valid_edges.append((repo1, repo2, cleaned_edge_data))
+                else:
+                    pass
+            elif edge is not None:
+                pass
+        
+        G.add_edges_from(valid_edges)
         
         # Calculate total edges and statistics
         total_edges = len(G.edges())
@@ -361,7 +432,7 @@ class EdgeGenerationService:
                 if shared_topics:
                     # Create edge with shared topics as weight
                     edges.append((repo1, repo2, {
-                        'type': 'topic_based',
+                        'edge_type': 'topic_based',
                         'shared_topics': list(shared_topics),
                         'weight': len(shared_topics)
                     }))
@@ -392,7 +463,7 @@ class EdgeGenerationService:
                 shared_contributors = contributors1.intersection(contributors2)
                 if len(shared_contributors) >= threshold:
                     edges.append((repo1, repo2, {
-                        'type': 'contributor_overlap',
+                        'edge_type': 'contributor_overlap',
                         'shared_contributors': list(shared_contributors),
                         'weight': len(shared_contributors)
                     }))
@@ -462,6 +533,9 @@ class EdgeGenerationService:
         # Group edges by repository pairs
         edge_groups = {}
         for edge in all_edges:
+            # Safely extract repository names
+            if len(edge) < 2:
+                continue  # Skip invalid edges
             repo1, repo2 = edge[0], edge[1]
             edge_key = tuple(sorted([repo1, repo2]))
             
@@ -479,7 +553,8 @@ class EdgeGenerationService:
             else:
                 # Multiple criteria satisfied, create a combined edge
                 combined_edge = self._create_combined_edge(edges)
-                final_edges.append(combined_edge)
+                if combined_edge:  # Only add if combined edge was created successfully
+                    final_edges.append(combined_edge)
         
         return final_edges
 
@@ -490,22 +565,32 @@ class EdgeGenerationService:
         if not edges:
             return None
         
-        # Get the repository pair
-        repo1, repo2 = edges[0][0], edges[0][1]
+        # Get the repository pair - safely handle edges with more than 3 elements
+        first_edge = edges[0]
+        if len(first_edge) < 2:
+            return None
+        
+        repo1, repo2 = first_edge[0], first_edge[1]
         
         # Collect all edge types and data
         edge_types = []
         shared_data = {}
         total_weight = 0
         
-        for edge in edges:
-            edge_data = edge[2] if len(edge) > 2 else {}
-            edge_type = edge_data.get('edge_type', 'unknown')
+        for i, edge in enumerate(edges):
+            # Safely extract edge data - handle edges with more than 3 elements
+            if len(edge) >= 3:
+                edge_data = edge[2] if isinstance(edge[2], dict) else {}
+            else:
+                edge_data = {}
+                
+            # Handle both 'type' and 'edge_type' keys for backward compatibility
+            edge_type = edge_data.get('edge_type', edge_data.get('type', 'unknown'))
             edge_types.append(edge_type)
             
             # Accumulate shared data
             for key, value in edge_data.items():
-                if key not in ['edge_type', 'weight']:
+                if key not in ['edge_type', 'type', 'weight']:
                     if key not in shared_data:
                         shared_data[key] = []
                     if isinstance(value, list):
@@ -526,10 +611,155 @@ class EdgeGenerationService:
             'edge_type': 'combined',
             'criteria_satisfied': edge_types,
             'weight': total_weight,
-            **shared_data
         }
         
-        return (repo1, repo2, combined_data)
+        # Safely add shared data, ensuring all values are serializable
+        for key, value in shared_data.items():
+            if isinstance(value, list):
+                # Ensure list contains only strings or numbers
+                clean_value = []
+                for item in value:
+                    if isinstance(item, (str, int, float)):
+                        clean_value.append(str(item))
+                combined_data[key] = clean_value
+            elif isinstance(value, (str, int, float, bool)):
+                combined_data[key] = value
+            else:
+                # Convert other types to string
+                combined_data[key] = str(value)
+        
+        result = (repo1, repo2, combined_data)
+        return result
+
+    def _apply_flexible_and_logic(self, all_edges: List[Tuple], criteria_config: Dict[str, any]) -> List[Tuple]:
+        """
+        Apply flexible AND logic to require a minimum number of criteria to be satisfied.
+        Only keeps edges that satisfy at least the specified number of criteria.
+        """
+        if not all_edges:
+            return []
+        
+        # Count how many criteria are enabled
+        enabled_criteria = sum([
+            criteria_config.get('topic_based_linking', False),
+            criteria_config.get('contributor_overlap_enabled', False),
+            criteria_config.get('shared_organization_enabled', False),
+            criteria_config.get('common_stargazers_enabled', False)
+        ])
+        
+        if enabled_criteria <= 1:
+            # Only one criterion enabled, no AND logic needed
+            return all_edges
+        
+        # Get minimum criteria required (default to 2, or all if strict_and_logic is true)
+        min_criteria_required = criteria_config.get('min_criteria_required', 2)
+        if criteria_config.get('strict_and_logic', False):
+            min_criteria_required = enabled_criteria
+        
+        # Group edges by repository pairs
+        edge_groups = {}
+        for edge in all_edges:
+            # Safely extract repository names
+            if len(edge) < 2:
+                continue  # Skip invalid edges
+            repo1, repo2 = edge[0], edge[1]
+            edge_key = tuple(sorted([repo1, repo2]))
+            
+            if edge_key not in edge_groups:
+                edge_groups[edge_key] = []
+            edge_groups[edge_key].append(edge)
+        
+        # Only keep edges that satisfy at least min_criteria_required
+        final_edges = []
+        for edge_key, edges_for_pair in edge_groups.items():
+            # Check if this repository pair satisfies enough criteria
+            satisfied_criteria = set()
+            
+            for edge in edges_for_pair:
+                edge_data = edge[2] if len(edge) >= 3 else {}
+                edge_type = edge_data.get('edge_type', 'unknown')
+                satisfied_criteria.add(edge_type)
+            
+            # Only keep if enough criteria are satisfied
+            if len(satisfied_criteria) >= min_criteria_required:
+                # Create a combined edge with all criteria
+                combined_edge = self._create_combined_edge(edges_for_pair)
+                if combined_edge is not None:
+                    final_edges.append(combined_edge)
+        
+        return final_edges
+
+    def _apply_strict_and_logic(self, all_edges: List[Tuple], criteria_config: Dict[str, any]) -> List[Tuple]:
+        """
+        Apply strict AND logic to require ALL enabled criteria to be satisfied for an edge.
+        Only keeps edges that satisfy ALL enabled criteria simultaneously.
+        """
+        if not all_edges:
+            return []
+        
+        # Count how many criteria are enabled
+        enabled_criteria = sum([
+            criteria_config.get('topic_based_linking', False),
+            criteria_config.get('contributor_overlap_enabled', False),
+            criteria_config.get('shared_organization_enabled', False),
+            criteria_config.get('common_stargazers_enabled', False)
+        ])
+        
+        if enabled_criteria <= 1:
+            # Only one criterion enabled, no AND logic needed
+            return all_edges
+        
+        # Group edges by repository pairs
+        edge_groups = {}
+        for edge in all_edges:
+            # Safely extract repository names
+            if len(edge) < 2:
+                continue  # Skip invalid edges
+            repo1, repo2 = edge[0], edge[1]
+            edge_key = tuple(sorted([repo1, repo2]))
+            
+            if edge_key not in edge_groups:
+                edge_groups[edge_key] = []
+            edge_groups[edge_key].append(edge)
+        
+        # Only keep edges that satisfy ALL enabled criteria
+        final_edges = []
+        for edge_key, edges_for_pair in edge_groups.items():
+            # Check if this repository pair satisfies ALL enabled criteria
+            satisfied_criteria = set()
+            
+            for edge in edges_for_pair:
+                edge_data = edge[2] if len(edge) >= 3 else {}
+                edge_type = edge_data.get('edge_type', 'unknown')
+                satisfied_criteria.add(edge_type)
+            
+            # Check if ALL enabled criteria are satisfied
+            required_criteria = set()
+            if criteria_config.get('topic_based_linking', False):
+                required_criteria.add('topic_based')
+            if criteria_config.get('contributor_overlap_enabled', False):
+                required_criteria.add('contributor_overlap')
+            if criteria_config.get('shared_organization_enabled', False):
+                required_criteria.add('shared_organization')
+            if criteria_config.get('common_stargazers_enabled', False):
+                required_criteria.add('stargazer_overlap')
+            
+            # Debug: Show what criteria this pair satisfied
+            if len(edges_for_pair) > 1:
+                pass
+            
+            # Only keep if ALL required criteria are satisfied
+            if satisfied_criteria.issuperset(required_criteria):
+                # Create a combined edge with all criteria
+                combined_edge = self._create_combined_edge(edges_for_pair)
+                if combined_edge is not None:
+                    final_edges.append(combined_edge)
+        
+        # Debug: Show some examples of what criteria were satisfied
+        if len(edge_groups) > 0:
+            pass
+        
+        return final_edges
 
     def _apply_and_logic(self, edges: List[Tuple], criteria_config: Dict[str, any]) -> List[Tuple]:
         """
@@ -551,21 +781,44 @@ class EdgeGenerationService:
             # Only one criterion enabled, no AND logic needed
             return edges
         
-        # Filter edges to only keep those that satisfy multiple criteria
-        filtered_edges = []
+        # Group edges by repository pairs
+        edge_groups = {}
         for edge in edges:
-            edge_data = edge[2] if len(edge) > 2 else {}
+            # Safely extract repository names
+            if len(edge) < 2:
+                continue  # Skip invalid edges
+            repo1, repo2 = edge[0], edge[1]
+            edge_key = tuple(sorted([repo1, repo2]))
             
-            if edge_data.get('edge_type') == 'combined':
-                # This edge already satisfies multiple criteria
-                filtered_edges.append(edge)
+            if edge_key not in edge_groups:
+                edge_groups[edge_key] = []
+            edge_groups[edge_key].append(edge)
+        
+        # Only keep edges that satisfy multiple criteria
+        final_edges = []
+        for edge_key, edges_for_pair in edge_groups.items():
+            # Check if this repository pair satisfies multiple criteria
+            satisfied_criteria = set()
+            
+            for edge in edges_for_pair:
+                edge_data = edge[2] if len(edge) >= 3 else {}
+                edge_type = edge_data.get('edge_type', 'unknown')
+                satisfied_criteria.add(edge_type)
+            
+            # Debug: Show what criteria this pair satisfied
+            if len(edges_for_pair) > 1:
+                pass
+            
+            # Only keep if multiple criteria are satisfied
+            if len(satisfied_criteria) > 1:
+                # Create a combined edge with all criteria
+                combined_edge = self._create_combined_edge(edges_for_pair)
+                if combined_edge is not None:
+                    final_edges.append(combined_edge)
             else:
-                # Single criterion edge, check if it should be kept
-                # For AND logic, we might want to require at least 2 criteria
-                # This is a simplified version - you can customize the logic
                 pass
         
-        return filtered_edges
+        return final_edges
 
     def _generate_topic_based_edges_from_graph(self, G: nx.Graph, nodes: List[str], threshold: int) -> List[Tuple]:
         """Generate edges based on shared topics from existing graph nodes."""
@@ -689,6 +942,9 @@ class EdgeGenerationService:
         # Group edges by repository pairs
         edge_groups = {}
         for edge in edges:
+            # Safely extract repository names
+            if len(edge) < 2:
+                continue  # Skip invalid edges
             repo1, repo2 = edge[0], edge[1]
             edge_key = tuple(sorted([repo1, repo2]))
             
@@ -702,7 +958,8 @@ class EdgeGenerationService:
             if len(edges_for_pair) > 1:
                 # Multiple criteria satisfied, create a combined edge
                 combined_edge = self._create_combined_edge(edges_for_pair)
-                final_edges.append(combined_edge)
+                if combined_edge is not None:  # Only add if combined edge was created successfully
+                    final_edges.append(combined_edge)
         
         return final_edges
 
@@ -728,6 +985,44 @@ class EdgeGenerationService:
         nx.write_gexf(G, output_path)
         return output_path
 
+    def get_detailed_edge_statistics(self, G: nx.Graph) -> Dict:
+        """Get detailed statistics about edge types and their breakdown."""
+        if not G.edges():
+            return {'message': 'No edges generated'}
+        
+        edge_types = {}
+        combined_edges = {}
+        
+        for _, _, data in G.edges(data=True):
+            edge_type = data.get('edge_type', 'unknown')
+            edge_types[edge_type] = edge_types.get(edge_type, 0) + 1
+            
+            # For combined edges, analyze what criteria were satisfied
+            if edge_type == 'combined':
+                criteria_satisfied = data.get('criteria_satisfied', [])
+                if isinstance(criteria_satisfied, str):
+                    criteria_satisfied = criteria_satisfied.split('|')
+                
+                criteria_key = '|'.join(sorted(criteria_satisfied))
+                combined_edges[criteria_key] = combined_edges.get(criteria_key, 0) + 1
+        
+        # Calculate statistics
+        total_edges = len(G.edges())
+        total_nodes = len(G.nodes())
+        
+        stats = {
+            'total_nodes': total_nodes,
+            'total_edges': total_edges,
+            'edge_type_breakdown': edge_types,
+            'combined_edge_breakdown': combined_edges,
+            'average_degree': sum(dict(G.degree()).values()) / total_nodes if total_nodes > 0 else 0,
+            'connected_components': nx.number_connected_components(G),
+            'density': nx.density(G),
+            'percentage_combined': (edge_types.get('combined', 0) / total_edges * 100) if total_edges > 0 else 0
+        }
+        
+        return stats
+
     def get_edge_statistics(self, G: nx.Graph) -> Dict:
         """Get comprehensive statistics about the generated graph."""
         if not G.edges():
@@ -735,7 +1030,7 @@ class EdgeGenerationService:
         
         edge_types = {}
         for _, _, data in G.edges(data=True):
-            edge_type = data.get('type', 'unknown')
+            edge_type = data.get('edge_type', 'unknown')
             edge_types[edge_type] = edge_types.get(edge_type, 0) + 1
         
         return {
