@@ -116,13 +116,14 @@ class EdgeGenerationService:
         
         return G, edge_stats
 
-    def create_edges_on_existing_graph(self, G: nx.Graph, criteria_config: Dict[str, any]) -> Dict[str, any]:
+    def create_edges_on_existing_graph(self, G: nx.Graph, criteria_config: Dict[str, any], filtered_node_ids: List[str] = None) -> Dict[str, any]:
         """
         Create edges on an existing graph based on specified criteria.
         
         Args:
             G: Existing NetworkX graph with nodes
             criteria_config: Configuration for edge generation criteria
+            filtered_node_ids: Optional list of node IDs to consider for edge creation (only these nodes will be used)
             
         Returns:
             Dictionary with statistics about created edges
@@ -152,10 +153,27 @@ class EdgeGenerationService:
         # Remove all existing edges first
         G.remove_edges_from(list(G.edges()))
         
-        # Get all nodes
-        nodes = list(G.nodes())
-        if len(nodes) < 2:
-            return {'message': 'Not enough nodes to create edges'}
+        # Use filtered nodes if provided, otherwise use all nodes
+        if filtered_node_ids is not None:
+            # Validate that all filtered node IDs exist in the graph
+            existing_nodes = set(G.nodes())
+            valid_filtered_nodes = [node_id for node_id in filtered_node_ids if node_id in existing_nodes]
+            
+            if len(valid_filtered_nodes) < 2:
+                return {
+                    'message': f'Not enough valid filtered nodes to create edges. Found {len(valid_filtered_nodes)} valid nodes out of {len(filtered_node_ids)} provided.',
+                    'total_edges': 0,
+                    'total_nodes': len(valid_filtered_nodes)
+                }
+            
+            nodes = valid_filtered_nodes
+            print(f"Using {len(nodes)} filtered nodes for edge creation out of {len(existing_nodes)} total nodes")
+        else:
+            # Use all nodes if no filtering is applied
+            nodes = list(G.nodes())
+            if len(nodes) < 2:
+                return {'message': 'Not enough nodes to create edges'}
+            print(f"Using all {len(nodes)} nodes for edge creation")
         
         # Generate edges based on enabled criteria
         edge_stats = {}

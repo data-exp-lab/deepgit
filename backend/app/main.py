@@ -518,13 +518,15 @@ def create_edges_on_graph():
             "common_stargazers_enabled": true,
             "stargazer_threshold": 5,
             "use_and_logic": false
-        }
+        },
+        "filtered_node_ids": ["node1", "node2", ...] // Optional: only consider these nodes for edge creation
     }
     """
     try:
         data = request.get_json()
         gexf_content = data.get("gexfContent", "")
         criteria_config = data.get("criteria_config", {})
+        filtered_node_ids = data.get("filtered_node_ids", None)  # Get filtered node IDs
         
         if not gexf_content:
             return jsonify({
@@ -574,7 +576,7 @@ def create_edges_on_graph():
         edge_service = EdgeGenerationService()
         
         # Create edges based on the criteria
-        edges_created = edge_service.create_edges_on_existing_graph(G, criteria_config)
+        edges_created = edge_service.create_edges_on_existing_graph(G, criteria_config, filtered_node_ids)
         
         # Save the updated graph
         import hashlib
