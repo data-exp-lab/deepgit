@@ -262,6 +262,13 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
     // Add effect to handle llmSuggestions updates
     useEffect(() => {
+        console.log('llmSuggestions effect triggered:', {
+            llmSuggestionsLength: llmSuggestions?.length,
+            isGettingSuggestions,
+            selectedModel,
+            searchTerm
+        });
+
         if (llmSuggestions && llmSuggestions.length > 0 && isGettingSuggestions) {
             console.log('Effect detected new suggestions:', llmSuggestions);
             const currentModel: ModelType = selectedModel === 'gpt-3.5-turbo' ? 'openai' : 'gemini';
@@ -420,7 +427,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         const topicSuggestions = suggestionsByModel.filter(
             s => s.topic.toLowerCase().trim() === normalizedTopic
         );
-        // console.log(`Rendering badges for ${topic}:`, topicSuggestions);
+        console.log(`Rendering badges for ${topic}:`, topicSuggestions, 'Total suggestionsByModel:', suggestionsByModel.length);
         return topicSuggestions.map(suggestion => {
             const tooltipId = `${suggestion.topic}-${suggestion.model}`;
             return (
@@ -482,10 +489,21 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
     // Add effect to initialize state when component mounts
     useEffect(() => {
-        // Only clear our internal state
+        console.log('Initialization effect running - clearing suggestionsByModel');
+        // Only clear our internal state on mount, not on every dependency change
         setSuggestionsByModel([]);
         // Don't clear parent state
         // setLlmSuggestions([]);
+    }, []); // Empty dependency array - only run on mount
+
+    // Separate effect to handle search term initialization
+    useEffect(() => {
+        console.log('Search term initialization effect running:', {
+            searchTerm,
+            selectedTopics,
+            finalizedTopics,
+            searchTermRemoved
+        });
 
         // Ensure search term is included in both selected and finalized topics
         if (searchTerm && !selectedTopics.includes(searchTerm)) {
@@ -498,7 +516,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                 fetchTopicCount(searchTerm);
             }
         }
-    }, [searchTerm, selectedTopics, finalizedTopics, setSelectedTopics, setFinalizedTopics]);
+    }, [searchTerm, selectedTopics, finalizedTopics, setSelectedTopics, setFinalizedTopics, searchTermRemoved, topicCounts]);
 
     const handleSubmitFinalizedTopics = async () => {
         // Wait for unique count to be loaded if it's still loading
