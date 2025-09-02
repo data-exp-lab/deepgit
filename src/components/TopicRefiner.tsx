@@ -133,7 +133,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             const data = await response.json();
             if (data.success) {
                 setUniqueReposCount(data.count);
-                // console.log('Unique repos count updated:', data.count);
             } else {
                 throw new Error(data.message || 'Failed to get unique repos count');
             }
@@ -152,7 +151,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
     // Update unique repos count when finalized topics change
     useEffect(() => {
-        // console.log('Finalized topics changed, fetching unique repos count:', finalizedTopics);
         fetchUniqueReposCount(finalizedTopics);
     }, [finalizedTopics]);
 
@@ -262,15 +260,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
     // Add effect to handle llmSuggestions updates
     useEffect(() => {
-        console.log('llmSuggestions effect triggered:', {
-            llmSuggestionsLength: llmSuggestions?.length,
-            isGettingSuggestions,
-            selectedModel,
-            searchTerm
-        });
-
         if (llmSuggestions && llmSuggestions.length > 0 && isGettingSuggestions) {
-            console.log('Effect detected new suggestions:', llmSuggestions);
             const currentModel: ModelType = selectedModel === 'gpt-3.5-turbo' ? 'openai' : 'gemini';
 
             // Process the suggestions
@@ -295,7 +285,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             setSuggestionsByModel(prev => {
                 const otherModelSuggestions = prev.filter(s => s.model !== currentModel);
                 const updatedSuggestions = [...otherModelSuggestions, ...newSuggestions];
-                console.log('Updated suggestions in effect:', updatedSuggestions);
                 return updatedSuggestions;
             });
 
@@ -333,12 +322,10 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             while (attempts < maxAttempts && isGettingSuggestions) {
                 await new Promise(resolve => setTimeout(resolve, checkInterval));
                 attempts++;
-                console.log(`Waiting for suggestions to be processed... attempt ${attempts}/${maxAttempts}`);
             }
 
             if (isGettingSuggestions) {
                 // If we're still getting suggestions after timeout, something went wrong
-                console.warn('Timeout waiting for suggestions to be processed');
                 throw new Error('Timeout waiting for suggestions to be processed');
             }
         } catch (error) {
@@ -427,7 +414,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         const topicSuggestions = suggestionsByModel.filter(
             s => s.topic.toLowerCase().trim() === normalizedTopic
         );
-        console.log(`Rendering badges for ${topic}:`, topicSuggestions, 'Total suggestionsByModel:', suggestionsByModel.length);
         return topicSuggestions.map(suggestion => {
             const tooltipId = `${suggestion.topic}-${suggestion.model}`;
             return (
@@ -489,7 +475,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
     // Add effect to initialize state when component mounts
     useEffect(() => {
-        console.log('Initialization effect running - clearing suggestionsByModel');
         // Only clear our internal state on mount, not on every dependency change
         setSuggestionsByModel([]);
         // Don't clear parent state
@@ -498,13 +483,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
     // Separate effect to handle search term initialization
     useEffect(() => {
-        console.log('Search term initialization effect running:', {
-            searchTerm,
-            selectedTopics,
-            finalizedTopics,
-            searchTermRemoved
-        });
-
         // Ensure search term is included in both selected and finalized topics
         if (searchTerm && !selectedTopics.includes(searchTerm)) {
             setSelectedTopics([...selectedTopics, searchTerm]);
@@ -521,26 +499,22 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const handleSubmitFinalizedTopics = async () => {
         // Wait for unique count to be loaded if it's still loading
         if (isLoadingUniqueCount) {
-            console.log('Waiting for unique count to load...');
             // Wait a bit for the count to load
             await new Promise(resolve => setTimeout(resolve, 500));
         }
 
         // Show memory limit warning for large repository counts
         if (uniqueReposCount > 2500) {
-            console.log('Showing memory limit modal for large dataset:', uniqueReposCount);
             setShowMemoryLimitModal(true);
             return;
         }
 
         // If we have an error but still have a count, check if it's over threshold
         if (uniqueCountError && uniqueReposCount > 2500) {
-            console.log('Showing memory limit modal despite error, count:', uniqueReposCount);
             setShowMemoryLimitModal(true);
             return;
         }
 
-        // console.log('Proceeding with submission, unique count:', uniqueReposCount);
         await submitTopics();
     };
 
@@ -1216,7 +1190,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn-close"
                                     onClick={() => {
-                                        console.log('Confirmation modal closed by user');
                                         setShowConfirmationModal(false);
                                     }}
                                     aria-label="Close"
@@ -1240,7 +1213,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn btn-secondary"
                                     onClick={() => {
-                                        console.log('Confirmation modal cancelled by user');
                                         setShowConfirmationModal(false);
                                     }}
                                 >
@@ -1250,7 +1222,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn btn-warning"
                                     onClick={() => {
-                                        console.log('User chose to change dataset');
                                         setShowConfirmationModal(false);
                                         // Focus on the topic selection area or scroll to it
                                         const topicInput = document.querySelector('input[placeholder="Add a custom topic"]') as HTMLInputElement;
@@ -1281,7 +1252,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn-close"
                                     onClick={() => {
-                                        console.log('Memory limit modal closed by user');
                                         setShowMemoryLimitModal(false);
                                     }}
                                     aria-label="Close"
@@ -1305,7 +1275,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn btn-secondary"
                                     onClick={() => {
-                                        console.log('Memory limit modal closed by user');
                                         setShowMemoryLimitModal(false);
                                     }}
                                 >
