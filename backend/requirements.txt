@@ -5,6 +5,7 @@ google-generativeai
 openai
 fastapi
 uvicorn
+gunicorn
 kaggle>=1.5.16
 numpy
 pandas

@@ -1,0 +1,22 @@
+name: deepgit
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - nodejs>=18
+  - pip:
+    - flask
+    - flask-cors
+    - duckdb
+    - google-generativeai
+    - openai
+    - fastapi
+    - uvicorn
+    - gunicorn
+    - kaggle>=1.5.16
+    - numpy
+    - pandas
+    - psutil
+    - networkx 
