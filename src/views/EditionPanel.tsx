@@ -200,10 +200,9 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                         {["filterable", "colorable", "sizeable"].map((key) => {
                           const colorOrSize = sizeableSet.has(f) || colorableSet.has(f);
                           const disabled =
-                            (key === "filterable" && colorOrSize) ||
                             (key === "sizeable" && field.type !== "quanti") ||
                             (key === "colorable" && field.type !== "quali" && field.type !== "quanti");
-                          const checked = sets[key].has(f) || (key === "filterable" && colorOrSize);
+                          const checked = sets[key].has(f);
                           const keyToUpdate = {
                             sizeable: "size",
                             colorable: "color",
@@ -265,7 +264,7 @@ const EditionPanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                         </td>
                       );
                     })}
-                    <td className="line-height-1 text-muted">Allow using default graph file colors and/or sizes</td>
+                    <td className="line-height-1 text-white">Allow using default graph file colors and/or sizes</td>
                   </tr>
                 </tbody>
               </table>

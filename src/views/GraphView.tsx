@@ -248,14 +248,22 @@ const GraphView: FC<{ embed?: boolean }> = ({ embed = false }) => {
     const { filterable, sizeable } = navState;
     // Filter out createdAt_year from sizeable fields
     const sizeableFields = allFields.filter(field => field !== 'createdAt_year');
-    if (
-      !filterable || filterable.length !== allFields.length ||
-      !sizeable || sizeable.length !== sizeableFields.length
-    ) {
+
+    // Set default values only if they haven't been initialized yet
+    const updates: Partial<NavState> = {};
+
+    if (!filterable || filterable.length === 0) {
+      updates.filterable = allFields;
+    }
+
+    if (!sizeable || sizeable.length === 0) {
+      updates.sizeable = sizeableFields;
+    }
+
+    if (Object.keys(updates).length > 0) {
       setNavState({
         ...navState,
-        filterable: allFields,
-        sizeable: sizeableFields,
+        ...updates,
       });
     }
   }, [data, navState, setNavState]);

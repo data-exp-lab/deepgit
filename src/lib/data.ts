@@ -576,7 +576,7 @@ export function getFilterableFields(
   { filterable, colorable, sizeable }: Pick<NavState, "filterable" | "colorable" | "sizeable">,
 ): Field[] {
   const { fields, fieldsIndex } = data;
-  const filterableSet = new Set<string>([...(filterable || []), ...(colorable || []), ...(sizeable || [])]);
+  const filterableSet = new Set<string>(filterable || []);
 
   return fields.filter((f) => filterableSet.has(f)).map((f) => fieldsIndex[f]);
 }

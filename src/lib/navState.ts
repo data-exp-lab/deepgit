@@ -156,7 +156,7 @@ export function cleanNavState(state: NavState, data: Data): NavState {
   const cleanedColorable = uniq((colorable || []).filter((f) => fieldsIndex[f]));
   const cleanedSizeable = uniq((sizeable || []).filter((f) => fieldsIndex[f]?.type === "quanti"));
   const cleanedFilterable = uniq(
-    (filterable || []).filter((f) => fieldsIndex[f] && !cleanedSizeable.includes(f) && !cleanedColorable.includes(f)),
+    (filterable || []).filter((f) => fieldsIndex[f]),
   );
   const cleanedSizeableIndex = keyBy(cleanedSizeable);
   const cleanedColorableIndex = keyBy(cleanedColorable);
