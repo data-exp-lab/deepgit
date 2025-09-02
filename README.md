@@ -14,6 +14,32 @@ DeepGit is a free, open-source web application designed to help researchers and 
 
 ## Getting Started
 
+### Option 1: Using Conda Environment (Recommended)
+
+1. Clone the repository:
+```bash
+git clone https://github.com/data-exp-lab/deepgit.git
+```
+
+2. Create and activate the conda environment:
+```bash
+cd deepgit
+conda env create -f environment.yml
+conda activate deepgit
+```
+
+3. Install frontend dependencies:
+```bash
+npm install
+```
+
+4. Start the development server:
+```bash
+bash start.sh
+```
+
+### Option 2: Manual Setup
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/data-exp-lab/deepgit.git
