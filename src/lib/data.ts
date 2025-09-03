@@ -383,6 +383,18 @@ export function getFields(graph: RetinaGraph, type: "node" | "edge", hasEdges: b
       }];
     }
 
+    // Special handling for contributors and stargazers: always content type for search filtering
+    if (key === "contributors" || key === "stargazers") {
+      return [{
+        type: "content",
+        id: minimized[key],
+        rawFieldId: key,
+        label: key === "contributors" ? "contributors" : "stargazers",
+        typeLabel: undefined,
+        nullValuesCount: totalRowsCount - values.length,
+      }];
+    }
+
     const types =
       key.indexOf(RETINA_NUMBER_FIELD_PREFIX) === 0
         ? (["quanti"] as FieldType[])
@@ -505,6 +517,10 @@ export function countTerms(graph: RetinaGraph, field: Field, nodes?: string[] | 
       v.split('|').map(t => t.trim()).filter(Boolean).forEach(topic => {
         counts[topic] = (counts[topic] || 0) + 1;
       });
+    } else if ((field.rawFieldId === 'contributors' || field.rawFieldId === 'stargazers') && typeof v === 'string') {
+      v.split(',').map(t => t.trim()).filter(Boolean).forEach(item => {
+        counts[item] = (counts[item] || 0) + 1;
+      });
     } else if (!isNil(v)) {
       counts[v] = (counts[v] || 0) + 1;
     }
@@ -551,8 +567,20 @@ export function filterNode(nodeData: NodeData, filters: Filter[], fieldsIndex: R
           const topicsArr = value.split('|').map(t => t.trim()).filter(Boolean);
           return filter.values.some(val => topicsArr.includes(val));
         }
+        if ((field.rawFieldId === 'contributors' || field.rawFieldId === 'stargazers') && typeof value === 'string') {
+          const values = value.split(',').map(v => v.trim()).filter(Boolean);
+          return filter.values.some(val => values.includes(val));
+        }
         return !isNil(value) && filter.values.includes(value + "");
       case "search":
+        if (field.rawFieldId === 'contributors' || field.rawFieldId === 'stargazers') {
+          // For contributors and stargazers, search within comma-separated values
+          if (typeof value === 'string') {
+            const values = value.split(',').map(v => v.trim()).filter(Boolean);
+            return values.some(v => normalize(v).includes(filter.normalizedValue));
+          }
+          return false;
+        }
         return value && normalize(value).includes(filter.normalizedValue);
       default:
         return false;
@@ -576,7 +604,7 @@ export function getFilterableFields(
   { filterable, colorable, sizeable }: Pick<NavState, "filterable" | "colorable" | "sizeable">,
 ): Field[] {
   const { fields, fieldsIndex } = data;
-  const filterableSet = new Set<string>([...(filterable || []), ...(colorable || []), ...(sizeable || [])]);
+  const filterableSet = new Set<string>(filterable || []);
 
   return fields.filter((f) => filterableSet.has(f)).map((f) => fieldsIndex[f]);
 }
