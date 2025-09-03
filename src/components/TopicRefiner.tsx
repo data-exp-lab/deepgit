@@ -104,6 +104,8 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [submitProgress, setSubmitProgress] = useState(0);
     const [submitStatus, setSubmitStatus] = useState<string>('');
     const [showMemoryLimitModal, setShowMemoryLimitModal] = useState(false);
+    const [showApiKeyErrorModal, setShowApiKeyErrorModal] = useState(false);
+    const [apiKeyError, setApiKeyError] = useState<string>('');
 
     // Function to fetch unique repository count for all finalized topics
     const fetchUniqueReposCount = async (topics: string[]) => {
@@ -294,6 +296,31 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         }
     }, [llmSuggestions, selectedModel, searchTerm, isGettingSuggestions]);
 
+    // Effect to focus API key input when error modal opens
+    useEffect(() => {
+        if (showApiKeyErrorModal) {
+            const timer = setTimeout(() => {
+                const apiKeyInput = document.getElementById('newApiKey') as HTMLInputElement;
+                if (apiKeyInput) {
+                    apiKeyInput.focus();
+                    apiKeyInput.select(); // Select the text so user can easily replace it
+                }
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [showApiKeyErrorModal]);
+
+    // Effect to ensure loading state is reset if it gets stuck
+    useEffect(() => {
+        if (isGettingSuggestions) {
+            const timer = setTimeout(() => {
+                console.log('Loading state timeout - resetting isGettingSuggestions');
+                setIsGettingSuggestions(false);
+            }, 30000); // 30 second timeout
+            return () => clearTimeout(timer);
+        }
+    }, [isGettingSuggestions]);
+
     const handleGetSuggestions = async () => {
         if (!apiKey) {
             alert('Please enter an API key');
@@ -311,27 +338,58 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             // Clear previous suggestions for this model
             setSuggestionsByModel(prev => prev.filter(s => s.model !== currentModel));
 
-            // Get suggestions from the API
-            await onRequestSuggestions(selectedModel, customPrompt, apiKey, selectedTopics);
+            // Set a timeout to ensure loading state is reset if something goes wrong
+            const timeoutId = setTimeout(() => {
+                if (isGettingSuggestions) {
+                    setIsGettingSuggestions(false);
+                }
+            }, 30000); // 30 second timeout
 
-            // Wait for suggestions to be processed by the effect
-            let attempts = 0;
-            const maxAttempts = 50;
-            const checkInterval = 100;
+            try {
+                // Get suggestions from the API
+                await onRequestSuggestions(selectedModel, customPrompt, apiKey, selectedTopics);
 
-            while (attempts < maxAttempts && isGettingSuggestions) {
-                await new Promise(resolve => setTimeout(resolve, checkInterval));
-                attempts++;
-            }
+                // Wait for suggestions to be processed by the effect
+                let attempts = 0;
+                const maxAttempts = 50;
+                const checkInterval = 100;
 
-            if (isGettingSuggestions) {
-                // If we're still getting suggestions after timeout, something went wrong
-                throw new Error('Timeout waiting for suggestions to be processed');
+                while (attempts < maxAttempts && isGettingSuggestions) {
+                    await new Promise(resolve => setTimeout(resolve, checkInterval));
+                    attempts++;
+                }
+
+                if (isGettingSuggestions) {
+                    // If we're still getting suggestions after timeout, something went wrong
+                    throw new Error('Timeout waiting for suggestions to be processed');
+                }
+            } finally {
+                clearTimeout(timeoutId); // Clear the timeout
             }
         } catch (error) {
             console.error('Error getting suggestions:', error);
-            alert('Failed to get AI suggestions. Please try again.');
+            console.log('Error type:', typeof error);
+            console.log('Error message:', error instanceof Error ? error.message : String(error));
+
+            // Always reset loading state first
             setIsGettingSuggestions(false);
+
+            // Check if the error is related to API key
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const isApiKeyError = errorMessage.toLowerCase().includes('api key') ||
+                errorMessage.toLowerCase().includes('authentication') ||
+                errorMessage.toLowerCase().includes('invalid') ||
+                errorMessage.toLowerCase().includes('unauthorized') ||
+                errorMessage.toLowerCase().includes('401') ||
+                errorMessage.toLowerCase().includes('403');
+
+            if (isApiKeyError) {
+                setApiKeyError(errorMessage);
+                setShowApiKeyErrorModal(true);
+                // Don't clear the API key here - let the user see what they entered and modify it
+            } else {
+                alert('Failed to get AI suggestions. Please try again.');
+            }
         }
     };
 
@@ -1279,6 +1337,120 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     }}
                                 >
                                     OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* API Key Error Modal */}
+            {showApiKeyErrorModal && (
+                <div className="modal show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title d-flex align-items-center">
+                                    <i className="fas fa-key text-danger me-2"></i>
+                                    Invalid API Key
+                                </h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => {
+                                        setShowApiKeyErrorModal(false);
+                                        setApiKeyError('');
+                                        setIsGettingSuggestions(false); // Ensure loading state is reset
+                                    }}
+                                    aria-label="Close"
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="alert alert-danger mb-3">
+                                    <p className="mb-2">
+                                        <strong>API Key Error:</strong> Your API key appears to be invalid or has expired.
+                                    </p>
+                                    <p className="mb-0">
+                                        Please enter a valid API key to continue using AI features.
+                                    </p>
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="newApiKey" className="form-label fw-bold">New API Key</label>
+                                    <div className="input-group">
+                                        <input
+                                            type="password"
+                                            id="newApiKey"
+                                            className="form-control"
+                                            value={apiKey}
+                                            onChange={(e) => setApiKey(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && apiKey.trim() && !isGettingSuggestions) {
+                                                    e.preventDefault();
+                                                    setShowApiKeyErrorModal(false);
+                                                    setApiKeyError('');
+                                                    handleGetSuggestions();
+                                                }
+                                            }}
+                                            placeholder="Enter your new API key"
+                                        />
+                                        <button
+                                            className="btn btn-outline-secondary"
+                                            type="button"
+                                            onClick={() => {
+                                                const input = document.getElementById('newApiKey') as HTMLInputElement
+                                                input.type = input.type === 'password' ? 'text' : 'password'
+                                            }}
+                                        >
+                                            Show/Hide
+                                        </button>
+                                    </div>
+                                    <small className="text-muted">
+                                        Your API key will be used only for this session and won't be stored.
+                                    </small>
+                                </div>
+                                {apiKeyError && (
+                                    <div className="alert alert-info">
+                                        <small>
+                                            <strong>Error Details:</strong> {apiKeyError}
+                                        </small>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                        setShowApiKeyErrorModal(false);
+                                        setApiKeyError('');
+                                        setIsGettingSuggestions(false); // Ensure loading state is reset
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={async () => {
+                                        if (apiKey.trim()) {
+                                            setShowApiKeyErrorModal(false);
+                                            setApiKeyError('');
+                                            // Re-try the suggestion request with the new API key
+                                            await handleGetSuggestions();
+                                        } else {
+                                            alert('Please enter a valid API key');
+                                        }
+                                    }}
+                                    disabled={!apiKey.trim() || isGettingSuggestions}
+                                >
+                                    {isGettingSuggestions ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin me-2" />
+                                            Retrying...
+                                        </>
+                                    ) : (
+                                        'Update API Key & Retry'
+                                    )}
                                 </button>
                             </div>
                         </div>
