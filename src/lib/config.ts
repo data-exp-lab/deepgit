@@ -10,4 +10,5 @@ export const API_ENDPOINTS = {
     SUGGEST_TOPICS: `${API_BASE_URL}/api/suggest-topics`,
     GENERATED_NODES: `${API_BASE_URL}/api/generated-node-gexf`,
     GET_UNIQUE_REPOS: `${API_BASE_URL}/api/get-unique-repos`,
+    CREATE_EDGES_ON_GRAPH: `${API_BASE_URL}/api/create-edges-on-graph`,
 } as const; 
