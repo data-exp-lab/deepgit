@@ -85,6 +85,8 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     );
     const [selectedModel, setSelectedModel] = useState('gpt-4');
     const [apiKey, setApiKey] = useState('');
+    const [apiKeyError, setApiKeyError] = useState<string>('');
+    const [hasConfiguredApiKey, setHasConfiguredApiKey] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -105,7 +107,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [submitStatus, setSubmitStatus] = useState<string>('');
     const [showMemoryLimitModal, setShowMemoryLimitModal] = useState(false);
     const [showApiKeyErrorModal, setShowApiKeyErrorModal] = useState(false);
-    const [apiKeyError, setApiKeyError] = useState<string>('');
 
     // Function to fetch unique repository count for all finalized topics
     const fetchUniqueReposCount = async (topics: string[]) => {
@@ -152,9 +153,33 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     };
 
     // Update unique repos count when finalized topics change
+    // Update hasConfiguredApiKey when selectedModel changes
     useEffect(() => {
-        fetchUniqueReposCount(finalizedTopics);
-    }, [finalizedTopics]);
+        const checkApiKeyForModel = async () => {
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.config) {
+                        let hasApiKeyForSelectedModel = false;
+                        if (selectedModel === 'gemini-2.0-flash') {
+                            const googleConfig = data.config.ai_providers?.google_genai;
+                            hasApiKeyForSelectedModel = googleConfig?.has_api_key || false;
+                        } else if (selectedModel.startsWith('gpt')) {
+                            const openaiConfig = data.config.ai_providers?.openai;
+                            hasApiKeyForSelectedModel = openaiConfig?.has_api_key || false;
+                        }
+
+                        setHasConfiguredApiKey(hasApiKeyForSelectedModel);
+                    }
+                }
+            } catch (error) {
+                console.log('Could not load configuration:', error);
+            }
+        };
+
+        checkApiKeyForModel();
+    }, [selectedModel]);
 
     // Also update when topicCounts change to ensure accuracy
     useEffect(() => {
@@ -322,8 +347,8 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     }, [isGettingSuggestions]);
 
     const handleGetSuggestions = async () => {
-        if (!apiKey) {
-            alert('Please enter an API key');
+        if (!hasConfiguredApiKey && !apiKey) {
+            alert('Please enter an API key or configure one in the backend');
             return;
         }
         if (selectedTopics.length === 0) {
@@ -1167,7 +1192,10 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                             className="form-control"
                                             value={apiKey}
                                             onChange={(e) => setApiKey(e.target.value)}
-                                            placeholder="Enter your API key"
+                                            placeholder={hasConfiguredApiKey ?
+                                                (selectedModel === 'gemini-2.0-flash' ? "✓ Google API key loaded from configuration" : "✓ OpenAI API key loaded from configuration") :
+                                                "Enter your API key"
+                                            }
                                         />
                                         <button
                                             className="btn btn-outline-secondary"
@@ -1217,7 +1245,7 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn btn-primary d-flex align-items-center gap-2"
                                     onClick={handleGetSuggestions}
-                                    disabled={!apiKey || isGettingSuggestions}
+                                    disabled={!hasConfiguredApiKey && !apiKey || isGettingSuggestions}
                                 >
                                     {isGettingSuggestions ? (
                                         <>
@@ -1391,7 +1419,10 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                                     handleGetSuggestions();
                                                 }
                                             }}
-                                            placeholder="Enter your new API key"
+                                            placeholder={hasConfiguredApiKey ?
+                                                (selectedModel === 'gemini-2.0-flash' ? "✓ Google API key loaded from configuration" : "✓ OpenAI API key loaded from configuration") :
+                                                "Enter your new API key"
+                                            }
                                         />
                                         <button
                                             className="btn btn-outline-secondary"

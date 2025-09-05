@@ -1,0 +1,44 @@
+{
+    "ai_providers": {
+        "openai": {
+            "api_key": "sk-your-openai-api-key-here",
+            "model": "gpt-4",
+            "base_url": "https://api.openai.com/v1"
+        },
+        "azure_openai": {
+            "api_key": "your-azure-openai-api-key-here",
+            "endpoint": "https://your-resource-name.openai.azure.com/",
+            "deployment_name": "your-deployment-name",
+            "api_version": "2024-02-15-preview"
+        },
+        "google_genai": {
+            "api_key": "your-google-api-key-here",
+            "model": "gemini-pro"
+        },
+        "anthropic": {
+            "api_key": "sk-ant-your-anthropic-api-key-here",
+            "model": "claude-3-sonnet-20240229"
+        }
+    },
+    "github": {
+        "token": "ghp_your-github-personal-access-token-here",
+        "rate_limit_per_hour": 5000
+    },
+    "graphrag": {
+        "timeout_minutes": 50,
+        "batch_size": 50,
+        "cache_hours": 24,
+        "max_repos_per_request": 1000
+    },
+    "server": {
+        "host": "127.0.0.1",
+        "port": 5002,
+        "debug": false,
+        "timeout": 3600
+    },
+    "database": {
+        "path": "kuzu",
+        "auto_cleanup": true,
+        "backup_enabled": false
+    }
+}

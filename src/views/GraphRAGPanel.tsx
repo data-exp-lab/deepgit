@@ -340,6 +340,61 @@ const GraphRAGPanel: FC = () => {
         setSessionAPIKeysState(getSessionAPIKeys());
     };
 
+    // Load configuration from backend on component mount
+    useEffect(() => {
+        const loadConfiguration = async () => {
+            try {
+                const response = await fetch('/api/config/keys');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.keys) {
+                        const keys = data.keys;
+
+                        // Load API keys from config if not already set in session
+                        const currentKeys = getSessionAPIKeys();
+                        const newKeys: Partial<SessionAPIKeys> = {};
+
+                        // GitHub token
+                        if (!currentKeys.githubToken && keys.github?.token) {
+                            newKeys.githubToken = keys.github.token;
+                        }
+
+                        // OpenAI API key
+                        if (!currentKeys.openaiKey && keys.ai_providers?.openai?.api_key) {
+                            newKeys.openaiKey = keys.ai_providers.openai.api_key;
+                        }
+
+                        // Azure OpenAI
+                        if (!currentKeys.azureOpenAIKey && keys.ai_providers?.azure_openai?.api_key) {
+                            newKeys.azureOpenAIKey = keys.ai_providers.azure_openai.api_key;
+                        }
+                        if (!currentKeys.azureOpenAIEndpoint && keys.ai_providers?.azure_openai?.endpoint) {
+                            newKeys.azureOpenAIEndpoint = keys.ai_providers.azure_openai.endpoint;
+                        }
+                        if (!currentKeys.azureOpenAIDeployment && keys.ai_providers?.azure_openai?.deployment_name) {
+                            newKeys.azureOpenAIDeployment = keys.ai_providers.azure_openai.deployment_name;
+                        }
+
+                        // Google GenAI
+                        if (!currentKeys.geminiKey && keys.ai_providers?.google_genai?.api_key) {
+                            newKeys.geminiKey = keys.ai_providers.google_genai.api_key;
+                        }
+
+                        // Update session keys if any were loaded from config
+                        if (Object.keys(newKeys).length > 0) {
+                            updateSessionAPIKeys(newKeys);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('Could not load configuration:', error);
+                // This is not an error - config loading is optional
+            }
+        };
+
+        loadConfiguration();
+    }, []);
+
     // Calculate graph statistics using the same logic as download control
     const graphStats = useMemo(() => {
         if (!data || !data.graph) {
