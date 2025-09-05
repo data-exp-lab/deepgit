@@ -39,7 +39,14 @@ export default defineConfig({
     host: "0.0.0.0",
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
     strictPort: true,
-    allowedHosts: ["deepgit.onrender.com"]
+    allowedHosts: ["deepgit.onrender.com"],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5002',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
   preview: {
     host: "0.0.0.0",

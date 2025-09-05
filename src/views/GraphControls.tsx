@@ -174,7 +174,7 @@ const GraphSearch: FC = () => {
 const GraphControls: FC = () => {
   const sigma = useSigma();
   const graph = sigma.getGraph();
-  const { graphFile, navState, hovered, computedData } = useContext(GraphContext);
+  const { graphFile, navState, hovered, computedData, openModal } = useContext(GraphContext);
 
   const zoom = useCallback(
     (ratio?: number): void => {
@@ -199,6 +199,27 @@ const GraphControls: FC = () => {
     });
   }, [graph, sigma]);
 
+  // Helper function to format XML with proper indentation
+  const formatXML = (xml: string): string => {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xml, "text/xml");
+
+    // Create a new document with proper formatting
+    const serializer = new XMLSerializer();
+    const formatted = serializer.serializeToString(xmlDoc);
+
+    // Add line breaks and indentation for better readability
+    return formatted
+      .replace(/></g, '>\n<')
+      .replace(/^\s*\n/gm, '')
+      .split('\n')
+      .map((line, index) => {
+        const indent = '  '.repeat(Math.max(0, (line.match(/</g) || []).length - (line.match(/\//g) || []).length - 1));
+        return indent + line.trim();
+      })
+      .join('\n');
+  };
+
   const downloadGraph = useCallback(() => {
     if (graphFile) {
       // Parse the existing GEXF content
@@ -213,27 +234,20 @@ const GraphControls: FC = () => {
       const highlightedNodesSet = new Set<string>();
       const highlightedEdgesSet = new Set<string>();
 
-      // Add selected node
-      if (navState.selectedNode) {
-        highlightedNodesSet.add(navState.selectedNode);
-      }
-
-      // Add hovered nodes
-      if (typeof hovered === "string") {
-        highlightedNodesSet.add(hovered);
-      } else if (hovered instanceof Set) {
-        hovered.forEach(node => highlightedNodesSet.add(node));
-      }
-
-      // If no nodes are highlighted from context, use filtered nodes (exclude faded ones)
-      if (highlightedNodesSet.size === 0 && computedData.filteredNodes) {
+      // Only use filtered nodes - ignore hover and selection states
+      if (computedData.filteredNodes) {
         // Use the filtered nodes as the base - these are the active/visible nodes
         computedData.filteredNodes.forEach(node => {
           highlightedNodesSet.add(node);
         });
+      } else {
+        // If no filters are applied, include all nodes
+        graph.forEachNode((node) => {
+          highlightedNodesSet.add(node);
+        });
       }
 
-      // Only include the specifically highlighted nodes (no neighbors)
+      // Only include the filtered nodes
       const nodesToAdd = new Set<string>();
       highlightedNodesSet.forEach(node => {
         if (graph.hasNode(node)) {
@@ -244,14 +258,9 @@ const GraphControls: FC = () => {
       // Add edges where BOTH source AND target nodes are visible (to avoid orphaned edges)
       graph.forEachEdge((edge, attributes, source, target) => {
         if (nodesToAdd.has(source) && nodesToAdd.has(target)) {
-          // Additional check: only include edges that are actually visible in the current filtered view
-          // This excludes edges that were created but are now hidden due to filtering
-          if (computedData.filteredEdges && computedData.filteredEdges.has(edge)) {
-            highlightedEdgesSet.add(edge);
-          } else if (!computedData.filteredEdges) {
-            // If no filtered edges exist, include all edges between visible nodes
-            highlightedEdgesSet.add(edge);
-          }
+          // Include all edges between the selected/highlighted nodes
+          // This ensures we get the complete subgraph structure
+          highlightedEdgesSet.add(edge);
         }
       });
 
@@ -259,7 +268,8 @@ const GraphControls: FC = () => {
 
       // If no nodes are highlighted, download the entire graph
       if (nodesToAdd.size === 0) {
-        const blob = new Blob([graphFile.textContent], { type: "application/xml" });
+        const formattedContent = formatXML(graphFile.textContent);
+        const blob = new Blob([formattedContent], { type: "application/xml" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -287,10 +297,62 @@ const GraphControls: FC = () => {
         }
       });
 
+      // Improved edge matching: match by source and target instead of just edge ID
       existingEdges.forEach(edge => {
         const edgeId = edge.getAttribute('id');
-        if (edgeId && !highlightedEdgesSet.has(edgeId)) {
+        const source = edge.getAttribute('source');
+        const target = edge.getAttribute('target');
+
+        // Check if this edge should be included based on source and target nodes
+        const shouldInclude = source && target && nodesToAdd.has(source) && nodesToAdd.has(target);
+
+        if (!shouldInclude) {
           edge.remove();
+        }
+      });
+
+      // Count remaining edges and nodes
+      const remainingNodes = newXmlDoc.querySelectorAll('node');
+      const remainingEdges = newXmlDoc.querySelectorAll('edge');
+
+      // Add missing edges that exist in the graph but not in the GEXF file
+      const existingEdgeIds = new Set<string>();
+      remainingEdges.forEach(edge => {
+        const edgeId = edge.getAttribute('id');
+        if (edgeId) existingEdgeIds.add(edgeId);
+      });
+
+      // Add edges that are in the graph but missing from the GEXF
+      highlightedEdgesSet.forEach(edgeId => {
+        if (!existingEdgeIds.has(edgeId)) {
+          // Get edge data from the graph
+          const edgeData = graph.getEdgeAttributes(edgeId);
+          const [source, target] = graph.extremities(edgeId);
+
+          // Create new edge element
+          const edgeElement = newXmlDoc.createElement('edge');
+          edgeElement.setAttribute('id', edgeId);
+          edgeElement.setAttribute('source', source);
+          edgeElement.setAttribute('target', target);
+
+          // Add edge attributes if they exist
+          if (edgeData && Object.keys(edgeData).length > 0) {
+            const attvaluesElement = newXmlDoc.createElement('attvalues');
+            Object.entries(edgeData).forEach(([key, value]) => {
+              if (key !== 'id' && key !== 'source' && key !== 'target') {
+                const attvalueElement = newXmlDoc.createElement('attvalue');
+                attvalueElement.setAttribute('for', key);
+                attvalueElement.setAttribute('value', String(value));
+                attvaluesElement.appendChild(attvalueElement);
+              }
+            });
+            if (attvaluesElement.children.length > 0) {
+              edgeElement.appendChild(attvaluesElement);
+            }
+          }
+
+          // Add the edge to the graph element
+          newGraphElement.appendChild(edgeElement);
         }
       });
 
@@ -298,8 +360,11 @@ const GraphControls: FC = () => {
       const serializer = new XMLSerializer();
       const filteredGexfContent = serializer.serializeToString(newXmlDoc);
 
+      // Format the XML content
+      const formattedContent = formatXML(filteredGexfContent);
+
       // Create and download the filtered file
-      const blob = new Blob([filteredGexfContent], { type: "application/xml" });
+      const blob = new Blob([formattedContent], { type: "application/xml" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -337,7 +402,7 @@ const GraphControls: FC = () => {
         <FaFileImage />
       </button>
 
-      <button className="btn btn-outline-dark graph-button mt-3" onClick={downloadGraph} title="Download highlighted graph file (.gexf)">
+      <button className="btn btn-outline-dark graph-button mt-3" onClick={downloadGraph} title="Download filtered graph file (.gexf) - entire graph if no filters, filtered subgraph if filters applied">
         <FaDownload />
       </button>
     </>

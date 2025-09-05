@@ -3,6 +3,7 @@ import React, { FC, JSX, useContext, useMemo } from "react";
 import { FaHome } from "react-icons/fa";
 import { MdOutlinePreview } from "react-icons/md";
 import { VscSettings } from "react-icons/vsc";
+import { AiOutlineRobot } from "react-icons/ai";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import Footer from "../components/Footer";
@@ -13,6 +14,7 @@ import GraphSumUp from "./GraphSumUp";
 import NodesAppearanceBlock from "./NodesAppearanceBlock";
 import Settings from "./Settings";
 import SelectedNodePanel from "./SelectedNodePanel";
+import GraphRAGPanel from "./GraphRAGPanel";
 
 const ContextPanel: FC = () => {
   const { navState, data, panel, setPanel } = useContext(GraphContext);
@@ -33,6 +35,8 @@ const ContextPanel: FC = () => {
   let content: JSX.Element;
   if (panel === "settings") {
     content = <Settings />;
+  } else if (panel === "graphrag") {
+    content = <GraphRAGPanel />;
   } else if (selectedNode) {
     content = <SelectedNodePanel node={navState?.selectedNode as string} data={selectedNode} />;
   } else {
@@ -65,6 +69,13 @@ const ContextPanel: FC = () => {
               disabled={panel === "settings"}
             >
               <VscSettings /> Settings
+            </button>
+            <button
+              className={cx("btn ms-2 mt-1", panel === "graphrag" ? selectedButtonClass : "btn-outline-dark")}
+              onClick={() => setPanel("graphrag")}
+              disabled={panel === "graphrag"}
+            >
+              <AiOutlineRobot /> GraphRAG
             </button>
             {/* <button
               className={cx("btn ms-2 mt-1", "btn-outline-dark")}

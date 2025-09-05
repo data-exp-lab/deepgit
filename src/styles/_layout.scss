@@ -70,10 +70,15 @@ body {
     flex-direction: column;
 
     @extend .custom-scrollbar;
-    overflow-y: scroll;
+    overflow-y: auto;
 
-    & > * > *:not(hr) {
+    &>*>*:not(hr) {
       padding: 1rem;
+    }
+
+    // Special handling for GraphRAG panel
+    .graphrag-chat {
+      padding: 0;
     }
   }
 }
@@ -94,6 +99,7 @@ body {
     transition: width $base-transition;
   }
 }
+
 .edition-panel {
   transition: all $base-transition;
   z-index: $zindex-panel + 1;
@@ -109,26 +115,33 @@ body {
   .graph-view.panel-collapsed .wrapper {
     width: calc(#{$panelSize} + 100%);
   }
+
   .graph-view.panel-expanded .wrapper {
     width: 100%;
   }
+
   .side-panel {
     width: $panelSize;
   }
+
   .edition-panel.collapsed {
     margin-left: -$panelSize;
   }
 }
+
 @include media-breakpoint-down(md) {
   .graph-view.panel-collapsed .wrapper {
     width: 200%;
   }
+
   .graph-view.panel-expanded .wrapper {
     width: 100%;
   }
+
   .side-panel {
     width: 100vw;
   }
+
   .edition-panel.collapsed {
     margin-left: -100vw;
   }
@@ -142,9 +155,11 @@ body {
     opacity: 0.1;
     z-index: $zindex-modal-backdrop;
   }
+
   .modal-content {
     z-index: $zindex-modal;
   }
+
   .modal-body {
     @extend .custom-scrollbar;
   }

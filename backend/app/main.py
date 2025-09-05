@@ -1,13 +1,15 @@
-from flask import Flask, jsonify, request, send_file, url_for
+from flask import Flask, jsonify, request, send_file, url_for, Response, stream_template
 from flask_cors import CORS
 from services.topic_service import TopicService
 from services.ai_service import AITopicProcessor
 from services.gexf_node_service import GexfNodeGenerator
 from services.edge_generation_service import EdgeGenerationService
+from services.graphrag_service import graphrag_service
 import os
 import asyncio
 import re
 import json
+import time
 
 app = Flask(__name__, static_folder='gexf', static_url_path='/gexf')
 CORS(
@@ -25,6 +27,43 @@ topic_service = TopicService()
 ai_processor = AITopicProcessor()
 gexf_node_service = GexfNodeGenerator()
 edge_generation_service = EdgeGenerationService()
+
+# Global progress tracking for GraphRAG setup
+graphrag_progress = {
+    "current_step": "",
+    "current": 0,
+    "total": 0,
+    "message": "",
+    "status": "idle"  # idle, running, completed, error
+}
+
+# Global variable to track if GraphRAG is set up
+graphrag_ready = False
+
+@app.route("/api/graphrag-health", methods=["GET"])
+def graphrag_health():
+    """Check if GraphRAG backend is ready and set up."""
+    global graphrag_ready
+    try:
+        if graphrag_ready:
+            return jsonify({
+                "success": True,
+                "ready": True,
+                "message": "GraphRAG backend is ready"
+            })
+        else:
+            return jsonify({
+                "success": True,
+                "ready": False,
+                "message": "GraphRAG backend is not set up"
+            }), 503
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "ready": False,
+            "error": str(e),
+            "message": "Error checking GraphRAG health"
+        }), 500
 
 
 @app.route("/api/process-topics", methods=["GET", "POST"])
@@ -618,6 +657,153 @@ def create_edges_on_graph():
             "success": False,
             "error": str(e),
             "message": "An error occurred while creating edges on the graph"
+        }), 500
+
+
+@app.route("/api/graphrag-reset-progress", methods=["POST", "OPTIONS"])
+def graphrag_reset_progress_endpoint():
+    """Reset GraphRAG progress status to initial state."""
+    if request.method == "OPTIONS":
+        return "", 200
+    
+    global graphrag_progress
+    graphrag_progress = {
+        "current_step": "Initializing...",
+        "current": 0,
+        "total": 100,
+        "message": "Preparing GraphRAG setup",
+        "status": "running"
+    }
+    return jsonify({"success": True, "message": "Progress reset"})
+
+@app.route("/api/graphrag-progress", methods=["GET"])
+def graphrag_progress_endpoint():
+    """Server-Sent Events endpoint for GraphRAG progress updates."""
+    def generate():
+        while True:
+            # Send current progress
+            data = f"data: {json.dumps(graphrag_progress)}\n\n"
+            yield data
+            
+            # If completed or error, stop streaming
+            if graphrag_progress["status"] in ["completed", "error"]:
+                break
+            
+            time.sleep(0.5)  # Update every 0.5 seconds for more responsive updates
+    
+    return Response(generate(), mimetype="text/event-stream")
+
+
+@app.route("/api/graphrag-setup", methods=["POST"])
+def graphrag_setup_endpoint():
+    """GraphRAG setup endpoint with progress tracking."""
+    global graphrag_progress, graphrag_ready
+    
+    try:
+        data = request.get_json()
+        
+        # Extract parameters
+        provider = data.get("provider", "openai")
+        api_keys = data.get("apiKeys", {})
+        graph_file = data.get("graphFile", "")
+        
+        if not graph_file:
+            return jsonify({
+                "success": False,
+                "error": "Graph file is required",
+                "message": "Please provide a graph file"
+            }), 400
+        
+        github_token = api_keys.get("githubToken", "")
+        if not github_token:
+            return jsonify({
+                "success": False,
+                "error": "GitHub token is required",
+                "message": "Please provide a GitHub personal access token"
+            }), 400
+        
+        # Reset progress
+        graphrag_progress = {
+            "current_step": "Starting setup...",
+            "current": 0,
+            "total": 100,
+            "message": "Initializing GraphRAG setup",
+            "status": "running"
+        }
+        
+        # Setup database from GEXF content with progress updates
+        setup_result = graphrag_service.setup_database_from_gexf_with_progress(graph_file, github_token, graphrag_progress)
+        if not setup_result["success"]:
+            graphrag_progress["status"] = "error"
+            graphrag_progress["message"] = setup_result.get("error", "Setup failed")
+            return jsonify(setup_result), 500
+        
+        # Initialize GraphRAG with the selected provider
+        graphrag_progress["current_step"] = "Initializing AI system..."
+        graphrag_progress["current"] = 90
+        graphrag_progress["message"] = "Setting up AI analysis system"
+        
+        init_result = graphrag_service.initialize_graphrag(provider, api_keys)
+        if not init_result["success"]:
+            graphrag_progress["status"] = "error"
+            graphrag_progress["message"] = init_result.get("error", "AI initialization failed")
+            return jsonify(init_result), 500
+        
+        # Mark as completed and set ready flag
+        graphrag_progress["status"] = "completed"
+        graphrag_progress["current"] = 100
+        graphrag_progress["message"] = "GraphRAG setup completed successfully!"
+        graphrag_ready = True
+        
+        return jsonify({
+            "success": True,
+            "message": "GraphRAG setup completed successfully",
+            "ready": True
+        })
+        
+    except Exception as e:
+        graphrag_progress["status"] = "error"
+        graphrag_progress["message"] = str(e)
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred during GraphRAG setup"
+        }), 500
+
+
+@app.route("/api/graphrag", methods=["POST"])
+def graphrag_endpoint():
+    """GraphRAG endpoint for AI-powered graph analysis."""
+    try:
+        data = request.get_json()
+        
+        # Extract parameters
+        query = data.get("query", "")
+        provider = data.get("provider", "openai")
+        api_keys = data.get("apiKeys", {})
+        
+        if not query:
+            return jsonify({
+                "success": False,
+                "error": "Query is required",
+                "message": "Please provide a query"
+            }), 400
+        
+        # Execute the query
+        query_result = graphrag_service.query_graphrag(query)
+        if not query_result["success"]:
+            return jsonify(query_result), 500
+        
+        return jsonify({
+            "success": True,
+            "result": query_result["result"]
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred while processing the GraphRAG query"
         }), 500
 
 

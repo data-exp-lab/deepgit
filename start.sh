@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Check if conda environment is activated
+if [[ "$CONDA_DEFAULT_ENV" != "deepgit" ]]; then
+    echo "⚠️  Warning: deepgit conda environment is not activated."
+    echo "Please run: conda activate deepgit"
+    echo "Then run this script again."
+    exit 1
+fi
+
+echo "✅ Using conda environment: $CONDA_DEFAULT_ENV"
+
 # Function to check if a port is in use
 check_port() {
     lsof -i :$1 >/dev/null 2>&1
@@ -83,10 +93,13 @@ fi
 # Kill any existing process on port 5002
 kill_port 5002
 
+# Kill any existing process on port 5173
+kill_port 5173
+
 # Start the Gunicorn backend server in the background
 echo "Starting backend server..."
 cd backend/app
-gunicorn -b 127.0.0.1:5002 main:app &
+gunicorn -b 127.0.0.1:5002 --timeout 300 --workers 1 main:app &
 
 # Wait a moment for the backend to start
 sleep 2
@@ -100,4 +113,18 @@ fi
 # Start the frontend development server
 echo "Starting frontend server..."
 cd ../..
-npm run dev
+npm run dev &
+
+# Wait a moment for the frontend to start
+sleep 3
+
+# Verify frontend is running
+if ! check_port 5173; then
+    echo "Failed to start frontend server. Please check the logs."
+    exit 1
+fi
+
+echo "✅ Both servers are running:"
+echo "   Backend: http://localhost:5002"
+echo "   Frontend: http://localhost:5173"
+echo "   GraphRAG: Click the robot icon (🤖) in the graph controls"
