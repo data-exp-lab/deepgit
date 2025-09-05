@@ -30,7 +30,7 @@
       flex-direction: column;
       align-items: flex-end;
 
-      & > * {
+      &>* {
         z-index: $zindex-buttons;
       }
     }
@@ -89,9 +89,10 @@
     }
 
     // Sigma layer is behind everything else, despite being absolutely placed:
-    & > * {
+    &>* {
       z-index: 1;
     }
+
     .sigma {
       z-index: 0;
     }
@@ -99,6 +100,97 @@
 
   .context-panel {
     background: white;
+  }
+
+  // GraphRAG Chat Interface Styles
+  .graphrag-chat {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; // Make the entire GraphRAG panel scrollable
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+    -webkit-overflow-scrolling: touch; // For better iOS scrolling
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #ccc;
+      border-radius: 3px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: visible; // Remove individual scrolling from chat messages
+      overflow-x: hidden;
+      min-height: 200px;
+      max-height: none; // Remove max-height constraint
+    }
+
+    .message-bubble {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+
+      &.user-message {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        border-radius: 18px 18px 4px 18px;
+      }
+
+      &.assistant-message {
+        background: #f8f9fa;
+        color: #212529;
+        border: 1px solid #e9ecef;
+        border-radius: 18px 18px 18px 4px;
+      }
+
+      &.system-message {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+        border-radius: 12px;
+        font-style: italic;
+      }
+    }
+
+    .chat-input {
+      border-top: 1px solid #e9ecef;
+      background: white;
+
+      .input-group {
+        .form-control {
+          border-radius: 20px 0 0 20px;
+          border: 1px solid #ced4da;
+
+          &:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+          }
+        }
+
+        .btn {
+          border-radius: 0 20px 20px 0;
+          border: 1px solid #007bff;
+        }
+      }
+    }
+
+    .setup-panel {
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      flex-shrink: 0; // Prevent setup panel from shrinking
+
+      .card {
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+    }
   }
 
   .toggle-button {

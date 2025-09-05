@@ -214,6 +214,9 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                 use_and_logic: enabledCriteria > 1 // Use AND logic if multiple criteria enabled
             };
 
+            // Get filtered node IDs for the API call
+            const filteredNodeIds = computedData?.filteredNodes ? Array.from(computedData.filteredNodes) : null;
+
             // Call backend API with original graph
             const response = await fetch(API_ENDPOINTS.CREATE_EDGES_ON_GRAPH, {
                 method: 'POST',
@@ -222,7 +225,8 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                 },
                 body: JSON.stringify({
                     gexfContent: originalGexfContent,
-                    criteria_config: criteriaConfig
+                    criteria_config: criteriaConfig,
+                    filtered_node_ids: filteredNodeIds
                 })
             });
 
@@ -316,8 +320,18 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
 
                         // Notify user of success
                         const edgesCreated = result.edgesCreated?.total_edges || 0;
+                        const nodeCount = computedData?.filteredNodes ? computedData.filteredNodes.size : data?.graph?.order || 0;
+                        const totalNodes = data?.graph?.order || 0;
+
+                        let successMessage = `Successfully created ${edgesCreated} edges`;
+                        if (computedData?.filteredNodes && computedData.filteredNodes.size < totalNodes) {
+                            successMessage += ` using ${nodeCount} filtered nodes (out of ${totalNodes} total)`;
+                        } else {
+                            successMessage += ` from original graph`;
+                        }
+
                         notify({
-                            message: `Successfully created ${edgesCreated} edges from original graph`,
+                            message: successMessage,
                             type: "success"
                         });
 
@@ -400,7 +414,18 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                         </h1>
 
                         <div className="mb-3">
-                            <h3 className="form-label fs-6 mb-3">Configure how edges are automatically created between repositories based on various criteria</h3>
+                            <h3 className="form-label fs-6 mb-3">
+                                Configure how edges are automatically created between repositories based on various criteria
+                                {computedData?.filteredNodes && (
+                                    <>
+                                        <br />
+                                        <br />
+                                        <span className="text-white">
+                                            Note: Edge creation will only consider currently visible nodes. Hidden/filtered nodes will not participate in edge creation.
+                                        </span>
+                                    </>
+                                )}
+                            </h3>
                         </div>
 
                         {/* Topic Based Linking */}
@@ -550,13 +575,6 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
 
                         {/* Apply Button */}
                         <div className="mb-3">
-                            {computedData?.filteredNodes && (
-                                <div className="alert alert-info small mb-3">
-                                    <strong>Note:</strong> Edge creation will only consider currently visible nodes ({computedData.filteredNodes.size} of {data?.graph?.order || 0} total).
-                                    Hidden/filtered nodes will not participate in edge creation.
-                                </div>
-                            )}
-
                             {/* Warning when no criteria are selected */}
                             {!enableTopicLinking && !enableSharedOrganization && !enableContributorOverlap && !enableCommonStargazers && (
                                 <div className="alert alert-info small mb-3">
