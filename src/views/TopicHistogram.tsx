@@ -383,12 +383,31 @@ const TopicHistogram: FC = () => {
             }
         } catch (error) {
             console.error('Error fetching explanation:', error);
-            notify({
-                message: "Failed to get topic explanation. Please try again.",
-                type: "error"
-            });
-            setTopicExplanation("Sorry, I couldn't generate an explanation for this topic at the moment.");
-            // Don't clear the selected topic on error, so user can try again
+
+            // Check if the error is related to API key
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const isApiKeyError = errorMessage.toLowerCase().includes('api key') ||
+                errorMessage.toLowerCase().includes('authentication') ||
+                errorMessage.toLowerCase().includes('invalid') ||
+                errorMessage.toLowerCase().includes('unauthorized') ||
+                errorMessage.toLowerCase().includes('401') ||
+                errorMessage.toLowerCase().includes('403');
+
+            if (isApiKeyError) {
+                notify({
+                    message: "Invalid API key. Please update your API key in the AI Settings.",
+                    type: "error"
+                });
+                setApiKey(''); // Clear the API key
+                setSelectedTopicForExplanation(null);
+                setPendingExplanationTopic(topic); // Store the topic for later
+            } else {
+                notify({
+                    message: "Failed to get topic explanation. Please try again.",
+                    type: "error"
+                });
+                setTopicExplanation("Sorry, I couldn't generate an explanation for this topic at the moment.");
+            }
         } finally {
             setIsLoadingExplanation(false);
         }
@@ -419,14 +438,15 @@ const TopicHistogram: FC = () => {
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
             const data = await response.json();
             // console.log('Received AI suggestions:', data);
 
-            if (data.success && Array.isArray(data.result)) {
+            if (!data.success) {
+                // Backend returned an error
+                throw new Error(data.error || data.message || 'Unknown error from backend');
+            }
+
+            if (Array.isArray(data.result)) {
                 // Update state synchronously
                 setLlmSuggestionsState(data.result);
 
@@ -467,11 +487,26 @@ const TopicHistogram: FC = () => {
             }
         } catch (error) {
             console.error('Error getting AI suggestions:', error);
-            notify({
-                message: "Failed to get AI suggestions. Please try again.",
-                type: "error"
-            });
-            setLlmSuggestionsState([]);
+
+            // Check if the error is related to API key
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const isApiKeyError = errorMessage.toLowerCase().includes('api key') ||
+                errorMessage.toLowerCase().includes('authentication') ||
+                errorMessage.toLowerCase().includes('invalid') ||
+                errorMessage.toLowerCase().includes('unauthorized') ||
+                errorMessage.toLowerCase().includes('401') ||
+                errorMessage.toLowerCase().includes('403');
+
+            if (isApiKeyError) {
+                // Re-throw the error so it can be handled by the TopicRefiner component
+                throw new Error(`API Key Error: ${errorMessage}`);
+            } else {
+                notify({
+                    message: "Failed to get AI suggestions. Please try again.",
+                    type: "error"
+                });
+                setLlmSuggestionsState([]);
+            }
         }
     };
 

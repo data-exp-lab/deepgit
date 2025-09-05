@@ -321,7 +321,8 @@ def generate_graph_with_edges():
             "contributor_overlap_threshold": 2,
             "shared_organization_enabled": false,
             "common_stargazers_enabled": true,
-            "stargazer_overlap_threshold": 3
+            "stargazer_overlap_threshold": 3,
+            "strict_and_logic": true
         }
     }
     """
@@ -371,7 +372,7 @@ def generate_graph_with_edges():
             gexf_content = f.read()
         
         # Get comprehensive statistics
-        graph_stats = edge_generation_service.get_edge_statistics(G)
+        graph_stats = edge_generation_service.get_detailed_edge_statistics(G)
         
         return jsonify({
             "success": True,
@@ -438,6 +439,12 @@ def get_edge_generation_criteria():
         },
         "use_and_logic": {
             "description": "Use AND logic to require multiple criteria to be satisfied for an edge",
+            "type": "boolean",
+            "default": False,
+            "category": "Logic Control"
+        },
+        "strict_and_logic": {
+            "description": "Use strict AND logic to require ALL enabled criteria to be satisfied simultaneously",
             "type": "boolean",
             "default": False,
             "category": "Logic Control"
@@ -641,7 +648,7 @@ def create_edges_on_graph():
             updated_gexf_content = f.read()
         
         # Get statistics
-        graph_stats = edge_service.get_edge_statistics(G)
+        graph_stats = edge_service.get_detailed_edge_statistics(G)
         
         return jsonify({
             "success": True,

@@ -104,6 +104,8 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     const [submitProgress, setSubmitProgress] = useState(0);
     const [submitStatus, setSubmitStatus] = useState<string>('');
     const [showMemoryLimitModal, setShowMemoryLimitModal] = useState(false);
+    const [showApiKeyErrorModal, setShowApiKeyErrorModal] = useState(false);
+    const [apiKeyError, setApiKeyError] = useState<string>('');
 
     // Function to fetch unique repository count for all finalized topics
     const fetchUniqueReposCount = async (topics: string[]) => {
@@ -133,7 +135,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             const data = await response.json();
             if (data.success) {
                 setUniqueReposCount(data.count);
-                // console.log('Unique repos count updated:', data.count);
             } else {
                 throw new Error(data.message || 'Failed to get unique repos count');
             }
@@ -152,7 +153,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
     // Update unique repos count when finalized topics change
     useEffect(() => {
-        // console.log('Finalized topics changed, fetching unique repos count:', finalizedTopics);
         fetchUniqueReposCount(finalizedTopics);
     }, [finalizedTopics]);
 
@@ -263,7 +263,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
     // Add effect to handle llmSuggestions updates
     useEffect(() => {
         if (llmSuggestions && llmSuggestions.length > 0 && isGettingSuggestions) {
-            console.log('Effect detected new suggestions:', llmSuggestions);
             const currentModel: ModelType = selectedModel === 'gpt-3.5-turbo' ? 'openai' : 'gemini';
 
             // Process the suggestions
@@ -288,7 +287,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             setSuggestionsByModel(prev => {
                 const otherModelSuggestions = prev.filter(s => s.model !== currentModel);
                 const updatedSuggestions = [...otherModelSuggestions, ...newSuggestions];
-                console.log('Updated suggestions in effect:', updatedSuggestions);
                 return updatedSuggestions;
             });
 
@@ -297,6 +295,31 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             setIsGettingSuggestions(false);
         }
     }, [llmSuggestions, selectedModel, searchTerm, isGettingSuggestions]);
+
+    // Effect to focus API key input when error modal opens
+    useEffect(() => {
+        if (showApiKeyErrorModal) {
+            const timer = setTimeout(() => {
+                const apiKeyInput = document.getElementById('newApiKey') as HTMLInputElement;
+                if (apiKeyInput) {
+                    apiKeyInput.focus();
+                    apiKeyInput.select(); // Select the text so user can easily replace it
+                }
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [showApiKeyErrorModal]);
+
+    // Effect to ensure loading state is reset if it gets stuck
+    useEffect(() => {
+        if (isGettingSuggestions) {
+            const timer = setTimeout(() => {
+                console.log('Loading state timeout - resetting isGettingSuggestions');
+                setIsGettingSuggestions(false);
+            }, 30000); // 30 second timeout
+            return () => clearTimeout(timer);
+        }
+    }, [isGettingSuggestions]);
 
     const handleGetSuggestions = async () => {
         if (!apiKey) {
@@ -315,29 +338,58 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
             // Clear previous suggestions for this model
             setSuggestionsByModel(prev => prev.filter(s => s.model !== currentModel));
 
-            // Get suggestions from the API
-            await onRequestSuggestions(selectedModel, customPrompt, apiKey, selectedTopics);
+            // Set a timeout to ensure loading state is reset if something goes wrong
+            const timeoutId = setTimeout(() => {
+                if (isGettingSuggestions) {
+                    setIsGettingSuggestions(false);
+                }
+            }, 30000); // 30 second timeout
 
-            // Wait for suggestions to be processed by the effect
-            let attempts = 0;
-            const maxAttempts = 50;
-            const checkInterval = 100;
+            try {
+                // Get suggestions from the API
+                await onRequestSuggestions(selectedModel, customPrompt, apiKey, selectedTopics);
 
-            while (attempts < maxAttempts && isGettingSuggestions) {
-                await new Promise(resolve => setTimeout(resolve, checkInterval));
-                attempts++;
-                console.log(`Waiting for suggestions to be processed... attempt ${attempts}/${maxAttempts}`);
-            }
+                // Wait for suggestions to be processed by the effect
+                let attempts = 0;
+                const maxAttempts = 50;
+                const checkInterval = 100;
 
-            if (isGettingSuggestions) {
-                // If we're still getting suggestions after timeout, something went wrong
-                console.warn('Timeout waiting for suggestions to be processed');
-                throw new Error('Timeout waiting for suggestions to be processed');
+                while (attempts < maxAttempts && isGettingSuggestions) {
+                    await new Promise(resolve => setTimeout(resolve, checkInterval));
+                    attempts++;
+                }
+
+                if (isGettingSuggestions) {
+                    // If we're still getting suggestions after timeout, something went wrong
+                    throw new Error('Timeout waiting for suggestions to be processed');
+                }
+            } finally {
+                clearTimeout(timeoutId); // Clear the timeout
             }
         } catch (error) {
             console.error('Error getting suggestions:', error);
-            alert('Failed to get AI suggestions. Please try again.');
+            console.log('Error type:', typeof error);
+            console.log('Error message:', error instanceof Error ? error.message : String(error));
+
+            // Always reset loading state first
             setIsGettingSuggestions(false);
+
+            // Check if the error is related to API key
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const isApiKeyError = errorMessage.toLowerCase().includes('api key') ||
+                errorMessage.toLowerCase().includes('authentication') ||
+                errorMessage.toLowerCase().includes('invalid') ||
+                errorMessage.toLowerCase().includes('unauthorized') ||
+                errorMessage.toLowerCase().includes('401') ||
+                errorMessage.toLowerCase().includes('403');
+
+            if (isApiKeyError) {
+                setApiKeyError(errorMessage);
+                setShowApiKeyErrorModal(true);
+                // Don't clear the API key here - let the user see what they entered and modify it
+            } else {
+                alert('Failed to get AI suggestions. Please try again.');
+            }
         }
     };
 
@@ -420,7 +472,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
         const topicSuggestions = suggestionsByModel.filter(
             s => s.topic.toLowerCase().trim() === normalizedTopic
         );
-        // console.log(`Rendering badges for ${topic}:`, topicSuggestions);
         return topicSuggestions.map(suggestion => {
             const tooltipId = `${suggestion.topic}-${suggestion.model}`;
             return (
@@ -482,11 +533,14 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
 
     // Add effect to initialize state when component mounts
     useEffect(() => {
-        // Only clear our internal state
+        // Only clear our internal state on mount, not on every dependency change
         setSuggestionsByModel([]);
         // Don't clear parent state
         // setLlmSuggestions([]);
+    }, []); // Empty dependency array - only run on mount
 
+    // Separate effect to handle search term initialization
+    useEffect(() => {
         // Ensure search term is included in both selected and finalized topics
         if (searchTerm && !selectedTopics.includes(searchTerm)) {
             setSelectedTopics([...selectedTopics, searchTerm]);
@@ -498,31 +552,27 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                 fetchTopicCount(searchTerm);
             }
         }
-    }, [searchTerm, selectedTopics, finalizedTopics, setSelectedTopics, setFinalizedTopics]);
+    }, [searchTerm, selectedTopics, finalizedTopics, setSelectedTopics, setFinalizedTopics, searchTermRemoved, topicCounts]);
 
     const handleSubmitFinalizedTopics = async () => {
         // Wait for unique count to be loaded if it's still loading
         if (isLoadingUniqueCount) {
-            console.log('Waiting for unique count to load...');
             // Wait a bit for the count to load
             await new Promise(resolve => setTimeout(resolve, 500));
         }
 
         // Show memory limit warning for large repository counts
         if (uniqueReposCount > 2500) {
-            console.log('Showing memory limit modal for large dataset:', uniqueReposCount);
             setShowMemoryLimitModal(true);
             return;
         }
 
         // If we have an error but still have a count, check if it's over threshold
         if (uniqueCountError && uniqueReposCount > 2500) {
-            console.log('Showing memory limit modal despite error, count:', uniqueReposCount);
             setShowMemoryLimitModal(true);
             return;
         }
 
-        // console.log('Proceeding with submission, unique count:', uniqueReposCount);
         await submitTopics();
     };
 
@@ -1198,7 +1248,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn-close"
                                     onClick={() => {
-                                        console.log('Confirmation modal closed by user');
                                         setShowConfirmationModal(false);
                                     }}
                                     aria-label="Close"
@@ -1222,7 +1271,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn btn-secondary"
                                     onClick={() => {
-                                        console.log('Confirmation modal cancelled by user');
                                         setShowConfirmationModal(false);
                                     }}
                                 >
@@ -1232,7 +1280,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn btn-warning"
                                     onClick={() => {
-                                        console.log('User chose to change dataset');
                                         setShowConfirmationModal(false);
                                         // Focus on the topic selection area or scroll to it
                                         const topicInput = document.querySelector('input[placeholder="Add a custom topic"]') as HTMLInputElement;
@@ -1263,7 +1310,6 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn-close"
                                     onClick={() => {
-                                        console.log('Memory limit modal closed by user');
                                         setShowMemoryLimitModal(false);
                                     }}
                                     aria-label="Close"
@@ -1287,11 +1333,124 @@ export const TopicRefiner: FC<Omit<TopicRefinerProps, 'isLlmProcessing'>> = ({
                                     type="button"
                                     className="btn btn-secondary"
                                     onClick={() => {
-                                        console.log('Memory limit modal closed by user');
                                         setShowMemoryLimitModal(false);
                                     }}
                                 >
                                     OK
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* API Key Error Modal */}
+            {showApiKeyErrorModal && (
+                <div className="modal show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title d-flex align-items-center">
+                                    <i className="fas fa-key text-danger me-2"></i>
+                                    Invalid API Key
+                                </h5>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => {
+                                        setShowApiKeyErrorModal(false);
+                                        setApiKeyError('');
+                                        setIsGettingSuggestions(false); // Ensure loading state is reset
+                                    }}
+                                    aria-label="Close"
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="alert alert-danger mb-3">
+                                    <p className="mb-2">
+                                        <strong>API Key Error:</strong> Your API key appears to be invalid or has expired.
+                                    </p>
+                                    <p className="mb-0">
+                                        Please enter a valid API key to continue using AI features.
+                                    </p>
+                                </div>
+                                <div className="mb-3">
+                                    <label htmlFor="newApiKey" className="form-label fw-bold">New API Key</label>
+                                    <div className="input-group">
+                                        <input
+                                            type="password"
+                                            id="newApiKey"
+                                            className="form-control"
+                                            value={apiKey}
+                                            onChange={(e) => setApiKey(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && apiKey.trim() && !isGettingSuggestions) {
+                                                    e.preventDefault();
+                                                    setShowApiKeyErrorModal(false);
+                                                    setApiKeyError('');
+                                                    handleGetSuggestions();
+                                                }
+                                            }}
+                                            placeholder="Enter your new API key"
+                                        />
+                                        <button
+                                            className="btn btn-outline-secondary"
+                                            type="button"
+                                            onClick={() => {
+                                                const input = document.getElementById('newApiKey') as HTMLInputElement
+                                                input.type = input.type === 'password' ? 'text' : 'password'
+                                            }}
+                                        >
+                                            Show/Hide
+                                        </button>
+                                    </div>
+                                    <small className="text-muted">
+                                        Your API key will be used only for this session and won't be stored.
+                                    </small>
+                                </div>
+                                {apiKeyError && (
+                                    <div className="alert alert-info">
+                                        <small>
+                                            <strong>Error Details:</strong> {apiKeyError}
+                                        </small>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                        setShowApiKeyErrorModal(false);
+                                        setApiKeyError('');
+                                        setIsGettingSuggestions(false); // Ensure loading state is reset
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={async () => {
+                                        if (apiKey.trim()) {
+                                            setShowApiKeyErrorModal(false);
+                                            setApiKeyError('');
+                                            // Re-try the suggestion request with the new API key
+                                            await handleGetSuggestions();
+                                        } else {
+                                            alert('Please enter a valid API key');
+                                        }
+                                    }}
+                                    disabled={!apiKey.trim() || isGettingSuggestions}
+                                >
+                                    {isGettingSuggestions ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin me-2" />
+                                            Retrying...
+                                        </>
+                                    ) : (
+                                        'Update API Key & Retry'
+                                    )}
                                 </button>
                             </div>
                         </div>

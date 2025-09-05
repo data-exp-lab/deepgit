@@ -5,6 +5,7 @@ import Slider from "rc-slider";
 
 import { GraphContext } from "../lib/context";
 import { useNotifications } from "../lib/notifications";
+import { API_ENDPOINTS } from "../lib/config";
 
 const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
     const { navState, setNavState, setShowEdgePanel, data, graphFile, computedData, setData } = useContext(GraphContext);
@@ -213,11 +214,11 @@ const EdgePanel: FC<{ isExpanded: boolean }> = ({ isExpanded }) => {
                 use_and_logic: enabledCriteria > 1 // Use AND logic if multiple criteria enabled
             };
 
-            // Get filtered node IDs to pass to backend
+            // Get filtered node IDs for the API call
             const filteredNodeIds = computedData?.filteredNodes ? Array.from(computedData.filteredNodes) : null;
 
-            // Call backend API with original graph and filtered nodes
-            const response = await fetch('http://127.0.0.1:5002/api/create-edges-on-graph', {
+            // Call backend API with original graph
+            const response = await fetch(API_ENDPOINTS.CREATE_EDGES_ON_GRAPH, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
