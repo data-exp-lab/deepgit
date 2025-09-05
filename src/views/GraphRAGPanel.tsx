@@ -722,7 +722,74 @@ const GraphRAGPanel: FC = () => {
             parts.push(content.slice(lastIndex));
         }
 
+        // If no markdown links were found, try to detect owner/repo patterns
+        if (parts.length === 1 && typeof parts[0] === 'string') {
+            return detectAndLinkRepositories(parts[0]);
+        }
+
         return parts.length > 0 ? parts : content;
+    };
+
+    const detectAndLinkRepositories = (text: string) => {
+        // Pattern to match owner/repo format (e.g., "cozodb/cozo", "vmware/differential-datalog")
+        const repoPattern = /\b([a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9]))*)\/([a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9]))*)\b/g;
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+
+        while ((match = repoPattern.exec(text)) !== null) {
+            // Add text before the match
+            if (match.index > lastIndex) {
+                parts.push(text.slice(lastIndex, match.index));
+            }
+
+            // Check if this repository exists in the graph
+            const repoName = match[0]; // e.g., "cozodb/cozo"
+            const nodeId = findNodeByRepoName(repoName);
+
+            if (nodeId) {
+                // Add the clickable link
+                parts.push(
+                    <button
+                        key={`repo-link-${match.index}`}
+                        className="btn btn-link p-0 text-decoration-none"
+                        style={{ color: '#007bff', fontWeight: 'bold' }}
+                        onClick={() => handleRepoClick(nodeId)}
+                        title={`Click to focus on ${repoName} in the graph`}
+                    >
+                        {repoName}
+                    </button>
+                );
+            } else {
+                // Repository not found in graph, just add as text
+                parts.push(repoName);
+            }
+
+            lastIndex = match.index + match[0].length;
+        }
+
+        // Add remaining text
+        if (lastIndex < text.length) {
+            parts.push(text.slice(lastIndex));
+        }
+
+        return parts.length > 0 ? parts : text;
+    };
+
+    const findNodeByRepoName = (repoName: string): string | null => {
+        if (!data?.graph) return null;
+
+        // Search through all nodes to find one with matching label
+        const nodes = data.graph.nodes();
+        for (let i = 0; i < nodes.length; i++) {
+            const nodeId = nodes[i];
+            const nodeAttributes = data.graph.getNodeAttributes(nodeId);
+            if (nodeAttributes.label === repoName) {
+                return nodeId;
+            }
+        }
+
+        return null;
     };
 
     const handleRepoClick = (repoId: string) => {
