@@ -25,6 +25,11 @@ interface Message {
     type: 'user' | 'assistant' | 'system';
     content: string;
     timestamp: Date;
+    actions?: Array<{
+        label: string;
+        action: string;
+        data?: any;
+    }>;
 }
 
 interface GraphRAGState {
@@ -98,6 +103,30 @@ const GraphRAGPanel: FC = () => {
         }
     };
 
+    // Clean up GraphRAG database on server
+    const cleanupGraphRAGDatabase = async () => {
+        try {
+            const sessionId = sessionStorage.getItem('graphrag_session_id') || '';
+            if (sessionId) {
+                const response = await fetch('/api/graphrag-cleanup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ sessionId }),
+                });
+
+                if (response.ok) {
+                    console.log('GraphRAG database cleanup completed');
+                } else {
+                    console.warn('GraphRAG database cleanup failed:', response.statusText);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to cleanup GraphRAG database:', error);
+        }
+    };
+
     // Clear all GraphRAG data (API keys and state)
     const clearAllGraphRAGData = () => {
         try {
@@ -115,11 +144,15 @@ const GraphRAGPanel: FC = () => {
         const handleBeforeUnload = () => {
             // Only clear when the entire browser tab is being closed
             clearAllGraphRAGData();
+            // Clean up database on server (synchronous for beforeunload)
+            cleanupGraphRAGDatabase();
         };
 
         const handlePageHide = () => {
             // Clear everything when page is hidden (browser tab closed)
             clearAllGraphRAGData();
+            // Clean up database on server (asynchronous for pagehide)
+            cleanupGraphRAGDatabase();
         };
 
         // Don't clear on visibility change (switching between tabs in same page)
@@ -142,19 +175,7 @@ const GraphRAGPanel: FC = () => {
         };
     }, []);
 
-    // Calculate graph hash for change detection
-    const currentGraphHash = useMemo(() => {
-        if (!data || !graphFile?.textContent) return '';
 
-        // Include both file content and graph structure in hash calculation
-        const graphStructure = {
-            nodes: data.graph.nodes().length,
-            edges: data.graph.edges().length,
-            fileContent: graphFile.textContent
-        };
-
-        return btoa(JSON.stringify(graphStructure)).slice(0, 20); // Simple hash
-    }, [data, graphFile?.textContent]);
 
     // Load persisted state from localStorage
     const loadPersistedState = (): GraphRAGState | null => {
@@ -208,11 +229,11 @@ const GraphRAGPanel: FC = () => {
     // Initialize state from localStorage or defaults
     const [graphragState, setGraphragState] = useState<GraphRAGState>(() => {
         const saved = loadPersistedState();
-        if (saved && saved.graphHash === currentGraphHash) {
+        if (saved && saved.graphHash === '') {
             return saved;
         }
         return {
-            graphHash: currentGraphHash,
+            graphHash: '',
             isReady: false,
             messages: [{
                 id: generateMessageId(),
@@ -227,14 +248,16 @@ const GraphRAGPanel: FC = () => {
     // State for graph change confirmation
     const [showGraphChangeDialog, setShowGraphChangeDialog] = useState(false);
     const [pendingGraphHash, setPendingGraphHash] = useState('');
+    const [showRebuildPrompt, setShowRebuildPrompt] = useState(false);
+    const hasShownRebuildPrompt = useRef(false);
 
     // Detect graph changes
     useEffect(() => {
-        if (currentGraphHash && currentGraphHash !== graphragState.graphHash) {
-            setPendingGraphHash(currentGraphHash);
+        if ('' && '' !== graphragState.graphHash) {
+            setPendingGraphHash('');
             setShowGraphChangeDialog(true);
         }
-    }, [currentGraphHash, graphragState.graphHash]);
+    }, [graphragState.graphHash]);
 
     // Check backend health and reset state if needed
     useEffect(() => {
@@ -291,7 +314,7 @@ const GraphRAGPanel: FC = () => {
         if (useNewGraph) {
             // Reset state for new graph
             const newState: GraphRAGState = {
-                graphHash: currentGraphHash,
+                graphHash: '',
                 isReady: false,
                 messages: [{
                     id: generateMessageId(),
@@ -586,6 +609,10 @@ const GraphRAGPanel: FC = () => {
 
 
         try {
+            // Generate session ID for this GraphRAG session
+            const sessionId = `graphrag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            sessionStorage.setItem('graphrag_session_id', sessionId);
+
             const response = await fetch('http://localhost:5002/api/graphrag-setup', {
                 method: 'POST',
                 headers: {
@@ -594,7 +621,8 @@ const GraphRAGPanel: FC = () => {
                 body: JSON.stringify({
                     provider: graphragState.selectedProvider,
                     apiKeys: getSessionAPIKeys(),
-                    graphFile: graphFile.textContent
+                    graphFile: graphFile.textContent,
+                    sessionId: sessionId
                 })
             });
 
@@ -612,6 +640,15 @@ const GraphRAGPanel: FC = () => {
                     messages: finalMessages,
                     lastSetupTime: new Date()
                 });
+
+                // Update the stored graph hash after successful setup
+                sessionStorage.setItem('graphrag_last_graph_hash', '');
+
+                // Also update simple statistics
+                sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+                    nodes: data?.graph.nodes().length || 0,
+                    edges: data?.graph.edges().length || 0
+                }));
             } else {
                 notify({
                     type: "error",
@@ -721,6 +758,130 @@ const GraphRAGPanel: FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+
+    // Check for graph changes only when user navigates to GraphRAG tab
+    useEffect(() => {
+        if (!data || !graphFile?.textContent) return;
+
+        // Use graphStats which accounts for filtered nodes
+        const currentNodeCount = graphStats.nodes;
+        const currentEdgeCount = graphStats.edges;
+
+        // Get stored statistics
+        const storedStats = sessionStorage.getItem('graphrag_last_stats');
+
+        // Only check for changes if we have previous stats (not first visit)
+        if (storedStats) {
+            try {
+                const { nodes: lastNodeCount, edges: lastEdgeCount } = JSON.parse(storedStats);
+
+                // Check if statistics have changed
+                if (lastNodeCount !== currentNodeCount || lastEdgeCount !== currentEdgeCount) {
+                    console.log('Graph statistics changed! User navigated to GraphRAG tab.', {
+                        previous: { nodes: lastNodeCount, edges: lastEdgeCount },
+                        current: { nodes: currentNodeCount, edges: currentEdgeCount }
+                    });
+
+                    // Only show the prompt if we haven't already shown it for this session
+                    if (!hasShownRebuildPrompt.current) {
+                        // Add a system message to the chat asking if user wants to rebuild
+                        const changeMessage = {
+                            id: generateMessageId(),
+                            type: 'system' as const,
+                            content: `📊 **Graph Structure Changed**\n\nI noticed the graph structure has changed since you last used GraphRAG:\n\n**Previous:** ${lastNodeCount} nodes, ${lastEdgeCount} edges\n**Current:** ${currentNodeCount} nodes, ${currentEdgeCount} edges\n\nWould you like me to rebuild the GraphRAG database to include the latest changes?`,
+                            timestamp: new Date(),
+                            actions: [
+                                {
+                                    label: "Rebuild GraphRAG",
+                                    action: "rebuild",
+                                    data: { previous: { nodes: lastNodeCount, edges: lastEdgeCount }, current: { nodes: currentNodeCount, edges: currentEdgeCount } }
+                                },
+                                {
+                                    label: "Keep Existing",
+                                    action: "keep",
+                                    data: { previous: { nodes: lastNodeCount, edges: lastEdgeCount }, current: { nodes: currentNodeCount, edges: currentEdgeCount } }
+                                }
+                            ]
+                        };
+
+                        updateState({
+                            messages: [...graphragState.messages, changeMessage]
+                        });
+
+                        setShowRebuildPrompt(true);
+                        hasShownRebuildPrompt.current = true;
+                    }
+                } else {
+                    // No changes detected, just update stored statistics
+                    sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+                        nodes: currentNodeCount,
+                        edges: currentEdgeCount
+                    }));
+                }
+            } catch (error) {
+                console.error('Error parsing stored stats:', error);
+                // Update stored statistics on error
+                sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+                    nodes: currentNodeCount,
+                    edges: currentEdgeCount
+                }));
+            }
+        } else {
+            // First visit - just store initial statistics without alerting
+            sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+                nodes: currentNodeCount,
+                edges: currentEdgeCount
+            }));
+        }
+    }, [graphFile?.textContent]); // Only trigger when component mounts (user switches to tab)
+
+    // Handle action button clicks in messages
+    const handleMessageAction = (action: string, data: any) => {
+        if (action === 'rebuild') {
+            // Trigger GraphRAG rebuild
+            handleSetup().then(() => {
+                // Update stored statistics after successful setup
+                sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+                    nodes: data.current.nodes,
+                    edges: data.current.edges
+                }));
+
+                // Add confirmation message
+                const confirmMessage = {
+                    id: generateMessageId(),
+                    type: 'assistant' as const,
+                    content: '✅ GraphRAG database has been rebuilt with the latest graph structure. You can now ask questions about your updated graph!',
+                    timestamp: new Date()
+                };
+
+                updateState({
+                    messages: [...graphragState.messages, confirmMessage]
+                });
+            });
+        } else if (action === 'keep') {
+            // User chose to keep existing database
+            sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+                nodes: data.current.nodes,
+                edges: data.current.edges
+            }));
+
+            // Add confirmation message
+            const confirmMessage = {
+                id: generateMessageId(),
+                type: 'assistant' as const,
+                content: '👍 Got it! I\'ll keep using the existing GraphRAG database. You can continue asking questions about your graph.',
+                timestamp: new Date()
+            };
+
+            updateState({
+                messages: [...graphragState.messages, confirmMessage]
+            });
+        }
+
+        setShowRebuildPrompt(false);
+        hasShownRebuildPrompt.current = false; // Reset so they can see the prompt again if they make more changes
     };
 
     const getProviderIcon = (provider: string) => {
@@ -1203,6 +1364,24 @@ const GraphRAGPanel: FC = () => {
                                 </div>
                                 <div style={{ whiteSpace: 'pre-wrap' }}>
                                     {renderMessageContent(message.content)}
+
+                                    {/* Action buttons for system messages */}
+                                    {message.type === 'system' && message.actions && (
+                                        <div className="mt-3">
+                                            {message.actions.map((action, actionIndex) => (
+                                                <button
+                                                    key={actionIndex}
+                                                    className={`btn btn-sm me-2 ${action.action === 'rebuild'
+                                                        ? 'btn-primary'
+                                                        : 'btn-outline-secondary'
+                                                        }`}
+                                                    onClick={() => handleMessageAction(action.action, action.data)}
+                                                >
+                                                    {action.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

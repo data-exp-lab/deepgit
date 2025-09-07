@@ -734,6 +734,7 @@ def graphrag_setup_endpoint():
         provider = data.get("provider", "openai")
         api_keys = data.get("apiKeys", {})
         graph_file = data.get("graphFile", "")
+        session_id = data.get("sessionId", "")
         
         # Merge frontend API keys with config and convert to GraphRAG format
         graphrag_api_keys = {}
@@ -813,7 +814,7 @@ def graphrag_setup_endpoint():
             graphrag_progress["message"] = "Creating new database from graph data"
             
             # Setup database from GEXF content with progress updates
-            setup_result = graphrag_service.setup_database_from_gexf_with_progress(graph_file, github_token, graphrag_progress)
+            setup_result = graphrag_service.setup_database_from_gexf_with_progress(graph_file, github_token, graphrag_progress, session_id)
             if not setup_result["success"]:
                 graphrag_progress["status"] = "error"
                 graphrag_progress["message"] = setup_result.get("error", "Setup failed")
@@ -1155,6 +1156,62 @@ def graphrag_endpoint():
             "success": False,
             "error": str(e),
             "message": "An error occurred while processing the GraphRAG query"
+        }), 500
+
+
+@app.route("/api/graphrag-cleanup", methods=["POST"])
+def graphrag_cleanup_endpoint():
+    """Clean up GraphRAG database and resources when user closes window."""
+    try:
+        data = request.get_json() or {}
+        session_id = data.get("sessionId", "")
+        
+        # Clean up GraphRAG resources
+        result = graphrag_service.cleanup(session_id)
+        
+        return jsonify({
+            "success": True,
+            "message": "GraphRAG cleanup completed successfully",
+            "details": result
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred during GraphRAG cleanup"
+        }), 500
+
+
+@app.route("/api/graphrag-check-changes", methods=["POST"])
+def graphrag_check_changes_endpoint():
+    """Check if GraphRAG database needs to be rebuilt due to graph changes."""
+    try:
+        data = request.get_json() or {}
+        gexf_content = data.get("gexfContent", "")
+        
+        if not gexf_content:
+            return jsonify({
+                "success": False,
+                "error": "No GEXF content provided",
+                "message": "Please provide GEXF content to check for changes"
+            }), 400
+        
+        # Check if database should be rebuilt
+        result = graphrag_service.should_rebuild_database(gexf_content)
+        
+        return jsonify({
+            "success": True,
+            "should_rebuild": result.get("should_rebuild", False),
+            "message": result.get("message", ""),
+            "details": result
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred while checking for graph changes"
         }), 500
 
 

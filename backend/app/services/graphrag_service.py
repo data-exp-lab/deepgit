@@ -1,7 +1,7 @@
 import os
 import tempfile
 import json
-import sys
+# import sys  # Removed unused import
 import xml.etree.ElementTree as ET
 import requests
 import base64
@@ -12,26 +12,23 @@ import hashlib
 from pathlib import Path
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
-from collections import defaultdict
+# from collections import defaultdict  # Removed unused import
 
 # Import required libraries
 try:
     import kuzu
-    print("✅ kuzu imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import kuzu: {e}")
     kuzu = None
 
 try:
     import pandas as pd
-    print("✅ pandas imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import pandas: {e}")
     pd = None
 
 try:
     import networkx as nx
-    print("✅ networkx imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import networkx: {e}")
     nx = None
@@ -47,7 +44,6 @@ try:
     from langchain_core.tools import tool
     from langchain_core.output_parsers import JsonOutputParser
     from pydantic import BaseModel, Field
-    print("✅ LangGraph modules imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import LangGraph modules: {e}")
     StateGraph = None
@@ -89,61 +85,197 @@ class GraphRAGService:
     def __init__(self):
         self.db_path = None
         self.graphrag_instance = None
+        self.session_id = None  # Track which session owns this database
+        # Use DuckDB in cache folder for README storage
         self.cache_dir = Path(__file__).parent.parent / "cache"
         self.cache_dir.mkdir(exist_ok=True)
-        
-        # In-memory cache for faster access
-        self._memory_cache = {}
+        self.readme_cache_db_path = self.cache_dir / "readme_cache.duckdb"
         self._cache_stats = {"hits": 0, "misses": 0}
     
     def get_cache_key(self, owner, repo):
         """Generate a cache key for a repository."""
         return hashlib.md5(f"{owner}/{repo}".encode()).hexdigest()
     
+    def get_cached_repos_batch(self, repo_list):
+        """Get list of repositories that already have cached READMEs."""
+        if not os.path.exists(self.readme_cache_db_path):
+            return set()
+        
+        try:
+            import duckdb
+            conn = duckdb.connect(str(self.readme_cache_db_path), read_only=True)
+            
+            # Create a list of (owner, repo) tuples for the query
+            repo_tuples = [(owner, repo) for _, owner, repo in repo_list]
+            
+            if not repo_tuples:
+                return set()
+            
+            # Use parameterized query to check multiple repos at once
+            placeholders = ','.join(['(?, ?)' for _ in repo_tuples])
+            query = f"""
+            SELECT owner, repo
+            FROM repository_cache
+            WHERE (owner, repo) IN (VALUES {placeholders})
+            AND readme_content IS NOT NULL
+            """
+            
+            # Flatten the tuples for the query parameters
+            params = [item for tuple_pair in repo_tuples for item in tuple_pair]
+            
+            result = conn.execute(query, params).fetchall()
+            
+            # Return set of cached (owner, repo) tuples
+            cached_repos = {(row[0], row[1]) for row in result}
+            print(f"📋 Found {len(cached_repos)} cached READMEs out of {len(repo_list)} repositories")
+            return cached_repos
+            
+        except Exception as e:
+            print(f"Error checking cached repositories: {e}")
+            return set()
+    
+    def _get_batch_cached_content(self, repo_list):
+        """Get cached README content for a batch of repositories."""
+        if not os.path.exists(self.readme_cache_db_path):
+            return {}
+        
+        try:
+            import duckdb
+            conn = duckdb.connect(str(self.readme_cache_db_path), read_only=True)
+            
+            # Create a list of (owner, repo) tuples for the query
+            repo_tuples = [(owner, repo) for _, owner, repo in repo_list]
+            
+            if not repo_tuples:
+                return {}
+            
+            # Use parameterized query to get content for multiple repos at once
+            placeholders = ','.join(['(?, ?)' for _ in repo_tuples])
+            query = f"""
+            SELECT owner, repo, readme_content, readme_length
+            FROM repository_cache
+            WHERE (owner, repo) IN (VALUES {placeholders})
+            """
+            
+            # Flatten the tuples for the query parameters
+            params = [item for tuple_pair in repo_tuples for item in tuple_pair]
+            
+            result = conn.execute(query, params).fetchall()
+            
+            # Return dict mapping (owner, repo) to (content, length)
+            cached_content = {}
+            for row in result:
+                owner, repo, content, length = row
+                cached_content[(owner, repo)] = (content, length)
+            
+            return cached_content
+            
+        except Exception as e:
+            print(f"Error getting batch cached content: {e}")
+            return {}
+    
     def get_cached_readme(self, owner, repo):
-        """Get README content from cache if available."""
-        cache_key = self.get_cache_key(owner, repo)
+        """Get README content from cache database if available."""
+        if not os.path.exists(self.readme_cache_db_path):
+            self._cache_stats["misses"] += 1
+            return None
         
-        # Check in-memory cache first (fastest)
-        if cache_key in self._memory_cache:
-            self._cache_stats["hits"] += 1
-            return self._memory_cache[cache_key]
-        
-        # Check file cache
-        cache_file = self.cache_dir / f"{cache_key}.txt"
-        if cache_file.exists():
-            # Check if cache is less than 24 hours old
-            if time.time() - cache_file.stat().st_mtime < 86400:  # 24 hours
-                try:
-                    with open(cache_file, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                        # Store in memory cache for faster future access
-                        self._memory_cache[cache_key] = content
-                        self._cache_stats["hits"] += 1
-                        return content
-                except:
-                    pass
-        
-        self._cache_stats["misses"] += 1
-        return None
+        try:
+            import duckdb
+            conn = duckdb.connect(str(self.readme_cache_db_path), read_only=True)
+            
+            # Query for README content using owner/repo
+            query = """
+            SELECT readme_content, readme_length
+            FROM repository_cache
+            WHERE owner = ? AND repo = ?
+            LIMIT 1
+            """
+            
+            result = conn.execute(query, [owner, repo]).fetchone()
+            
+            if result and result[0] is not None:  # Check if readme_content exists (including empty string)
+                self._cache_stats["hits"] += 1
+                content = result[0]  # Get readme_content
+                # Ensure we return a string, not float
+                if isinstance(content, str):
+                    return content  # Return empty string for "no README" cases
+                elif content is not None:
+                    return str(content)
+                else:
+                    return ""
+            
+            self._cache_stats["misses"] += 1
+            return None  # Return None only if not cached at all
+            
+        except Exception as e:
+            print(f"Error querying README from cache database: {e}")
+            self._cache_stats["misses"] += 1
+            return None
     
     def cache_readme(self, owner, repo, content):
-        """Cache README content."""
-        if not content:
-            return
-            
-        cache_key = self.get_cache_key(owner, repo)
-        
-        # Store in memory cache first (fastest)
-        self._memory_cache[cache_key] = content
-        
-        # Also store in file cache for persistence
-        cache_file = self.cache_dir / f"{cache_key}.txt"
+        """Store README content in cache database, including 'no README' cases."""
         try:
-            with open(cache_file, 'w', encoding='utf-8') as f:
-                f.write(content)
+            # Initialize cache database if it doesn't exist
+            self._initialize_cache_database()
+            
+            import duckdb
+            conn = duckdb.connect(str(self.readme_cache_db_path))
+            
+            if content:
+                # Clean the content for database storage
+                cleaned_content = self.clean_text_for_csv(content)
+                content_length = len(content)
+            else:
+                # Cache "no README" case to avoid repeated GitHub API calls
+                cleaned_content = ""  # Empty string indicates no README found
+                content_length = 0
+            
+            # Insert or update README content in cache database
+            query = """
+            INSERT OR REPLACE INTO repository_cache 
+            (owner, repo, readme_content, readme_length, cached_at)
+            VALUES (?, ?, ?, ?, ?)
+            """
+            
+            conn.execute(query, [
+                owner, 
+                repo, 
+                cleaned_content, 
+                content_length,
+                int(time.time())
+            ])
+            
         except Exception as e:
             print(f"Failed to cache README for {owner}/{repo}: {e}")
+    
+    def _initialize_cache_database(self):
+        """Initialize the cache database if it doesn't exist."""
+        if os.path.exists(self.readme_cache_db_path):
+            return  # Database already exists
+        
+        try:
+            print("Creating README cache database...")
+            import duckdb
+            conn = duckdb.connect(str(self.readme_cache_db_path))
+            
+            # Create Repository table for cache
+            cache_schema = """
+            CREATE TABLE IF NOT EXISTS repository_cache (
+                owner VARCHAR,
+                repo VARCHAR,
+                readme_content TEXT,
+                readme_length BIGINT,
+                cached_at BIGINT,
+                PRIMARY KEY (owner, repo)
+            )
+            """
+            conn.execute(cache_schema)
+            print("✅ README cache database created successfully")
+            
+        except Exception as e:
+            print(f"Failed to create cache database: {e}")
+            raise
     
     def fix_database_schema(self, db_path):
         """Fix database schema by adding missing README properties."""
@@ -193,27 +325,29 @@ class GraphRAGService:
                 return False
     
     def preload_cache(self):
-        """Preload all cached READMEs into memory for faster access."""
-        print("Preloading README cache into memory...")
-        cache_files = list(self.cache_dir.glob("*.txt"))
-        loaded_count = 0
+        """Check cache database for existing README content."""
+        if not os.path.exists(self.readme_cache_db_path):
+            print("No cache database available for README preloading")
+            return 0
         
-        for cache_file in cache_files:
-            try:
-                # Extract owner/repo from filename (hash)
-                cache_key = cache_file.stem
-                
-                # Check if cache is less than 24 hours old
-                if time.time() - cache_file.stat().st_mtime < 86400:  # 24 hours
-                    with open(cache_file, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                        self._memory_cache[cache_key] = content
-                        loaded_count += 1
-            except Exception as e:
-                print(f"Failed to load cache file {cache_file}: {e}")
-        
-        print(f"Preloaded {loaded_count} READMEs into memory cache")
-        return loaded_count
+        try:
+            import duckdb
+            conn = duckdb.connect(str(self.readme_cache_db_path), read_only=True)
+            
+            # Count repositories with README content in cache
+            result = conn.execute("""
+                SELECT COUNT(*) 
+                FROM repository_cache 
+                WHERE readme_content IS NOT NULL AND readme_content <> ''
+            """).fetchone()
+            
+            readme_count = result[0] if result else 0
+            print(f"Found {readme_count} cached READMEs in cache database")
+            return readme_count
+            
+        except Exception as e:
+            print(f"Error checking README content in cache database: {e}")
+            return 0
     
     def get_cache_stats(self):
         """Get cache statistics."""
@@ -221,25 +355,32 @@ class GraphRAGService:
         total_misses = self._cache_stats["misses"]
         hit_rate = total_hits / (total_hits + total_misses) * 100 if (total_hits + total_misses) > 0 else 0
         
+        # Get cache database README count
+        cache_readme_count = 0
+        if os.path.exists(self.readme_cache_db_path):
+            try:
+                import duckdb
+                conn = duckdb.connect(str(self.readme_cache_db_path), read_only=True)
+                result = conn.execute("""
+                    SELECT COUNT(*) 
+                    FROM repository_cache 
+                    WHERE readme_content IS NOT NULL AND readme_content <> ''
+                """).fetchone()
+                cache_readme_count = result[0] if result else 0
+            except:
+                pass
+        
         return {
-            "memory_cache_size": len(self._memory_cache),
+            "cache_readme_count": cache_readme_count,
             "total_hits": total_hits,
             "total_misses": total_misses,
             "hit_rate": f"{hit_rate:.1f}%"
         }
     
     def cleanup_old_cache(self, max_age_hours=24):
-        """Clean up cache files older than specified hours."""
-        try:
-            current_time = time.time()
-            max_age_seconds = max_age_hours * 3600
-            
-            for cache_file in self.cache_dir.glob("*.txt"):
-                if current_time - cache_file.stat().st_mtime > max_age_seconds:
-                    cache_file.unlink()
-                    print(f"Cleaned up old cache file: {cache_file.name}")
-        except Exception as e:
-            print(f"Error cleaning up cache: {e}")
+        """Database-based system doesn't need file cleanup."""
+        print("Using database-based README storage - no file cleanup needed")
+        return
     
     def create_kuzu_database(self, gexf_file, db_path):
         """Create a Kuzu database from GEXF file data."""
@@ -472,6 +613,27 @@ class GraphRAGService:
         print(f"Nodes: {node_count.iloc[0, 0]}")
         print(f"Edges: {edge_count.iloc[0, 0]}")
     
+    def make_database_readonly(self, db_path: str):
+        """Make the database read-only by testing read-only access."""
+        try:
+            # Test read-only access
+            read_only_db = kuzu.Database(db_path, read_only=True)
+            read_only_conn = kuzu.Connection(read_only_db)
+            
+            # Test a simple query to ensure read-only mode works
+            read_only_conn.execute("MATCH (r:Repository) RETURN COUNT(r) LIMIT 1").get_as_df()
+            
+            # Close the test connection
+            read_only_conn.close()
+            read_only_db.close()
+            
+            print("🔒 Database is now in read-only mode")
+            return True
+            
+        except Exception as e:
+            print(f"⚠️  Failed to switch database to read-only mode: {e}")
+            return False
+    
     def get_github_readme(self, owner, repo, token=None):
         """Fetch README file from GitHub repository."""
         # Try different README file names
@@ -576,10 +738,18 @@ class GraphRAGService:
                 print(f"Error fetching README for {owner}/{repo}: {e}")
                 continue
         
+        # Cache "no README" result to avoid repeated GitHub API calls
+        self.cache_readme(owner, repo, "")
         return ""
     
     def clean_text_for_csv(self, text):
         """Clean text to be safe for CSV storage."""
+        # Handle non-string inputs
+        if text is None:
+            return ""
+        if not isinstance(text, str):
+            text = str(text)
+        
         # Replace newlines with spaces
         text = text.replace('\n', ' ').replace('\r', ' ')
         # Replace multiple spaces with single space
@@ -750,7 +920,11 @@ class GraphRAGService:
                     cached += 1
                     print(f"    📋 Using cached README for {owner}/{repo}")
                     cleaned_content = self.clean_text_for_csv(cached_content)
-                    original_length = len(cached_content)
+                    # Handle non-string cached content
+                    if isinstance(cached_content, str):
+                        original_length = len(cached_content)
+                    else:
+                        original_length = len(str(cached_content))
                     readme_data.append((repo_id, cleaned_content, original_length))
                     successful += 1
                     continue
@@ -904,94 +1078,64 @@ class GraphRAGService:
         
         print(f"Found {len(valid_repos)} valid repositories to process")
         
-        # Preload cache for faster access
-        preloaded_count = self.preload_cache()
-        if preloaded_count > 0:
-            print(f"🚀 Cache preloaded: {preloaded_count} READMEs ready for instant access")
+        # Check existing README content in cache database
+        existing_readmes = self.preload_cache()
+        if existing_readmes > 0:
+            print(f"🚀 Found {existing_readmes} existing READMEs in cache database")
+        
+        # Batch check which repositories already have cached READMEs
+        cached_repos = self.get_cached_repos_batch(valid_repos)
+        
+        # Process ALL repositories (both cached and non-cached) to ensure READMEs get into Kuzu database
+        repos_to_process = valid_repos  # Process all valid repositories
+        
+        print(f"📊 Processing {len(repos_to_process)} repositories ({len(cached_repos)} cached)")
         
         # Process repositories in batches for better progress tracking
         batch_size = 50  # Increased batch size for better performance
-        total_repos = len(valid_repos)
+        total_repos = len(repos_to_process)
         processed = 0
         successful = 0
-        cached = 0
+        cached = len(cached_repos)  # Count cached repos as successful
         failed = 0
         
         for i in range(0, total_repos, batch_size):
-            batch = valid_repos[i:i+batch_size]
+            batch = repos_to_process[i:i+batch_size]
             print(f"\nProcessing batch {i//batch_size + 1}/{(total_repos + batch_size - 1)//batch_size}")
             
+            # Get cached content for the entire batch at once
+            batch_cached_content = self._get_batch_cached_content(batch)
+            
+            # Separate cached and uncached repositories
+            cached_repos_in_batch = []
+            uncached_repos_in_batch = []
+            
             for repo_id, owner, repo in batch:
+                if (owner, repo) in batch_cached_content:
+                    cached_content, cached_length = batch_cached_content[(owner, repo)]
+                    cached_repos_in_batch.append((repo_id, owner, repo, cached_content, cached_length))
+                else:
+                    uncached_repos_in_batch.append((repo_id, owner, repo))
+            
+            print(f"  📊 Batch {i//batch_size + 1}: {len(cached_repos_in_batch)} cached, {len(uncached_repos_in_batch)} API calls")
+            
+            # Process cached repositories (no API calls needed)
+            for repo_id, owner, repo, cached_content, cached_length in cached_repos_in_batch:
                 processed += 1
                 
-                # Update progress with time estimation
-                if progress_dict:
-                    current_time = time.time()
-                    elapsed_time = current_time - start_time
-                    
-                    if processed > 0:
-                        # Calculate estimated time remaining
-                        avg_time_per_repo = elapsed_time / processed
-                        remaining_repos = total_repos - processed
-                        estimated_remaining_time = avg_time_per_repo * remaining_repos
-                        
-                        # Format time estimates
-                        elapsed_minutes = int(elapsed_time // 60)
-                        elapsed_seconds = int(elapsed_time % 60)
-                        remaining_minutes = int(estimated_remaining_time // 60)
-                        remaining_seconds = int(estimated_remaining_time % 60)
-                        
-                        progress_dict["current"] = processed
-                        progress_dict["message"] = f"Extracting READMEs ({processed}/{total_repos}) - Elapsed: {elapsed_minutes}m{elapsed_seconds}s, ETA: {remaining_minutes}m{remaining_seconds}s"
-                    else:
-                        progress_dict["current"] = processed
-                        progress_dict["message"] = f"Extracting README content from repositories ({processed}/{total_repos})"
-                    
-                    # Reduced delay for faster processing
-                    time.sleep(0.01)
-                
-                # Add checkpoint every 100 repositories to prevent data loss (reduced frequency for better performance)
-                if processed % 100 == 0 and readme_data:
-                    try:
-                        # Insert current batch to database
-                        for repo_id, content, length in readme_data:
-                            try:
-                                conn.execute("""
-                                    MERGE (r:Repository {id: $repo_id})
-                                    SET r.readme_content = $content, r.readme_length = $length
-                                """, parameters={"repo_id": repo_id, "content": content, "length": length})
-                            except Exception as e:
-                                if "Cannot find property" in str(e):
-                                    # Try to add the properties first
-                                    conn.execute("ALTER TABLE Repository ADD COLUMN readme_content STRING")
-                                    conn.execute("ALTER TABLE Repository ADD COLUMN readme_length INT64")
-                                    # Retry the insertion
-                                    conn.execute("""
-                                        MERGE (r:Repository {id: $repo_id})
-                                        SET r.readme_content = $content, r.readme_length = $length
-                                    """, parameters={"repo_id": repo_id, "content": content, "length": length})
-                                else:
-                                    print(f"  ⚠️  Checkpoint insertion failed for {repo_id}: {e}")
-                        
-                        print(f"  💾 Checkpoint saved: {len(readme_data)} READMEs processed")
-                        readme_data = []  # Clear the batch
-                    except Exception as e:
-                        print(f"  ⚠️  Checkpoint failed: {e}")
-                        # Continue processing even if checkpoint fails
-                
-                print(f"  [{processed}/{total_repos}] Processing {owner}/{repo}...")
-                
-                # Check if we have cached content
-                cached_content = self.get_cached_readme(owner, repo)
                 if cached_content:
-                    cached += 1
-                    print(f"    📋 Using cached README for {owner}/{repo}")
+                    # Clean the content for CSV storage
                     cleaned_content = self.clean_text_for_csv(cached_content)
-                    original_length = len(cached_content)
-                    readme_data.append((repo_id, cleaned_content, original_length))
+                    readme_data.append((repo_id, cleaned_content, cached_length))
                     successful += 1
-                    continue
+                else:
+                    failed += 1
+            
+            # Process uncached repositories (GitHub API calls)
+            for repo_id, owner, repo in uncached_repos_in_batch:
+                processed += 1
                 
+                # Fetch from GitHub
                 readme_content = self.get_github_readme_optimized(owner, repo, token)
                 
                 if readme_content:
@@ -1000,10 +1144,8 @@ class GraphRAGService:
                     original_length = len(readme_content)
                     readme_data.append((repo_id, cleaned_content, original_length))
                     successful += 1
-                    print(f"    ✓ Found README ({original_length} characters, stored: {len(cleaned_content)} characters)")
                 else:
                     failed += 1
-                    print(f"    ✗ No README found")
                 
                 # Adaptive rate limiting based on GitHub's headers
                 if token:
@@ -1013,14 +1155,68 @@ class GraphRAGService:
                     # Without token: 60 requests per hour = ~1 request per 60 seconds
                     time.sleep(60)
             
+            # Update progress with time estimation
+            if progress_dict:
+                current_time = time.time()
+                elapsed_time = current_time - start_time
+                
+                if processed > 0:
+                    # Calculate estimated time remaining
+                    avg_time_per_repo = elapsed_time / processed
+                    remaining_repos = total_repos - processed
+                    estimated_remaining_time = avg_time_per_repo * remaining_repos
+                    
+                    # Format time estimates
+                    elapsed_minutes = int(elapsed_time // 60)
+                    elapsed_seconds = int(elapsed_time % 60)
+                    remaining_minutes = int(estimated_remaining_time // 60)
+                    remaining_seconds = int(estimated_remaining_time % 60)
+                    
+                    progress_dict["current"] = processed
+                    progress_dict["message"] = f"Extracting READMEs ({processed}/{total_repos}) - Elapsed: {elapsed_minutes}m{elapsed_seconds}s, ETA: {remaining_minutes}m{remaining_seconds}s (Cached: {cached})"
+                else:
+                    progress_dict["current"] = processed
+                    progress_dict["message"] = f"Extracting README content from repositories ({processed}/{total_repos}) (Cached: {cached})"
+                
+                # Reduced delay for faster processing
+                time.sleep(0.01)
+            
+            # Add checkpoint every 100 repositories to prevent data loss (reduced frequency for better performance)
+            if processed % 100 == 0 and readme_data:
+                try:
+                    # Insert current batch to database
+                    for repo_id, content, length in readme_data:
+                        try:
+                            conn.execute("""
+                                MERGE (r:Repository {id: $repo_id})
+                                SET r.readme_content = $content, r.readme_length = $length
+                            """, parameters={"repo_id": repo_id, "content": content, "length": length})
+                        except Exception as e:
+                            if "Cannot find property" in str(e):
+                                # Try to add the properties first
+                                conn.execute("ALTER TABLE Repository ADD COLUMN readme_content STRING")
+                                conn.execute("ALTER TABLE Repository ADD COLUMN readme_length INT64")
+                                # Retry the insertion
+                                conn.execute("""
+                                    MERGE (r:Repository {id: $repo_id})
+                                    SET r.readme_content = $content, r.readme_length = $length
+                                """, parameters={"repo_id": repo_id, "content": content, "length": length})
+                            else:
+                                print(f"  ⚠️  Checkpoint insertion failed for {repo_id}: {e}")
+                    
+                    print(f"  💾 Checkpoint saved: {len(readme_data)} READMEs processed")
+                    readme_data = []  # Clear the batch
+                except Exception as e:
+                    print(f"  ⚠️  Checkpoint failed: {e}")
+                    # Continue processing even if checkpoint fails
+            
             # Progress update after each batch
-            print(f"  Batch complete. Progress: {processed}/{total_repos} repos processed")
-            print(f"  Statistics: {successful} successful, {cached} cached, {failed} failed")
+            print(f"  ✅ Batch complete: {processed}/{total_repos} processed ({successful} successful, {failed} failed)")
             
             # Update progress after each batch
             if progress_dict:
                 progress_dict["current"] = processed
-                progress_dict["message"] = f"Processed batch {i//batch_size + 1}/{(total_repos + batch_size - 1)//batch_size} - {processed}/{total_repos} repositories"
+                progress_dict["message"] = f"Processed batch {i//batch_size + 1}/{(total_repos + batch_size - 1)//batch_size} - {processed}/{total_repos} repositories (Cached: {cached})"
                 time.sleep(0.01)  # Reduced delay for faster processing
         
         # Update progress for final step
@@ -1077,28 +1273,18 @@ class GraphRAGService:
                 print(f"  ⚠️  Could not count repositories either: {alt_e}")
                 total_stored = len(readme_data)  # Use processed count as fallback
         
-        print(f"\n📊 README Extraction Summary:")
-        print(f"  Total repositories processed: {processed}")
-        print(f"  Successful extractions: {successful}")
-        print(f"  Cached READMEs used: {cached}")
-        print(f"  Failed extractions: {failed}")
-        print(f"  Total READMEs stored: {total_stored}")
-        print(f"  Success rate: {successful/processed*100:.1f}%" if processed > 0 else "  Success rate: N/A")
-        print(f"  Cache hit rate: {cached/(successful+cached)*100:.1f}%" if (successful+cached) > 0 else "  Cache hit rate: 0%")
+        print(f"\n✅ README extraction completed: {successful} successful, {failed} failed, {cached} cached")
         
         # Calculate and display total time taken
         total_time = time.time() - start_time
         total_minutes = int(total_time // 60)
         total_seconds = int(total_time % 60)
-        print(f"  Total time taken: {total_minutes}m{total_seconds}s")
-        print(f"  Average time per repository: {total_time/processed:.2f}s" if processed > 0 else "  Average time per repository: N/A")
+        print(f"⏱️  Time taken: {total_minutes}m{total_seconds}s")
         
-        # Display cache statistics
-        cache_stats = self.get_cache_stats()
-        print(f"  Memory cache size: {cache_stats['memory_cache_size']} READMEs")
-        print(f"  Cache performance: {cache_stats['hit_rate']} hit rate ({cache_stats['total_hits']} hits, {cache_stats['total_misses']} misses)")
+        # Make database read-only after README extraction is complete
+        self.make_database_readonly(db_path)
     
-    def setup_database_from_gexf(self, gexf_content: str, github_token: str) -> Dict[str, Any]:
+    def setup_database_from_gexf(self, gexf_content: str, github_token: str, session_id: str = None) -> Dict[str, Any]:
         """Set up the Kuzu database from GEXF content and extract README data."""
         try:
             # Check if required modules are available
@@ -1138,6 +1324,8 @@ class GraphRAGService:
                     
                     if has_readmes:
                         print("✅ Database and README data already available, skipping setup")
+                        # Make database read-only since it's complete
+                        self.make_database_readonly(str(self.db_path))
                         return {
                             "success": True,
                             "db_path": str(self.db_path),
@@ -1147,6 +1335,8 @@ class GraphRAGService:
                         print("📝 Database exists but missing README data, extracting READMEs...")
                         # Extract README data
                         self.extract_readmes_from_repos_optimized(str(self.db_path), github_token)
+                        # Make database read-only after README extraction
+                        self.make_database_readonly(str(self.db_path))
                         
                         return {
                             "success": True,
@@ -1160,6 +1350,7 @@ class GraphRAGService:
             
             # Create a new database with hash-based naming
             self.db_path = existing_db_path  # Use hash-based name for consistency
+            self.session_id = session_id  # Track session ownership
             
             # Create temporary GEXF file
             with tempfile.NamedTemporaryFile(mode='w', suffix='.gexf', delete=False) as temp_gexf:
@@ -1171,13 +1362,15 @@ class GraphRAGService:
                 print("Creating Kuzu database from GEXF...")
                 self.create_kuzu_database(temp_gexf_path, str(self.db_path))
                 
-                # Clean up old cache files
-                print("Cleaning up old cache files...")
-                self.cleanup_old_cache()
+                # Database-based system doesn't need file cleanup
+                print("Using database-based README storage...")
                 
                 # Extract README data
                 print("Extracting README data...")
                 self.extract_readmes_from_repos_optimized(str(self.db_path), github_token)
+                
+                # Make database read-only after setup is complete
+                self.make_database_readonly(str(self.db_path))
                 
                 return {
                     "success": True,
@@ -1196,7 +1389,7 @@ class GraphRAGService:
                 "message": "Failed to setup database"
             }
     
-    def setup_database_from_gexf_with_progress(self, gexf_content: str, github_token: str, progress_dict: dict = None) -> Dict[str, Any]:
+    def setup_database_from_gexf_with_progress(self, gexf_content: str, github_token: str, progress_dict: dict = None, session_id: str = None) -> Dict[str, Any]:
         """Set up the Kuzu database from GEXF content and extract README data with progress updates."""
         try:
             # Check if required modules are available
@@ -1247,6 +1440,9 @@ class GraphRAGService:
                         
                         print("✅ Database and README data already available, skipping setup")
                         
+                        # Make database read-only since it's complete
+                        self.make_database_readonly(str(self.db_path))
+                        
                         # Add a small delay to ensure progress messages are sent
                         if progress_dict:
                             import time
@@ -1266,6 +1462,9 @@ class GraphRAGService:
                         
                         # Extract README data with progress updates
                         self.extract_readmes_from_repos_with_progress(str(self.db_path), github_token, progress_dict)
+                        
+                        # Make database read-only after README extraction
+                        self.make_database_readonly(str(self.db_path))
                         
                         # Add a small delay to ensure progress messages are sent
                         if progress_dict:
@@ -1289,6 +1488,7 @@ class GraphRAGService:
                 progress_dict["message"] = "Creating new Kuzu database from GEXF file"
             
             self.db_path = existing_db_path  # Use hash-based name for consistency
+            self.session_id = session_id  # Track session ownership
             
             # Create temporary GEXF file
             with tempfile.NamedTemporaryFile(mode='w', suffix='.gexf', delete=False) as temp_gexf:
@@ -1302,13 +1502,12 @@ class GraphRAGService:
                 
                 # Update progress
                 if progress_dict:
-                    progress_dict["current_step"] = "Cleaning cache..."
+                    progress_dict["current_step"] = "Database ready..."
                     progress_dict["current"] = 20
-                    progress_dict["message"] = "Cleaning up old cache files"
+                    progress_dict["message"] = "Database created, using database-based README storage"
                 
-                # Clean up old cache files
-                print("Cleaning up old cache files...")
-                self.cleanup_old_cache()
+                # Database-based system doesn't need file cleanup
+                print("Using database-based README storage...")
                 
                 # Update progress
                 if progress_dict:
@@ -1323,11 +1522,8 @@ class GraphRAGService:
                     import threading
                     import time
                     
-                    def extract_with_timeout():
-                        self.extract_readmes_from_repos_with_progress(str(self.db_path), github_token, progress_dict)
-                    
                     # Create a thread for README extraction
-                    extraction_thread = threading.Thread(target=extract_with_timeout)
+                    extraction_thread = threading.Thread(target=self.extract_readmes_from_repos_with_progress, args=(str(self.db_path), github_token, progress_dict))
                     extraction_thread.daemon = True
                     extraction_thread.start()
                     
@@ -1348,6 +1544,9 @@ class GraphRAGService:
                     if progress_dict:
                         progress_dict["current_step"] = "README extraction failed, continuing..."
                         progress_dict["message"] = f"README extraction failed: {str(readme_error)[:100]}..."
+                
+                # Make database read-only after setup is complete
+                self.make_database_readonly(str(self.db_path))
                 
                 return {
                     "success": True,
@@ -1575,17 +1774,128 @@ class GraphRAGService:
                 "message": "Failed to get database statistics"
             }
     
-    def cleanup(self):
+    def cleanup(self, session_id: str = None):
         """Clean up temporary files and database."""
+        cleanup_details = {
+            "database_deleted": False,
+            "cache_cleared": False,
+            "session_id": session_id,
+            "errors": []
+        }
+        
         try:
+            # Only cleanup if session_id matches or if no session_id is provided (legacy cleanup)
+            if session_id and self.session_id and session_id != self.session_id:
+                print(f"Skipping cleanup - session mismatch: {session_id} != {self.session_id}")
+                cleanup_details["errors"].append("Session ID mismatch - skipping cleanup")
+                return cleanup_details
+            
+            # Clean up Kuzu database
             if self.db_path and os.path.exists(self.db_path):
-                # For now, just set the path to None without deleting
-                # The database will persist in the kuzu folder for reuse
-                print(f"Database kept at: {self.db_path}")
+                try:
+                    # Close any active connections first
+                    if self.graphrag_instance:
+                        # Close database connections
+                        if hasattr(self.graphrag_instance, 'conn'):
+                            self.graphrag_instance.conn.close()
+                        if hasattr(self.graphrag_instance, 'db'):
+                            self.graphrag_instance.db.close()
+                        self.graphrag_instance = None
+                    
+                    # Delete the database file (Kuzu databases are files, not directories)
+                    os.remove(self.db_path)
+                    print(f"🗑️  Deleted Kuzu database: {self.db_path}")
+                    cleanup_details["database_deleted"] = True
+                    
+                except Exception as db_error:
+                    error_msg = f"Failed to delete database {self.db_path}: {db_error}"
+                    print(f"⚠️  {error_msg}")
+                    cleanup_details["errors"].append(error_msg)
+                
+                # Reset instance variables
                 self.db_path = None
-                self.graphrag_instance = None
+                self.session_id = None
+            
+            # Clean up README cache database (optional - you might want to keep this)
+            # Uncomment the following lines if you want to clear the cache on cleanup
+            # if os.path.exists(self.readme_cache_db_path):
+            #     try:
+            #         os.remove(self.readme_cache_db_path)
+            #         print(f"🗑️  Deleted README cache database: {self.readme_cache_db_path}")
+            #         cleanup_details["cache_cleared"] = True
+            #     except Exception as cache_error:
+            #         error_msg = f"Failed to delete cache database {self.readme_cache_db_path}: {cache_error}"
+            #         print(f"⚠️  {error_msg}")
+            #         cleanup_details["errors"].append(error_msg)
+            
+            print("✅ GraphRAG cleanup completed")
+            
         except Exception as e:
-            print(f"Warning: Failed to cleanup GraphRAG resources: {e}")
+            error_msg = f"Unexpected error during cleanup: {e}"
+            print(f"❌ {error_msg}")
+            cleanup_details["errors"].append(error_msg)
+        
+        return cleanup_details
+    
+    def detect_graph_changes(self, current_gexf_content: str) -> Dict[str, Any]:
+        """Detect if the current graph has changed compared to the GraphRAG database."""
+        try:
+            if not self.db_path or not os.path.exists(self.db_path):
+                return {
+                    "has_changes": False,
+                    "message": "No GraphRAG database exists to compare against"
+                }
+            
+            # Calculate hash of current GEXF content
+            import hashlib
+            current_hash = hashlib.md5(current_gexf_content.encode()).hexdigest()
+            
+            # Extract hash from database path (format: graphrag_db_{hash})
+            db_name = os.path.basename(self.db_path)
+            if db_name.startswith("graphrag_db_"):
+                stored_hash = db_name[12:]  # Remove "graphrag_db_" prefix
+                
+                if current_hash != stored_hash:
+                    return {
+                        "has_changes": True,
+                        "current_hash": current_hash,
+                        "stored_hash": stored_hash,
+                        "message": "Graph structure has changed. GraphRAG database may be outdated."
+                    }
+                else:
+                    return {
+                        "has_changes": False,
+                        "message": "Graph structure matches current GraphRAG database"
+                    }
+            else:
+                return {
+                    "has_changes": True,
+                    "message": "Cannot determine graph hash from database path"
+                }
+                
+        except Exception as e:
+            return {
+                "has_changes": True,
+                "error": str(e),
+                "message": "Error detecting graph changes"
+            }
+    
+    def should_rebuild_database(self, current_gexf_content: str) -> Dict[str, Any]:
+        """Check if GraphRAG database should be rebuilt based on graph changes."""
+        change_detection = self.detect_graph_changes(current_gexf_content)
+        
+        if change_detection.get("has_changes", False):
+            return {
+                "should_rebuild": True,
+                "reason": "Graph structure has changed",
+                "details": change_detection,
+                "message": "The graph structure has changed since the GraphRAG database was created. Would you like to rebuild the database to include the latest changes?"
+            }
+        else:
+            return {
+                "should_rebuild": False,
+                "message": "GraphRAG database is up to date"
+            }
 
 class MultiLLMGraphRAG:
     """Enhanced GraphRAG system with support for multiple LLM providers."""
@@ -1593,7 +1903,7 @@ class MultiLLMGraphRAG:
     def __init__(self, db_path: str, llm_provider: str = "openai"):
         """Initialize the GraphRAG system."""
         self.db_path = db_path
-        self.db = kuzu.Database(db_path)
+        self.db = kuzu.Database(db_path, read_only=True)  # Use read-only mode for GraphRAG
         self.conn = kuzu.Connection(self.db)
         self.llm_provider = llm_provider
         
@@ -1931,13 +2241,13 @@ README Preview: {content_preview}
         return result.to_dict('records')
     
     def _get_readme_content(self, repo_id: str) -> Optional[str]:
-        """Get README content for a repository."""
+        """Get README content for a repository from the database."""
         
         try:
             query = """
             MATCH (r:Repository)
-            WHERE r.readme_content IS NOT NULL AND r.readme_content <> ''
-            WHERE r.repo_id = $repo_id
+            WHERE r.id = $repo_id
+            AND r.readme_content IS NOT NULL AND r.readme_content <> ''
             RETURN r.readme_content
             """
             
@@ -1945,8 +2255,8 @@ README Preview: {content_preview}
             
             if not result.empty:
                 return result.iloc[0, 0]
-        except:
-            pass
+        except Exception as e:
+            print(f"Error retrieving README for {repo_id}: {e}")
         
         return None
     
