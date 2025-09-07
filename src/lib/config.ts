@@ -1,5 +1,9 @@
 // Backend API configuration
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// Use environment var if provided; otherwise default to same-origin
+const ENV_API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined;
+export const API_BASE_URL = (ENV_API_BASE_URL && ENV_API_BASE_URL.trim() !== "")
+    ? ENV_API_BASE_URL
+    : window.location.origin;
 
 
 // API endpoints
