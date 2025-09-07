@@ -53,13 +53,16 @@ class TopicService:
                         "cached": True
                     }
 
-            # Use a more efficient query that filters early
+            # Use exact topic matching instead of substring matching
             query = """
                 WITH filtered_repos AS (
                     SELECT DISTINCT r.nameWithOwner
                     FROM repos r
                     JOIN repo_topics t ON r.nameWithOwner = t.repo
-                    WHERE LOWER(t.topics) LIKE '%' || ? || '%'
+                    WHERE LOWER(t.topics) LIKE '%|' || ? || '|%' 
+                       OR LOWER(t.topics) LIKE ? || '|%' 
+                       OR LOWER(t.topics) LIKE '%|' || ?
+                       OR LOWER(t.topics) = ?
                 ),
                 split_topics AS (
                     SELECT 
@@ -78,8 +81,8 @@ class TopicService:
                 ORDER BY count DESC
             """
             
-            # Execute query with streaming
-            result = self.con.execute(query, [search_term, search_term]).fetchall()
+            # Execute query with streaming - pass search_term 4 times for the 4 LIKE conditions, then once more for exclusion
+            result = self.con.execute(query, [search_term, search_term, search_term, search_term, search_term]).fetchall()
             
             # Convert results to the expected format
             topics = [{"name": name.lower(), "count": count} for name, count in result]
