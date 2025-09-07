@@ -60,14 +60,20 @@ class TopicService:
                     FROM repos r
                     JOIN repo_topics t ON r.nameWithOwner = t.repo
                     WHERE LOWER(t.topics) LIKE '%' || ? || '%'
+                ),
+                split_topics AS (
+                    SELECT 
+                        fr.nameWithOwner,
+                        unnest(string_split(t.topics, '|')) as topic
+                    FROM filtered_repos fr
+                    JOIN repo_topics t ON fr.nameWithOwner = t.repo
                 )
                 SELECT 
-                    unnest(string_split(t.topics, '|')) as topic,
+                    topic,
                     COUNT(*) as count
-                FROM filtered_repos fr
-                JOIN repo_topics t ON fr.nameWithOwner = t.repo
-                WHERE LOWER(unnest(string_split(t.topics, '|'))) != ?
-                GROUP BY unnest(string_split(t.topics, '|'))
+                FROM split_topics
+                WHERE LOWER(topic) != ?
+                GROUP BY topic
                 HAVING COUNT(*) > 2
                 ORDER BY count DESC
             """
