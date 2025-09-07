@@ -99,7 +99,7 @@ kill_port 5173
 # Start the Gunicorn backend server in the background
 echo "Starting backend server..."
 cd backend/app
-gunicorn -b 127.0.0.1:5002 --timeout 300 --workers 1 main:app &
+gunicorn -b 127.0.0.1:5002 --timeout 3600 --workers 1 main:app &
 
 # Wait a moment for the backend to start
 sleep 2

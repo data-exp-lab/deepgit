@@ -289,20 +289,47 @@ const TopicHistogram: FC = () => {
 
     // Add API key input modal - initialize to false instead of !apiKey
     const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+    const [hasConfiguredApiKey, setHasConfiguredApiKey] = useState(false);
+
+    // Load configuration from backend on component mount
+    useEffect(() => {
+        const loadConfiguration = async () => {
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.config) {
+                        // Check if Google GenAI has an API key configured
+                        const googleConfig = data.config.ai_providers?.google_genai;
+                        if (googleConfig?.has_api_key) {
+                            setHasConfiguredApiKey(true);
+                        } else {
+                            setHasConfiguredApiKey(false);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('Could not load configuration:', error);
+                // This is not an error - config loading is optional
+            }
+        };
+
+        loadConfiguration();
+    }, []);
 
     // Add state for AI suggestions
     const [llmSuggestionsState, setLlmSuggestionsState] = useState<string[]>([]);
 
     // Function to handle topic click
     const handleTopicClick = (topic: string) => {
-        if (!apiKey) {
+        if (!hasConfiguredApiKey && !apiKey) {
             // Store the topic that was clicked for later explanation
             setPendingExplanationTopic(topic);
             setShowApiKeyModal(true);
             return;
         }
 
-        // If we have an API key, fetch explanation immediately
+        // If we have an API key (either configured or entered), fetch explanation immediately
         setSelectedTopicForExplanation(topic);
         setTopicExplanation("");  // Clear previous explanation
         setIsLoadingExplanation(true);  // Set loading state
@@ -346,9 +373,9 @@ const TopicHistogram: FC = () => {
 
     // Function to fetch topic explanation
     const fetchTopicExplanation = async (topic: string) => {
-        if (!apiKey) {
+        if (!hasConfiguredApiKey && !apiKey) {
             notify({
-                message: "Please set your Google API key first",
+                message: "Please set your Google API key first or configure one in the backend",
                 type: "warning"
             });
             setSelectedTopicForExplanation(null);
@@ -357,17 +384,24 @@ const TopicHistogram: FC = () => {
         }
 
         try {
+            // Prepare request body - only include apiKey if it's provided
+            const requestBody: any = {
+                topic: topic,
+                searchTerm: searchTerm,
+                originalTopic: originalTopic
+            };
+
+            // Only add apiKey if it's provided (for frontend override)
+            if (apiKey && apiKey.trim()) {
+                requestBody.apiKey = apiKey;
+            }
+
             const response = await fetch(API_ENDPOINTS.EXPLAIN_TOPIC, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    topic: topic,
-                    searchTerm: searchTerm,
-                    originalTopic: originalTopic,
-                    apiKey: apiKey
-                })
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) {
@@ -424,18 +458,26 @@ const TopicHistogram: FC = () => {
         setLlmSuggestionsState([]); // Clear previous suggestions immediately
         try {
             // console.log('Requesting AI suggestions with:', { model, prompt, apiKey, topics });
+
+            // Prepare request body - only include apiKey if it's provided
+            const requestBody: any = {
+                selectedModel: model,
+                customPrompt: prompt,
+                selectedTopics: topics,
+                searchTerm: searchTerm
+            };
+
+            // Only add apiKey if it's provided (for frontend override)
+            if (apiKey && apiKey.trim()) {
+                requestBody.apiKey = apiKey;
+            }
+
             const response = await fetch(API_ENDPOINTS.AI_PROCESS, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    selectedModel: model,
-                    customPrompt: prompt,
-                    apiKey: apiKey,
-                    selectedTopics: topics,
-                    searchTerm: searchTerm
-                })
+                body: JSON.stringify(requestBody)
             });
 
             const data = await response.json();
@@ -618,7 +660,7 @@ const TopicHistogram: FC = () => {
                                         id="apiKey"
                                         value={apiKey}
                                         onChange={handleApiKeyChange}
-                                        placeholder="Enter your Google Gemini API key"
+                                        placeholder={hasConfiguredApiKey ? "✓ API key loaded from configuration" : "Enter your Google Gemini API key"}
                                         autoComplete="off"
                                     />
                                     <div className="form-text">
@@ -727,7 +769,10 @@ const TopicHistogram: FC = () => {
                                     alignItems: "center",
                                     justifyContent: "center"
                                 }}
-                                title={apiKey ? 'Change Gemini API Key' : 'Set Gemini API Key'}
+                                title={hasConfiguredApiKey ?
+                                    (apiKey ? 'Change Gemini API Key' : 'Configure Gemini API Key') :
+                                    (apiKey ? 'Change Gemini API Key' : 'Set Gemini API Key')
+                                }
                             >
                                 <FaCog className="m-auto" />
                             </button>

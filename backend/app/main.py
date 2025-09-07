@@ -5,9 +5,11 @@ from services.ai_service import AITopicProcessor
 from services.gexf_node_service import GexfNodeGenerator
 from services.edge_generation_service import EdgeGenerationService
 from services.graphrag_service import graphrag_service
+from config_manager import config_manager
 import os
 import asyncio
 import re
+from pathlib import Path
 import json
 import time
 
@@ -101,6 +103,22 @@ def ai_process():
         selected_topics = data.get("selectedTopics", [])
         search_term = data.get("searchTerm", "")
 
+        # If no API key provided, try to get it from configuration based on model
+        if not api_key:
+            if model.startswith("gemini") or model.startswith("google"):
+                api_key = config_manager.get("ai_providers.google_genai.api_key")
+            elif model.startswith("gpt") or model.startswith("openai"):
+                api_key = config_manager.get("ai_providers.openai.api_key")
+            elif model.startswith("claude") or model.startswith("anthropic"):
+                api_key = config_manager.get("ai_providers.anthropic.api_key")
+            
+            if not api_key:
+                return jsonify({
+                    "success": False,
+                    "error": "API key is required. Please provide one or configure it in the backend.",
+                    "message": "API key is required. Please provide one or configure it in the backend."
+                }), 400
+
         # Use the AI processor to analyze the topics
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -142,6 +160,18 @@ def explain_topic():
         original_topic = data.get("originalTopic", "")
         api_key = data.get("apiKey", "")
 
+        # If no API key provided, try to get it from configuration
+        if not api_key:
+            api_key = config_manager.get("ai_providers.google_genai.api_key")
+            if not api_key:
+                print("No API key provided and none configured")
+                return jsonify(
+                    {
+                        "success": False,
+                        "message": "API key is required. Please provide one or configure it in the backend.",
+                    }
+                ), 400
+
         if not topic or not search_term or not original_topic:
             print("Missing required parameters:", {
                 "topic": bool(topic),
@@ -152,15 +182,6 @@ def explain_topic():
                 {
                     "success": False,
                     "message": "Missing required parameters: topic, searchTerm, or originalTopic",
-                }
-            ), 400
-
-        if not api_key:
-            print("Missing API key")
-            return jsonify(
-                {
-                    "success": False,
-                    "message": "API key is required",
                 }
             ), 400
 
@@ -709,10 +730,32 @@ def graphrag_setup_endpoint():
     try:
         data = request.get_json()
         
-        # Extract parameters
+        # Extract parameters with config fallback
         provider = data.get("provider", "openai")
         api_keys = data.get("apiKeys", {})
         graph_file = data.get("graphFile", "")
+        
+        # Merge frontend API keys with config and convert to GraphRAG format
+        graphrag_api_keys = {}
+        if provider == "openai":
+            api_key = api_keys.get("openaiKey") or config_manager.get("ai_providers.openai.api_key", "")
+            graphrag_api_keys = {"openaiKey": api_key}
+        elif provider == "azure_openai":
+            api_key = api_keys.get("azureOpenAIKey") or config_manager.get("ai_providers.azure_openai.api_key", "")
+            endpoint = api_keys.get("azureOpenAIEndpoint") or config_manager.get("ai_providers.azure_openai.endpoint", "")
+            deployment = api_keys.get("azureOpenAIDeployment") or config_manager.get("ai_providers.azure_openai.deployment_name", "")
+            graphrag_api_keys = {
+                "azureOpenAIKey": api_key,
+                "azureOpenAIEndpoint": endpoint,
+                "azureOpenAIDeployment": deployment
+            }
+        elif provider == "google_genai":
+            api_key = api_keys.get("geminiKey") or config_manager.get("ai_providers.google_genai.api_key", "")
+            graphrag_api_keys = {"geminiKey": api_key}
+            provider = "gemini"  # Map to GraphRAG service provider name
+        elif provider == "anthropic":
+            api_key = api_keys.get("anthropicKey") or config_manager.get("ai_providers.anthropic.api_key", "")
+            graphrag_api_keys = {"anthropicKey": api_key}
         
         if not graph_file:
             return jsonify({
@@ -721,7 +764,7 @@ def graphrag_setup_endpoint():
                 "message": "Please provide a graph file"
             }), 400
         
-        github_token = api_keys.get("githubToken", "")
+        github_token = api_keys.get("githubToken", config_manager.get_github_token())
         if not github_token:
             return jsonify({
                 "success": False,
@@ -731,26 +774,57 @@ def graphrag_setup_endpoint():
         
         # Reset progress
         graphrag_progress = {
-            "current_step": "Starting setup...",
+            "current_step": "Checking existing database...",
             "current": 0,
             "total": 100,
-            "message": "Initializing GraphRAG setup",
+            "message": "Checking if database already exists for this graph",
             "status": "running"
         }
         
-        # Setup database from GEXF content with progress updates
-        setup_result = graphrag_service.setup_database_from_gexf_with_progress(graph_file, github_token, graphrag_progress)
-        if not setup_result["success"]:
-            graphrag_progress["status"] = "error"
-            graphrag_progress["message"] = setup_result.get("error", "Setup failed")
-            return jsonify(setup_result), 500
+        # Check if database already exists for this graph
+        db_check = graphrag_service.check_database_exists(graph_file)
+        
+        if db_check["exists"]:
+            # Database exists, just update provider and README data if needed
+            print(f"🔄 Database exists: {db_check['message']}")
+            graphrag_service.db_path = Path(db_check["db_path"])
+            
+            # Update progress
+            graphrag_progress["current_step"] = "Updating README data..."
+            graphrag_progress["current"] = 20
+            graphrag_progress["message"] = "Updating README content with new GitHub token"
+            
+            # Update README data with new GitHub token
+            readme_result = graphrag_service.update_readme_data(github_token, graphrag_progress)
+            if not readme_result["success"]:
+                print(f"⚠️ README update failed: {readme_result.get('error', 'Unknown error')}")
+                # Continue anyway, as README update is not critical
+            
+            # Update progress
+            graphrag_progress["current_step"] = "Database ready..."
+            graphrag_progress["current"] = 30
+            graphrag_progress["message"] = "Database is ready, initializing AI system"
+            
+        else:
+            # Database doesn't exist, create it
+            print(f"🆕 Creating new database: {db_check['message']}")
+            graphrag_progress["current_step"] = "Creating database..."
+            graphrag_progress["current"] = 10
+            graphrag_progress["message"] = "Creating new database from graph data"
+            
+            # Setup database from GEXF content with progress updates
+            setup_result = graphrag_service.setup_database_from_gexf_with_progress(graph_file, github_token, graphrag_progress)
+            if not setup_result["success"]:
+                graphrag_progress["status"] = "error"
+                graphrag_progress["message"] = setup_result.get("error", "Setup failed")
+                return jsonify(setup_result), 500
         
         # Initialize GraphRAG with the selected provider
         graphrag_progress["current_step"] = "Initializing AI system..."
         graphrag_progress["current"] = 90
         graphrag_progress["message"] = "Setting up AI analysis system"
         
-        init_result = graphrag_service.initialize_graphrag(provider, api_keys)
+        init_result = graphrag_service.initialize_graphrag(provider, graphrag_api_keys)
         if not init_result["success"]:
             graphrag_progress["status"] = "error"
             graphrag_progress["message"] = init_result.get("error", "AI initialization failed")
@@ -778,16 +852,281 @@ def graphrag_setup_endpoint():
         }), 500
 
 
+@app.route("/api/graphrag-change-provider", methods=["POST"])
+def graphrag_change_provider_endpoint():
+    """Change GraphRAG provider without recreating the database."""
+    try:
+        data = request.get_json()
+        
+        # Extract parameters with config fallback
+        provider = data.get("provider", "openai")
+        api_keys = data.get("apiKeys", {})
+        
+        # Merge frontend API keys with config and convert to GraphRAG format
+        graphrag_api_keys = {}
+        if provider == "openai":
+            api_key = api_keys.get("openaiKey") or config_manager.get("ai_providers.openai.api_key", "")
+            graphrag_api_keys = {"openaiKey": api_key}
+        elif provider == "azure_openai":
+            api_key = api_keys.get("azureOpenAIKey") or config_manager.get("ai_providers.azure_openai.api_key", "")
+            endpoint = api_keys.get("azureOpenAIEndpoint") or config_manager.get("ai_providers.azure_openai.endpoint", "")
+            deployment = api_keys.get("azureOpenAIDeployment") or config_manager.get("ai_providers.azure_openai.deployment_name", "")
+            graphrag_api_keys = {
+                "azureOpenAIKey": api_key,
+                "azureOpenAIEndpoint": endpoint,
+                "azureOpenAIDeployment": deployment
+            }
+        elif provider == "google_genai":
+            api_key = api_keys.get("geminiKey") or config_manager.get("ai_providers.google_genai.api_key", "")
+            graphrag_api_keys = {"geminiKey": api_key}
+            provider = "gemini"  # Map to GraphRAG service provider name
+        elif provider == "anthropic":
+            api_key = api_keys.get("anthropicKey") or config_manager.get("ai_providers.anthropic.api_key", "")
+            graphrag_api_keys = {"anthropicKey": api_key}
+        
+        if not provider:
+            return jsonify({
+                "success": False,
+                "error": "Provider is required",
+                "message": "Please provide a provider"
+            }), 400
+        
+        # Change provider
+        result = graphrag_service.change_provider(provider, graphrag_api_keys)
+        
+        if result["success"]:
+            return jsonify({
+                "success": True,
+                "message": f"Successfully changed provider to {provider}",
+                "provider": provider
+            })
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred while changing provider"
+        }), 500
+
+
+@app.route("/api/graphrag-update-readme", methods=["POST"])
+def graphrag_update_readme_endpoint():
+    """Update README data with new GitHub token without recreating the database."""
+    try:
+        data = request.get_json()
+        
+        # Extract parameters
+        github_token = data.get("githubToken", config_manager.get_github_token())
+        
+        if not github_token:
+            return jsonify({
+                "success": False,
+                "error": "GitHub token is required",
+                "message": "Please provide a GitHub personal access token"
+            }), 400
+        
+        # Update README data
+        result = graphrag_service.update_readme_data(github_token)
+        
+        if result["success"]:
+            return jsonify({
+                "success": True,
+                "message": "README data updated successfully"
+            })
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred while updating README data"
+        }), 500
+
+
+@app.route("/api/graphrag-fix-schema", methods=["POST"])
+def graphrag_fix_schema_endpoint():
+    """Fix database schema by adding missing README properties."""
+    try:
+        if not graphrag_service.db_path:
+            return jsonify({
+                "success": False,
+                "error": "No database path set",
+                "message": "Please run GraphRAG setup first"
+            }), 400
+        
+        # Fix database schema
+        success = graphrag_service.fix_database_schema(graphrag_service.db_path)
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": "Database schema fixed successfully"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Failed to fix database schema"
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred while fixing database schema"
+        }), 500
+
+
+@app.route("/api/config", methods=["GET"])
+def get_config_endpoint():
+    """Get current configuration (without sensitive data)."""
+    try:
+        # Return configuration without API keys for security
+        safe_config = {
+            "ai_providers": {
+                provider: {
+                    "model": config_manager.get(f"ai_providers.{provider}.model", ""),
+                    "base_url": config_manager.get(f"ai_providers.{provider}.base_url", ""),
+                    "endpoint": config_manager.get(f"ai_providers.{provider}.endpoint", ""),
+                    "deployment_name": config_manager.get(f"ai_providers.{provider}.deployment_name", ""),
+                    "api_version": config_manager.get(f"ai_providers.{provider}.api_version", ""),
+                    "has_api_key": bool(config_manager.get(f"ai_providers.{provider}.api_key", ""))
+                }
+                for provider in ["openai", "azure_openai", "google_genai", "anthropic"]
+            },
+            "github": {
+                "rate_limit_per_hour": config_manager.get("github.rate_limit_per_hour", 5000),
+                "has_token": bool(config_manager.get("github.token", ""))
+            },
+            "graphrag": config_manager.get_graphrag_config(),
+            "server": config_manager.get_server_config(),
+            "database": config_manager.get_database_config()
+        }
+        
+        return jsonify({
+            "success": True,
+            "config": safe_config
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred while getting configuration"
+        }), 500
+
+
+@app.route("/api/config/keys", methods=["GET"])
+def get_config_keys_endpoint():
+    """Get API keys from configuration for GraphRAG setup."""
+    try:
+        keys_config = {
+            "github": {
+                "token": config_manager.get("github.token", "")
+            },
+            "ai_providers": {
+                "openai": {
+                    "api_key": config_manager.get("ai_providers.openai.api_key", "")
+                },
+                "azure_openai": {
+                    "api_key": config_manager.get("ai_providers.azure_openai.api_key", ""),
+                    "endpoint": config_manager.get("ai_providers.azure_openai.endpoint", ""),
+                    "deployment_name": config_manager.get("ai_providers.azure_openai.deployment_name", "")
+                },
+                "google_genai": {
+                    "api_key": config_manager.get("ai_providers.google_genai.api_key", "")
+                }
+            }
+        }
+        
+        return jsonify({
+            "success": True,
+            "keys": keys_config
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+@app.route("/api/config/validate", methods=["GET"])
+def validate_config_endpoint():
+    """Validate current configuration."""
+    try:
+        validation = config_manager.validate_config()
+        
+        return jsonify({
+            "success": True,
+            "validation": validation
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred while validating configuration"
+        }), 500
+
+
+@app.route("/api/config/example", methods=["POST"])
+def create_example_config_endpoint():
+    """Create an example configuration file."""
+    try:
+        success = config_manager.create_example_config()
+        
+        if success:
+            return jsonify({
+                "success": True,
+                "message": "Example configuration file created successfully"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Failed to create example configuration file"
+            }), 500
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "An error occurred while creating example configuration"
+        }), 500
+
+
 @app.route("/api/graphrag", methods=["POST"])
 def graphrag_endpoint():
     """GraphRAG endpoint for AI-powered graph analysis."""
     try:
         data = request.get_json()
         
-        # Extract parameters
+        # Extract parameters with config fallback
         query = data.get("query", "")
         provider = data.get("provider", "openai")
         api_keys = data.get("apiKeys", {})
+        
+        # Merge frontend API keys with config and convert to GraphRAG format
+        graphrag_api_keys = {}
+        if provider == "openai":
+            api_key = api_keys.get("openaiKey") or config_manager.get("ai_providers.openai.api_key", "")
+            graphrag_api_keys = {"openaiKey": api_key}
+        elif provider == "azure_openai":
+            api_key = api_keys.get("azureOpenAIKey") or config_manager.get("ai_providers.azure_openai.api_key", "")
+            endpoint = api_keys.get("azureOpenAIEndpoint") or config_manager.get("ai_providers.azure_openai.endpoint", "")
+            deployment = api_keys.get("azureOpenAIDeployment") or config_manager.get("ai_providers.azure_openai.deployment_name", "")
+            graphrag_api_keys = {
+                "azureOpenAIKey": api_key,
+                "azureOpenAIEndpoint": endpoint,
+                "azureOpenAIDeployment": deployment
+            }
+        elif provider == "google_genai":
+            api_key = api_keys.get("geminiKey") or config_manager.get("ai_providers.google_genai.api_key", "")
+            graphrag_api_keys = {"geminiKey": api_key}
+            provider = "gemini"  # Map to GraphRAG service provider name
+        elif provider == "anthropic":
+            api_key = api_keys.get("anthropicKey") or config_manager.get("ai_providers.anthropic.api_key", "")
+            graphrag_api_keys = {"anthropicKey": api_key}
         
         if not query:
             return jsonify({
@@ -795,6 +1134,11 @@ def graphrag_endpoint():
                 "error": "Query is required",
                 "message": "Please provide a query"
             }), 400
+        
+        # Initialize GraphRAG with the selected provider if not already initialized
+        init_result = graphrag_service.initialize_graphrag(provider, graphrag_api_keys)
+        if not init_result["success"]:
+            return jsonify(init_result), 500
         
         # Execute the query
         query_result = graphrag_service.query_graphrag(query)

@@ -91,6 +91,10 @@ class GraphRAGService:
         self.graphrag_instance = None
         self.cache_dir = Path(__file__).parent.parent / "cache"
         self.cache_dir.mkdir(exist_ok=True)
+        
+        # In-memory cache for faster access
+        self._memory_cache = {}
+        self._cache_stats = {"hits": 0, "misses": 0}
     
     def get_cache_key(self, owner, repo):
         """Generate a cache key for a repository."""
@@ -99,16 +103,28 @@ class GraphRAGService:
     def get_cached_readme(self, owner, repo):
         """Get README content from cache if available."""
         cache_key = self.get_cache_key(owner, repo)
-        cache_file = self.cache_dir / f"{cache_key}.txt"
         
+        # Check in-memory cache first (fastest)
+        if cache_key in self._memory_cache:
+            self._cache_stats["hits"] += 1
+            return self._memory_cache[cache_key]
+        
+        # Check file cache
+        cache_file = self.cache_dir / f"{cache_key}.txt"
         if cache_file.exists():
             # Check if cache is less than 24 hours old
             if time.time() - cache_file.stat().st_mtime < 86400:  # 24 hours
                 try:
                     with open(cache_file, 'r', encoding='utf-8') as f:
-                        return f.read()
+                        content = f.read()
+                        # Store in memory cache for faster future access
+                        self._memory_cache[cache_key] = content
+                        self._cache_stats["hits"] += 1
+                        return content
                 except:
                     pass
+        
+        self._cache_stats["misses"] += 1
         return None
     
     def cache_readme(self, owner, repo, content):
@@ -117,13 +133,100 @@ class GraphRAGService:
             return
             
         cache_key = self.get_cache_key(owner, repo)
-        cache_file = self.cache_dir / f"{cache_key}.txt"
         
+        # Store in memory cache first (fastest)
+        self._memory_cache[cache_key] = content
+        
+        # Also store in file cache for persistence
+        cache_file = self.cache_dir / f"{cache_key}.txt"
         try:
             with open(cache_file, 'w', encoding='utf-8') as f:
                 f.write(content)
         except Exception as e:
             print(f"Failed to cache README for {owner}/{repo}: {e}")
+    
+    def fix_database_schema(self, db_path):
+        """Fix database schema by adding missing README properties."""
+        if kuzu is None:
+            raise ImportError("kuzu is not available")
+        
+        print("Checking and fixing database schema...")
+        db = kuzu.Database(db_path)
+        conn = kuzu.Connection(db)
+        
+        # Check if README properties exist
+        try:
+            conn.execute("MATCH (r:Repository) RETURN r.readme_content LIMIT 1")
+            print("✅ README properties already exist")
+            return True
+        except Exception as e:
+            print(f"⚠️  README properties missing: {e}")
+            print("Adding README properties to Repository table...")
+            
+            # Try to add properties using ALTER TABLE
+            try:
+                # Add readme_content property
+                conn.execute("ALTER TABLE Repository ADD COLUMN readme_content STRING")
+                print("✅ Added readme_content property")
+            except Exception as add_e:
+                print(f"⚠️  ALTER TABLE failed: {add_e}")
+                print("Kuzu may not support ALTER TABLE ADD COLUMN")
+                print("Properties will be added during data insertion")
+                # Don't return False here - continue with the process
+                # The properties will be added when we insert data
+            
+            try:
+                # Add readme_length property
+                conn.execute("ALTER TABLE Repository ADD COLUMN readme_length INT64")
+                print("✅ Added readme_length property")
+            except Exception as add_e:
+                print(f"⚠️  ALTER TABLE failed: {add_e}")
+                print("Properties will be added during data insertion")
+            
+            # Verify the properties were added
+            try:
+                conn.execute("MATCH (r:Repository) RETURN r.readme_content LIMIT 1")
+                print("✅ README properties verified successfully")
+                return True
+            except Exception as verify_e:
+                print(f"❌ README properties verification failed: {verify_e}")
+                return False
+    
+    def preload_cache(self):
+        """Preload all cached READMEs into memory for faster access."""
+        print("Preloading README cache into memory...")
+        cache_files = list(self.cache_dir.glob("*.txt"))
+        loaded_count = 0
+        
+        for cache_file in cache_files:
+            try:
+                # Extract owner/repo from filename (hash)
+                cache_key = cache_file.stem
+                
+                # Check if cache is less than 24 hours old
+                if time.time() - cache_file.stat().st_mtime < 86400:  # 24 hours
+                    with open(cache_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        self._memory_cache[cache_key] = content
+                        loaded_count += 1
+            except Exception as e:
+                print(f"Failed to load cache file {cache_file}: {e}")
+        
+        print(f"Preloaded {loaded_count} READMEs into memory cache")
+        return loaded_count
+    
+    def get_cache_stats(self):
+        """Get cache statistics."""
+        total_hits = self._cache_stats["hits"]
+        total_misses = self._cache_stats["misses"]
+        hit_rate = total_hits / (total_hits + total_misses) * 100 if (total_hits + total_misses) > 0 else 0
+        
+        return {
+            "memory_cache_size": len(self._memory_cache),
+            "total_hits": total_hits,
+            "total_misses": total_misses,
+            "hit_rate": f"{hit_rate:.1f}%"
+        }
     
     def cleanup_old_cache(self, max_age_hours=24):
         """Clean up cache files older than specified hours."""
@@ -162,50 +265,99 @@ class GraphRAGService:
         if nodes_elem is None or edges_elem is None:
             raise ValueError("Could not find nodes or edges section")
         
-        # Create Kuzu database
-        print(f"Creating Kuzu database at: {db_path}")
-        db = kuzu.Database(db_path)
-        conn = kuzu.Connection(db)
+        # Create or connect to Kuzu database
+        if os.path.exists(db_path):
+            print(f"Connecting to existing Kuzu database at: {db_path}")
+            db = kuzu.Database(db_path)
+            conn = kuzu.Connection(db)
+            
+            # Check if tables already exist
+            try:
+                conn.execute("MATCH (r:Repository) RETURN COUNT(r) LIMIT 1")
+                print("Database already contains Repository table, skipping creation")
+                return
+            except:
+                print("Repository table not found, will create it")
+        else:
+            print(f"Creating new Kuzu database at: {db_path}")
+            db = kuzu.Database(db_path)
+            conn = kuzu.Connection(db)
         
-        # Create node table schema
-        node_schema = """
-        CREATE NODE TABLE Repository (
-            id STRING,
-            label STRING,
-            github_url STRING,
-            stars INT64,
-            forks INT64,
-            watchers INT64,
-            isArchived BOOLEAN,
-            languageCount INT64,
-            pullRequests INT64,
-            issues INT64,
-            primaryLanguage STRING,
-            createdAt_year INT64,
-            license STRING,
-            topics STRING,
-            contributors STRING,
-            stargazers STRING,
-            PRIMARY KEY (id)
-        )
-        """
+        # Create node table schema (only if it doesn't exist)
+        try:
+            node_schema = """
+            CREATE NODE TABLE Repository (
+                id STRING,
+                label STRING,
+                github_url STRING,
+                stars INT64,
+                forks INT64,
+                watchers INT64,
+                isArchived BOOLEAN,
+                languageCount INT64,
+                pullRequests INT64,
+                issues INT64,
+                primaryLanguage STRING,
+                createdAt_year INT64,
+                license STRING,
+                topics STRING,
+                contributors STRING,
+                stargazers STRING,
+                readme_content STRING,
+                readme_length INT64,
+                PRIMARY KEY (id)
+            )
+            """
+            conn.execute(node_schema)
+            print("Created Repository node table")
+        except Exception as e:
+            if "already exists" in str(e).lower():
+                print("Repository node table already exists, skipping creation")
+                # Check if README properties exist, if not add them
+                try:
+                    conn.execute("MATCH (r:Repository) RETURN r.readme_content LIMIT 1")
+                    print("README properties already exist")
+                except:
+                    print("Adding README properties to existing Repository table...")
+                    try:
+                        # Add readme_content property
+                        conn.execute("ALTER TABLE Repository ADD COLUMN readme_content STRING")
+                        print("Added readme_content property")
+                    except Exception as add_e:
+                        if "already exists" in str(add_e).lower():
+                            print("readme_content property already exists")
+                        else:
+                            print(f"Warning: Could not add readme_content property: {add_e}")
+                    
+                    try:
+                        # Add readme_length property
+                        conn.execute("ALTER TABLE Repository ADD COLUMN readme_length INT64")
+                        print("Added readme_length property")
+                    except Exception as add_e:
+                        if "already exists" in str(add_e).lower():
+                            print("readme_length property already exists")
+                        else:
+                            print(f"Warning: Could not add readme_length property: {add_e}")
+            else:
+                raise e
         
-        # Create edge table schema
-        edge_schema = """
-        CREATE REL TABLE StargazerOverlap (
-            FROM Repository TO Repository,
-            weight DOUBLE,
-            edge_type STRING,
-            shared_stargazers STRING
-        )
-        """
-        
-        # Execute schema creation
-        print("Creating node table...")
-        conn.execute(node_schema)
-        
-        print("Creating edge table...")
-        conn.execute(edge_schema)
+        # Create edge table schema (only if it doesn't exist)
+        try:
+            edge_schema = """
+            CREATE REL TABLE StargazerOverlap (
+                FROM Repository TO Repository,
+                weight DOUBLE,
+                edge_type STRING,
+                shared_stargazers STRING
+            )
+            """
+            conn.execute(edge_schema)
+            print("Created StargazerOverlap edge table")
+        except Exception as e:
+            if "already exists" in str(e).lower():
+                print("StargazerOverlap edge table already exists, skipping creation")
+            else:
+                raise e
         
         # Parse nodes and create CSV file
         print("Parsing nodes...")
@@ -248,7 +400,7 @@ class GraphRAGService:
                     node_id, label, github_url, stars, forks, watchers,
                     is_archived, language_count, pull_requests, issues,
                     primary_language, created_at_year, license_info, topics,
-                    contributors, stargazers
+                    contributors, stargazers, '', 0  # readme_content, readme_length
                 ])
             
             node_csv_path = node_csv.name
@@ -283,12 +435,28 @@ class GraphRAGService:
             
             edge_csv_path = edge_csv.name
         
-        # Import data using COPY FROM
-        print("Importing nodes...")
-        conn.execute(f"COPY Repository FROM '{node_csv_path}' (HEADER=false)")
+        # Import data using COPY FROM (only if tables are empty)
+        try:
+            # Check if Repository table has data
+            result = conn.execute("MATCH (r:Repository) RETURN COUNT(r)").get_as_df()
+            if result.iloc[0, 0] == 0:
+                print("Importing nodes...")
+                conn.execute(f"COPY Repository FROM '{node_csv_path}' (HEADER=false)")
+            else:
+                print("Repository table already has data, skipping import")
+        except Exception as e:
+            print(f"Error checking/importing nodes: {e}")
         
-        print("Importing edges...")
-        conn.execute(f"COPY StargazerOverlap FROM '{edge_csv_path}' (HEADER=false)")
+        try:
+            # Check if StargazerOverlap table has data
+            result = conn.execute("MATCH ()-[r:StargazerOverlap]->() RETURN COUNT(r)").get_as_df()
+            if result.iloc[0, 0] == 0:
+                print("Importing edges...")
+                conn.execute(f"COPY StargazerOverlap FROM '{edge_csv_path}' (HEADER=false)")
+            else:
+                print("StargazerOverlap table already has data, skipping import")
+        except Exception as e:
+            print(f"Error checking/importing edges: {e}")
         
         # Clean up temporary files
         os.unlink(node_csv_path)
@@ -388,7 +556,21 @@ class GraphRAGService:
                     continue
                     
             except requests.exceptions.Timeout:
-                print(f"Timeout fetching README for {owner}/{repo}")
+                print(f"Timeout fetching README for {owner}/{repo}, retrying with longer timeout...")
+                try:
+                    # Retry with longer timeout
+                    response = requests.get(url, headers=headers, timeout=30)
+                    if response.status_code == 200:
+                        data = response.json()
+                        if 'content' in data:
+                            content = base64.b64decode(data['content']).decode('utf-8')
+                            self.cache_readme(owner, repo, content)
+                            return content
+                except Exception as retry_e:
+                    print(f"Retry failed for {owner}/{repo}: {retry_e}")
+                continue
+            except requests.exceptions.ConnectionError:
+                print(f"Connection error fetching README for {owner}/{repo}, will retry later")
                 continue
             except Exception as e:
                 print(f"Error fetching README for {owner}/{repo}: {e}")
@@ -589,7 +771,7 @@ class GraphRAGService:
                 # Adaptive rate limiting based on GitHub's headers
                 if token:
                     # With token: 5000 requests per hour = ~1 request per 0.72 seconds
-                    time.sleep(0.8)
+                    time.sleep(0.5)  # Reduced from 0.8 to 0.5 seconds
                 else:
                     # Without token: 60 requests per hour = ~1 request per 60 seconds
                     time.sleep(60)
@@ -626,7 +808,7 @@ class GraphRAGService:
         print(f"  Cached READMEs used: {cached}")
         print(f"  Failed extractions: {failed}")
         print(f"  Total READMEs stored: {total_stored}")
-        print(f"  Success rate: {successful/processed*100:.1f}%")
+        print(f"  Success rate: {successful/processed*100:.1f}%" if processed > 0 else "  Success rate: N/A")
         print(f"  Cache hit rate: {cached/(successful+cached)*100:.1f}%" if (successful+cached) > 0 else "  Cache hit rate: 0%")
 
     def extract_readmes_from_repos(self, db_path, token=None):
@@ -650,11 +832,27 @@ class GraphRAGService:
         db = kuzu.Database(db_path)
         conn = kuzu.Connection(db)
         
-        # Get all repositories
+        # Fix database schema if needed
+        self.fix_database_schema(db_path)
+        
+        # Get all repositories (we'll check for existing README content later)
         print("Fetching repository list from database...")
         repos = conn.execute("MATCH (r:Repository) RETURN r.id, r.github_url").get_as_df()
         
         print(f"Found {len(repos)} repositories")
+        
+        # Estimate time for README extraction
+        estimated_time_per_repo = 2.0  # seconds (conservative estimate)
+        estimated_total_time = len(repos) * estimated_time_per_repo
+        estimated_minutes = int(estimated_total_time // 60)
+        estimated_seconds = int(estimated_total_time % 60)
+        
+        print(f"⏱️  Estimated README extraction time: {estimated_minutes}m{estimated_seconds}s")
+        print(f"   (This may vary based on GitHub API rate limits and network conditions)")
+        
+        # Import time for progress tracking
+        import time
+        start_time = time.time()
         
         # Update progress with total count
         if progress_dict:
@@ -662,62 +860,125 @@ class GraphRAGService:
             progress_dict["current"] = 0
             progress_dict["message"] = f"Found {len(repos)} repositories to process"
         
-        # Create a new node table for README data
-        print("Creating README node table...")
+        # Add README properties to existing Repository table
+        print("Preparing README properties for Repository table...")
         
-        # Check if RepositoryReadme table already exists
+        # Check if README properties already exist, if not add them
         try:
-            conn.execute("DROP NODE TABLE IF EXISTS RepositoryReadme")
+            conn.execute("MATCH (r:Repository) RETURN r.readme_content LIMIT 1")
+            print("README properties already exist in Repository table")
         except:
-            pass
-        
-        readme_schema = """
-        CREATE NODE TABLE RepositoryReadme (
-            repo_id STRING,
-            readme_content STRING,
-            readme_length INT64,
-            PRIMARY KEY (repo_id)
-        )
-        """
-        conn.execute(readme_schema)
+            print("Adding README properties to Repository table...")
+            try:
+                # Add readme_content property
+                conn.execute("ALTER TABLE Repository ADD COLUMN readme_content STRING")
+                print("Added readme_content property")
+            except Exception as add_e:
+                if "already exists" in str(add_e).lower():
+                    print("readme_content property already exists")
+                else:
+                    print(f"Warning: Could not add readme_content property: {add_e}")
+            
+            try:
+                # Add readme_length property
+                conn.execute("ALTER TABLE Repository ADD COLUMN readme_length INT64")
+                print("Added readme_length property")
+            except Exception as add_e:
+                if "already exists" in str(add_e).lower():
+                    print("readme_length property already exists")
+                else:
+                    print(f"Warning: Could not add readme_length property: {add_e}")
         
         # Extract README content for each repository with optimizations
         print("Extracting README content...")
         readme_data = []
         
+        # Pre-filter repositories to avoid processing empty URLs
+        valid_repos = []
+        for _, row in repos.iterrows():
+            github_url = row['r.github_url']
+            if github_url and github_url.strip():
+                match = re.search(r'github\.com/([^/]+)/([^/]+)', github_url)
+                if match:
+                    valid_repos.append((row['r.id'], match.groups()[0], match.groups()[1]))
+        
+        print(f"Found {len(valid_repos)} valid repositories to process")
+        
+        # Preload cache for faster access
+        preloaded_count = self.preload_cache()
+        if preloaded_count > 0:
+            print(f"🚀 Cache preloaded: {preloaded_count} READMEs ready for instant access")
+        
         # Process repositories in batches for better progress tracking
-        batch_size = 10
-        total_repos = len(repos)
+        batch_size = 50  # Increased batch size for better performance
+        total_repos = len(valid_repos)
         processed = 0
         successful = 0
         cached = 0
         failed = 0
         
         for i in range(0, total_repos, batch_size):
-            batch = repos.iloc[i:i+batch_size]
+            batch = valid_repos[i:i+batch_size]
             print(f"\nProcessing batch {i//batch_size + 1}/{(total_repos + batch_size - 1)//batch_size}")
             
-            for _, row in batch.iterrows():
-                repo_id = row['r.id']
-                github_url = row['r.github_url']
+            for repo_id, owner, repo in batch:
                 processed += 1
                 
-                # Update progress
+                # Update progress with time estimation
                 if progress_dict:
-                    progress_dict["current"] = processed
-                    progress_dict["message"] = f"Extracting README content from repositories ({processed}/{total_repos})"
-                    # Force a small delay to allow progress updates to be sent
-                    time.sleep(0.1)
+                    current_time = time.time()
+                    elapsed_time = current_time - start_time
+                    
+                    if processed > 0:
+                        # Calculate estimated time remaining
+                        avg_time_per_repo = elapsed_time / processed
+                        remaining_repos = total_repos - processed
+                        estimated_remaining_time = avg_time_per_repo * remaining_repos
+                        
+                        # Format time estimates
+                        elapsed_minutes = int(elapsed_time // 60)
+                        elapsed_seconds = int(elapsed_time % 60)
+                        remaining_minutes = int(estimated_remaining_time // 60)
+                        remaining_seconds = int(estimated_remaining_time % 60)
+                        
+                        progress_dict["current"] = processed
+                        progress_dict["message"] = f"Extracting READMEs ({processed}/{total_repos}) - Elapsed: {elapsed_minutes}m{elapsed_seconds}s, ETA: {remaining_minutes}m{remaining_seconds}s"
+                    else:
+                        progress_dict["current"] = processed
+                        progress_dict["message"] = f"Extracting README content from repositories ({processed}/{total_repos})"
+                    
+                    # Reduced delay for faster processing
+                    time.sleep(0.01)
                 
-                if not github_url or github_url == '':
-                    continue
+                # Add checkpoint every 100 repositories to prevent data loss (reduced frequency for better performance)
+                if processed % 100 == 0 and readme_data:
+                    try:
+                        # Insert current batch to database
+                        for repo_id, content, length in readme_data:
+                            try:
+                                conn.execute("""
+                                    MERGE (r:Repository {id: $repo_id})
+                                    SET r.readme_content = $content, r.readme_length = $length
+                                """, parameters={"repo_id": repo_id, "content": content, "length": length})
+                            except Exception as e:
+                                if "Cannot find property" in str(e):
+                                    # Try to add the properties first
+                                    conn.execute("ALTER TABLE Repository ADD COLUMN readme_content STRING")
+                                    conn.execute("ALTER TABLE Repository ADD COLUMN readme_length INT64")
+                                    # Retry the insertion
+                                    conn.execute("""
+                                        MERGE (r:Repository {id: $repo_id})
+                                        SET r.readme_content = $content, r.readme_length = $length
+                                    """, parameters={"repo_id": repo_id, "content": content, "length": length})
+                                else:
+                                    print(f"  ⚠️  Checkpoint insertion failed for {repo_id}: {e}")
+                        
+                        print(f"  💾 Checkpoint saved: {len(readme_data)} READMEs processed")
+                        readme_data = []  # Clear the batch
+                    except Exception as e:
+                        print(f"  ⚠️  Checkpoint failed: {e}")
+                        # Continue processing even if checkpoint fails
                 
-                # Extract owner/repo from GitHub URL
-                match = re.search(r'github\.com/([^/]+)/([^/]+)', github_url)
-                if not match:
-                    continue
-                
-                owner, repo = match.groups()
                 print(f"  [{processed}/{total_repos}] Processing {owner}/{repo}...")
                 
                 # Check if we have cached content
@@ -729,11 +990,6 @@ class GraphRAGService:
                     original_length = len(cached_content)
                     readme_data.append((repo_id, cleaned_content, original_length))
                     successful += 1
-                    # Update progress for cached READMEs too
-                    if progress_dict:
-                        progress_dict["current"] = processed
-                        progress_dict["message"] = f"Using cached README for {owner}/{repo} ({processed}/{total_repos})"
-                        time.sleep(0.1)
                     continue
                 
                 readme_content = self.get_github_readme_optimized(owner, repo, token)
@@ -752,7 +1008,7 @@ class GraphRAGService:
                 # Adaptive rate limiting based on GitHub's headers
                 if token:
                     # With token: 5000 requests per hour = ~1 request per 0.72 seconds
-                    time.sleep(0.8)
+                    time.sleep(0.5)  # Reduced from 0.8 to 0.5 seconds
                 else:
                     # Without token: 60 requests per hour = ~1 request per 60 seconds
                     time.sleep(60)
@@ -765,34 +1021,61 @@ class GraphRAGService:
             if progress_dict:
                 progress_dict["current"] = processed
                 progress_dict["message"] = f"Processed batch {i//batch_size + 1}/{(total_repos + batch_size - 1)//batch_size} - {processed}/{total_repos} repositories"
-                time.sleep(0.1)
+                time.sleep(0.01)  # Reduced delay for faster processing
         
         # Update progress for final step
         if progress_dict:
             progress_dict["current_step"] = "Saving to database..."
             progress_dict["message"] = f"Saving {len(readme_data)} README files to database"
         
-        # Insert README data into database
-        print(f"\nInserting {len(readme_data)} README files into database...")
-        
-        # Create temporary CSV file for README data
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, newline='') as readme_csv:
-            readme_writer = csv.writer(readme_csv, quoting=csv.QUOTE_ALL)
+        # Insert remaining README data directly into Repository table
+        if readme_data:
+            print(f"\nInserting final batch of {len(readme_data)} README files into database...")
             for repo_id, content, length in readme_data:
-                readme_writer.writerow([repo_id, content, length])
-            readme_csv_path = readme_csv.name
-        
-        # Import README data with parallel disabled
-        conn.execute(f"COPY RepositoryReadme FROM '{readme_csv_path}' (HEADER=false, PARALLEL=false)")
-        
-        # Clean up temporary file
-        os.unlink(readme_csv_path)
+                try:
+                    # Try to insert README data with error handling for missing properties
+                    conn.execute("""
+                        MERGE (r:Repository {id: $repo_id})
+                        SET r.readme_content = $content, r.readme_length = $length
+                    """, parameters={"repo_id": repo_id, "content": content, "length": length})
+                except Exception as e:
+                    if "Cannot find property" in str(e):
+                        print(f"  ⚠️  Property missing, attempting to add properties first...")
+                        try:
+                            # Try to add the properties first
+                            conn.execute("ALTER TABLE Repository ADD COLUMN readme_content STRING")
+                            conn.execute("ALTER TABLE Repository ADD COLUMN readme_length INT64")
+                            print(f"  ✅ Properties added, retrying insertion...")
+                            # Retry the insertion
+                            conn.execute("""
+                                MERGE (r:Repository {id: $repo_id})
+                                SET r.readme_content = $content, r.readme_length = $length
+                            """, parameters={"repo_id": repo_id, "content": content, "length": length})
+                        except Exception as retry_e:
+                            print(f"  ❌ Failed to add properties or retry insertion: {retry_e}")
+                    else:
+                        print(f"  ⚠️  Failed to insert README for repo {repo_id}: {e}")
         
         print("README extraction completed!")
         
         # Print detailed statistics
-        readme_count = conn.execute("MATCH (r:RepositoryReadme) RETURN COUNT(r)").get_as_df()
-        total_stored = readme_count.iloc[0, 0]
+        try:
+            readme_count = conn.execute("""
+                MATCH (r:Repository) 
+                WHERE r.readme_content IS NOT NULL AND r.readme_content <> ''
+                RETURN COUNT(r)
+            """).get_as_df()
+            total_stored = readme_count.iloc[0, 0]
+        except Exception as e:
+            print(f"  ⚠️  Could not count stored READMEs: {e}")
+            # Try alternative approach - count all repositories
+            try:
+                total_repos = conn.execute("MATCH (r:Repository) RETURN COUNT(r)").get_as_df()
+                total_stored = total_repos.iloc[0, 0] if len(total_repos) > 0 else 0
+                print(f"  📊 Total repositories in database: {total_stored}")
+            except Exception as alt_e:
+                print(f"  ⚠️  Could not count repositories either: {alt_e}")
+                total_stored = len(readme_data)  # Use processed count as fallback
         
         print(f"\n📊 README Extraction Summary:")
         print(f"  Total repositories processed: {processed}")
@@ -800,8 +1083,20 @@ class GraphRAGService:
         print(f"  Cached READMEs used: {cached}")
         print(f"  Failed extractions: {failed}")
         print(f"  Total READMEs stored: {total_stored}")
-        print(f"  Success rate: {successful/processed*100:.1f}%")
+        print(f"  Success rate: {successful/processed*100:.1f}%" if processed > 0 else "  Success rate: N/A")
         print(f"  Cache hit rate: {cached/(successful+cached)*100:.1f}%" if (successful+cached) > 0 else "  Cache hit rate: 0%")
+        
+        # Calculate and display total time taken
+        total_time = time.time() - start_time
+        total_minutes = int(total_time // 60)
+        total_seconds = int(total_time % 60)
+        print(f"  Total time taken: {total_minutes}m{total_seconds}s")
+        print(f"  Average time per repository: {total_time/processed:.2f}s" if processed > 0 else "  Average time per repository: N/A")
+        
+        # Display cache statistics
+        cache_stats = self.get_cache_stats()
+        print(f"  Memory cache size: {cache_stats['memory_cache_size']} READMEs")
+        print(f"  Cache performance: {cache_stats['hit_rate']} hit rate ({cache_stats['total_hits']} hits, {cache_stats['total_misses']} misses)")
     
     def setup_database_from_gexf(self, gexf_content: str, github_token: str) -> Dict[str, Any]:
         """Set up the Kuzu database from GEXF content and extract README data."""
@@ -834,7 +1129,11 @@ class GraphRAGService:
                 try:
                     db = kuzu.Database(str(self.db_path))
                     conn = kuzu.Connection(db)
-                    readme_count = conn.execute("MATCH (r:RepositoryReadme) RETURN COUNT(r)").get_as_df()
+                    readme_count = conn.execute("""
+                        MATCH (r:Repository) 
+                        WHERE r.readme_content IS NOT NULL AND r.readme_content <> ''
+                        RETURN COUNT(r)
+                    """).get_as_df()
                     has_readmes = readme_count.iloc[0, 0] > 0
                     
                     if has_readmes:
@@ -933,7 +1232,11 @@ class GraphRAGService:
                 try:
                     db = kuzu.Database(str(self.db_path))
                     conn = kuzu.Connection(db)
-                    readme_count = conn.execute("MATCH (r:RepositoryReadme) RETURN COUNT(r)").get_as_df()
+                    readme_count = conn.execute("""
+                        MATCH (r:Repository) 
+                        WHERE r.readme_content IS NOT NULL AND r.readme_content <> ''
+                        RETURN COUNT(r)
+                    """).get_as_df()
                     has_readmes = readme_count.iloc[0, 0] > 0
                     
                     if has_readmes:
@@ -1015,7 +1318,36 @@ class GraphRAGService:
                 
                 # Extract README data with progress updates
                 print("Extracting README data...")
-                self.extract_readmes_from_repos_with_progress(str(self.db_path), github_token, progress_dict)
+                try:
+                    # Use threading-based timeout for better cross-platform compatibility
+                    import threading
+                    import time
+                    
+                    def extract_with_timeout():
+                        self.extract_readmes_from_repos_with_progress(str(self.db_path), github_token, progress_dict)
+                    
+                    # Create a thread for README extraction
+                    extraction_thread = threading.Thread(target=extract_with_timeout)
+                    extraction_thread.daemon = True
+                    extraction_thread.start()
+                    
+                    # Wait for completion with timeout (50 minutes to stay well under gunicorn timeout)
+                    extraction_thread.join(timeout=3000)
+                    
+                    if extraction_thread.is_alive():
+                        print("⏰ README extraction timed out after 50 minutes, continuing with setup...")
+                        if progress_dict:
+                            progress_dict["current_step"] = "README extraction timed out, continuing..."
+                            progress_dict["message"] = "README extraction timed out, but database setup will continue"
+                    else:
+                        print("✅ README extraction completed successfully")
+                        
+                except Exception as readme_error:
+                    print(f"⚠️ README extraction failed: {readme_error}")
+                    # Continue with setup even if README extraction fails
+                    if progress_dict:
+                        progress_dict["current_step"] = "README extraction failed, continuing..."
+                        progress_dict["message"] = f"README extraction failed: {str(readme_error)[:100]}..."
                 
                 return {
                     "success": True,
@@ -1032,6 +1364,121 @@ class GraphRAGService:
                 "success": False,
                 "error": str(e),
                 "message": "Failed to setup database"
+            }
+    
+    def check_database_exists(self, gexf_content: str) -> Dict[str, Any]:
+        """Check if a valid database exists for the given GEXF content."""
+        try:
+            # Calculate hash of the GEXF content
+            import hashlib
+            gexf_hash = hashlib.md5(gexf_content.encode()).hexdigest()
+            
+            # Look for existing database with the same hash
+            kuzu_dir = Path(__file__).parent.parent / "kuzu"
+            existing_db_path = kuzu_dir / f"graphrag_db_{gexf_hash}"
+            
+            if not existing_db_path.exists():
+                return {
+                    "exists": False,
+                    "db_path": None,
+                    "message": "No existing database found for this graph"
+                }
+            
+            # Check if database is valid
+            try:
+                db = kuzu.Database(str(existing_db_path))
+                conn = kuzu.Connection(db)
+                
+                # Check if Repository table exists and has data
+                result = conn.execute("MATCH (r:Repository) RETURN COUNT(r)").get_as_df()
+                repo_count = result.iloc[0, 0]
+                
+                if repo_count > 0:
+                    return {
+                        "exists": True,
+                        "db_path": str(existing_db_path),
+                        "repo_count": repo_count,
+                        "message": f"Valid database found with {repo_count} repositories"
+                    }
+                else:
+                    return {
+                        "exists": False,
+                        "db_path": str(existing_db_path),
+                        "message": "Database exists but is empty"
+                    }
+                    
+            except Exception as e:
+                return {
+                    "exists": False,
+                    "db_path": str(existing_db_path),
+                    "message": f"Database exists but is corrupted: {str(e)}"
+                }
+                
+        except Exception as e:
+            return {
+                "exists": False,
+                "db_path": None,
+                "message": f"Error checking database: {str(e)}"
+            }
+    
+    def update_readme_data(self, github_token: str, progress_dict: dict = None) -> Dict[str, Any]:
+        """Update README data with a new GitHub token without recreating the database."""
+        try:
+            if not self.db_path or not os.path.exists(self.db_path):
+                return {
+                    "success": False,
+                    "error": "Database not set up. Please setup database first.",
+                    "message": "Database not found"
+                }
+            
+            if progress_dict:
+                progress_dict["current_step"] = "Updating README data..."
+                progress_dict["current"] = 0
+                progress_dict["message"] = "Updating README content with new GitHub token"
+            
+            # Extract README data with progress updates
+            print("Updating README data with new GitHub token...")
+            self.extract_readmes_from_repos_with_progress(str(self.db_path), github_token, progress_dict)
+            
+            return {
+                "success": True,
+                "message": "README data updated successfully"
+            }
+                
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "Failed to update README data"
+            }
+    
+    def change_provider(self, provider: str, api_keys: Dict[str, str]) -> Dict[str, Any]:
+        """Change the GraphRAG provider without recreating the database."""
+        try:
+            if not self.db_path or not os.path.exists(self.db_path):
+                return {
+                    "success": False,
+                    "error": "Database not set up. Please setup database first.",
+                    "message": "Database not found"
+                }
+            
+            # Initialize GraphRAG with new provider
+            result = self.initialize_graphrag(provider, api_keys)
+            
+            if result["success"]:
+                return {
+                    "success": True,
+                    "message": f"Successfully changed provider to {provider}",
+                    "provider": provider
+                }
+            else:
+                return result
+                
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "Failed to change provider"
             }
     
     def initialize_graphrag(self, provider: str, api_keys: Dict[str, str]) -> Dict[str, Any]:
@@ -1231,7 +1678,11 @@ class MultiLLMGraphRAG:
     def _get_readme_count(self) -> int:
         """Get total number of README files."""
         try:
-            result = self.conn.execute("MATCH (r:RepositoryReadme) RETURN COUNT(r)").get_as_df()
+            result = self.conn.execute("""
+                MATCH (r:Repository) 
+                WHERE r.readme_content IS NOT NULL AND r.readme_content <> ''
+                RETURN COUNT(r)
+            """).get_as_df()
             return result.iloc[0, 0]
         except:
             return 0
@@ -1484,7 +1935,8 @@ README Preview: {content_preview}
         
         try:
             query = """
-            MATCH (r:RepositoryReadme)
+            MATCH (r:Repository)
+            WHERE r.readme_content IS NOT NULL AND r.readme_content <> ''
             WHERE r.repo_id = $repo_id
             RETURN r.readme_content
             """
@@ -1531,7 +1983,11 @@ README Preview: {content_preview}
         
         # README count
         try:
-            readme_count = self.conn.execute("MATCH (r:RepositoryReadme) RETURN COUNT(r)").get_as_df()
+            readme_count = self.conn.execute("""
+                MATCH (r:Repository) 
+                WHERE r.readme_content IS NOT NULL AND r.readme_content <> ''
+                RETURN COUNT(r)
+            """).get_as_df()
             stats["total_readmes"] = readme_count.iloc[0, 0]
         except:
             stats["total_readmes"] = 0
