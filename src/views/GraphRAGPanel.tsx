@@ -8,6 +8,7 @@ import { Tooltip } from 'bootstrap';
 
 import { GraphContext } from "../lib/context";
 import { useNotifications } from "../lib/notifications";
+import { API_ENDPOINTS } from "../lib/config";
 import { ANIMATION_DURATION } from "../lib/consts";
 import { Coordinates } from "sigma/types";
 
@@ -108,7 +109,7 @@ const GraphRAGPanel: FC = () => {
         try {
             const sessionId = sessionStorage.getItem('graphrag_session_id') || '';
             if (sessionId) {
-                const response = await fetch('/api/graphrag-cleanup', {
+                const response = await fetch(API_ENDPOINTS.GRAPHRAG_CLEANUP, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -264,7 +265,7 @@ const GraphRAGPanel: FC = () => {
         const checkBackendHealth = async () => {
             if (graphragState.isReady) {
                 try {
-                    const response = await fetch('http://localhost:5002/api/graphrag-health', {
+                    const response = await fetch(API_ENDPOINTS.GRAPHRAG_HEALTH, {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json',
@@ -613,7 +614,7 @@ const GraphRAGPanel: FC = () => {
             const sessionId = `graphrag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             sessionStorage.setItem('graphrag_session_id', sessionId);
 
-            const response = await fetch('http://localhost:5002/api/graphrag-setup', {
+            const response = await fetch(API_ENDPOINTS.GRAPHRAG_SETUP, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -707,7 +708,7 @@ const GraphRAGPanel: FC = () => {
         updateState({ messages: newMessages });
 
         try {
-            const response = await fetch("/api/graphrag", {
+            const response = await fetch(API_ENDPOINTS.GRAPHRAG_QUERY, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
