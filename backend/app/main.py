@@ -1133,6 +1133,10 @@ def graphrag_endpoint():
             api_key = api_keys.get("geminiKey") or config_manager.get("ai_providers.google_genai.api_key", "")
             graphrag_api_keys = {"geminiKey": api_key}
             provider = "gemini"  # Map to GraphRAG service provider name
+        elif provider == "gemini":
+            # Support direct "gemini" provider selection from frontend
+            api_key = api_keys.get("geminiKey") or config_manager.get("ai_providers.google_genai.api_key", "")
+            graphrag_api_keys = {"geminiKey": api_key}
         elif provider == "anthropic":
             api_key = api_keys.get("anthropicKey") or config_manager.get("ai_providers.anthropic.api_key", "")
             graphrag_api_keys = {"anthropicKey": api_key}
