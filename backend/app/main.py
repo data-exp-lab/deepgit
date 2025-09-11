@@ -4,7 +4,7 @@ from services.topic_service import TopicService
 from services.ai_service import AITopicProcessor
 from services.gexf_node_service import GexfNodeGenerator
 from services.edge_generation_service import EdgeGenerationService
-from services.graphrag_service import graphrag_service
+from services.deepgit_ai_service import DeepGitAIService
 from config_manager import config_manager
 import os
 import asyncio
@@ -29,9 +29,10 @@ topic_service = TopicService()
 ai_processor = AITopicProcessor()
 gexf_node_service = GexfNodeGenerator()
 edge_generation_service = EdgeGenerationService()
+deepgit_ai_service = DeepGitAIService()
 
-# Global progress tracking for GraphRAG setup
-graphrag_progress = {
+# Global progress tracking for DeepGitAI setup
+deepgit_ai_progress = {
     "current_step": "",
     "current": 0,
     "total": 0,
@@ -39,32 +40,54 @@ graphrag_progress = {
     "status": "idle"  # idle, running, completed, error
 }
 
-# Global variable to track if GraphRAG is set up
-graphrag_ready = False
+# Global variable to track if DeepGitAI is set up
+deepgit_ai_ready = False
 
-@app.route("/api/graphrag-health", methods=["GET"])
-def graphrag_health():
-    """Check if GraphRAG backend is ready and set up."""
-    global graphrag_ready
+@app.route("/api/deepgit-ai-health", methods=["GET"])
+def deepgit_ai_health():
+    """Check if DeepGitAI backend is ready and set up."""
+    global deepgit_ai_ready
     try:
-        if graphrag_ready:
+        if deepgit_ai_ready:
             return jsonify({
                 "success": True,
                 "ready": True,
-                "message": "GraphRAG backend is ready"
+                "message": "DeepGitAI backend is ready"
             })
         else:
             return jsonify({
                 "success": True,
                 "ready": False,
-                "message": "GraphRAG backend is not set up"
+                "message": "DeepGitAI backend is not set up"
             }), 503
     except Exception as e:
         return jsonify({
             "success": False,
             "ready": False,
             "error": str(e),
-            "message": "Error checking GraphRAG health"
+            "message": "Error checking DeepGitAI health"
+        }), 500
+
+
+@app.route("/api/deepgit-ai-scope", methods=["GET"])
+def deepgit_ai_scope():
+    """Get information about the database scope and limitations."""
+    try:
+        if not deepgit_ai_ready:
+            return jsonify({
+                "success": False,
+                "error": "DeepGitAI not initialized",
+                "message": "Please initialize DeepGitAI first"
+            }), 503
+        
+        result = deepgit_ai_service.validate_query_scope("")
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "Error getting database scope information"
         }), 500
 
 
@@ -688,33 +711,33 @@ def create_edges_on_graph():
         }), 500
 
 
-@app.route("/api/graphrag-reset-progress", methods=["POST", "OPTIONS"])
-def graphrag_reset_progress_endpoint():
-    """Reset GraphRAG progress status to initial state."""
+@app.route("/api/deepgit-ai-reset-progress", methods=["POST", "OPTIONS"])
+def deepgit_ai_reset_progress_endpoint():
+    """Reset DeepGitAI progress status to initial state."""
     if request.method == "OPTIONS":
         return "", 200
     
-    global graphrag_progress
-    graphrag_progress = {
+    global deepgit_ai_progress
+    deepgit_ai_progress = {
         "current_step": "Initializing...",
         "current": 0,
         "total": 100,
-        "message": "Preparing GraphRAG setup",
+        "message": "Preparing DeepGitAI setup",
         "status": "running"
     }
     return jsonify({"success": True, "message": "Progress reset"})
 
-@app.route("/api/graphrag-progress", methods=["GET"])
-def graphrag_progress_endpoint():
-    """Server-Sent Events endpoint for GraphRAG progress updates."""
+@app.route("/api/deepgit-ai-progress", methods=["GET"])
+def deepgit_ai_progress_endpoint():
+    """Server-Sent Events endpoint for DeepGitAI progress updates."""
     def generate():
         while True:
             # Send current progress
-            data = f"data: {json.dumps(graphrag_progress)}\n\n"
+            data = f"data: {json.dumps(deepgit_ai_progress)}\n\n"
             yield data
             
             # If completed or error, stop streaming
-            if graphrag_progress["status"] in ["completed", "error"]:
+            if deepgit_ai_progress["status"] in ["completed", "error"]:
                 break
             
             time.sleep(0.5)  # Update every 0.5 seconds for more responsive updates
@@ -722,10 +745,10 @@ def graphrag_progress_endpoint():
     return Response(generate(), mimetype="text/event-stream")
 
 
-@app.route("/api/graphrag-setup", methods=["POST"])
-def graphrag_setup_endpoint():
-    """GraphRAG setup endpoint with progress tracking."""
-    global graphrag_progress, graphrag_ready
+@app.route("/api/deepgit-ai-setup", methods=["POST"])
+def deepgit_ai_setup_endpoint():
+    """DeepGitAI setup endpoint with progress tracking."""
+    global deepgit_ai_progress, deepgit_ai_ready
     
     try:
         data = request.get_json()
@@ -736,31 +759,31 @@ def graphrag_setup_endpoint():
         graph_file = data.get("graphFile", "")
         session_id = data.get("sessionId", "")
         
-        # Merge frontend API keys with config and convert to GraphRAG format
-        graphrag_api_keys = {}
+        # Merge frontend API keys with config and convert to DeepGitAI format
+        deepgit_ai_api_keys = {}
         if provider == "openai":
             api_key = api_keys.get("openaiKey") or config_manager.get("ai_providers.openai.api_key", "")
-            graphrag_api_keys = {"openaiKey": api_key}
+            deepgit_ai_api_keys = {"openaiKey": api_key}
         elif provider == "azure_openai":
             api_key = api_keys.get("azureOpenAIKey") or config_manager.get("ai_providers.azure_openai.api_key", "")
             endpoint = api_keys.get("azureOpenAIEndpoint") or config_manager.get("ai_providers.azure_openai.endpoint", "")
             deployment = api_keys.get("azureOpenAIDeployment") or config_manager.get("ai_providers.azure_openai.deployment_name", "")
-            graphrag_api_keys = {
+            deepgit_ai_api_keys = {
                 "azureOpenAIKey": api_key,
                 "azureOpenAIEndpoint": endpoint,
                 "azureOpenAIDeployment": deployment
             }
         elif provider == "google_genai":
             api_key = api_keys.get("geminiKey") or config_manager.get("ai_providers.google_genai.api_key", "")
-            graphrag_api_keys = {"geminiKey": api_key}
-            provider = "gemini"  # Map to GraphRAG service provider name
+            deepgit_ai_api_keys = {"geminiKey": api_key}
+            provider = "gemini"  # Map to DeepGitAI service provider name
         elif provider == "gemini":
             # Support direct "gemini" provider selection from frontend
             api_key = api_keys.get("geminiKey") or config_manager.get("ai_providers.google_genai.api_key", "")
-            graphrag_api_keys = {"geminiKey": api_key}
+            deepgit_ai_api_keys = {"geminiKey": api_key}
         elif provider == "anthropic":
             api_key = api_keys.get("anthropicKey") or config_manager.get("ai_providers.anthropic.api_key", "")
-            graphrag_api_keys = {"anthropicKey": api_key}
+            deepgit_ai_api_keys = {"anthropicKey": api_key}
         
         if not graph_file:
             return jsonify({
@@ -778,7 +801,7 @@ def graphrag_setup_endpoint():
             }), 400
         
         # Reset progress
-        graphrag_progress = {
+        deepgit_ai_progress = {
             "current_step": "Checking existing database...",
             "current": 0,
             "total": 100,
@@ -787,79 +810,79 @@ def graphrag_setup_endpoint():
         }
         
         # Check if database already exists for this graph
-        db_check = graphrag_service.check_database_exists(graph_file)
+        db_check = deepgit_ai_service.check_database_exists(graph_file)
         
         if db_check["exists"]:
             # Database exists, just update provider and README data if needed
             print(f"🔄 Database exists: {db_check['message']}")
-            graphrag_service.db_path = Path(db_check["db_path"])
+            deepgit_ai_service.db_path = Path(db_check["db_path"])
             
             # Update progress
-            graphrag_progress["current_step"] = "Updating README data..."
-            graphrag_progress["current"] = 20
-            graphrag_progress["message"] = "Updating README content with new GitHub token"
+            deepgit_ai_progress["current_step"] = "Updating README data..."
+            deepgit_ai_progress["current"] = 20
+            deepgit_ai_progress["message"] = "Updating README content with new GitHub token"
             
             # Update README data with new GitHub token
-            readme_result = graphrag_service.update_readme_data(github_token, graphrag_progress)
+            readme_result = deepgit_ai_service.update_readme_data(github_token, deepgit_ai_progress)
             if not readme_result["success"]:
                 print(f"⚠️ README update failed: {readme_result.get('error', 'Unknown error')}")
                 # Continue anyway, as README update is not critical
             
             # Update progress
-            graphrag_progress["current_step"] = "Database ready..."
-            graphrag_progress["current"] = 30
-            graphrag_progress["message"] = "Database is ready, initializing AI system"
+            deepgit_ai_progress["current_step"] = "Database ready..."
+            deepgit_ai_progress["current"] = 30
+            deepgit_ai_progress["message"] = "Database is ready, initializing AI system"
             
         else:
             # Database doesn't exist, create it
             print(f"🆕 Creating new database: {db_check['message']}")
-            graphrag_progress["current_step"] = "Creating database..."
-            graphrag_progress["current"] = 10
-            graphrag_progress["message"] = "Creating new database from graph data"
+            deepgit_ai_progress["current_step"] = "Creating database..."
+            deepgit_ai_progress["current"] = 10
+            deepgit_ai_progress["message"] = "Creating new database from graph data"
             
             # Setup database from GEXF content with progress updates
-            setup_result = graphrag_service.setup_database_from_gexf_with_progress(graph_file, github_token, graphrag_progress, session_id)
+            setup_result = deepgit_ai_service.setup_database_from_gexf_with_progress(graph_file, github_token, deepgit_ai_progress, session_id)
             if not setup_result["success"]:
-                graphrag_progress["status"] = "error"
-                graphrag_progress["message"] = setup_result.get("error", "Setup failed")
+                deepgit_ai_progress["status"] = "error"
+                deepgit_ai_progress["message"] = setup_result.get("error", "Setup failed")
                 return jsonify(setup_result), 500
         
-        # Initialize GraphRAG with the selected provider
-        graphrag_progress["current_step"] = "Initializing AI system..."
-        graphrag_progress["current"] = 90
-        graphrag_progress["message"] = "Setting up AI analysis system"
+        # Initialize DeepGitAI with the selected provider
+        deepgit_ai_progress["current_step"] = "Initializing AI system..."
+        deepgit_ai_progress["current"] = 90
+        deepgit_ai_progress["message"] = "Setting up AI analysis system"
         
-        init_result = graphrag_service.initialize_graphrag(provider, graphrag_api_keys)
+        init_result = deepgit_ai_service.initialize_deepgit_ai(provider, deepgit_ai_api_keys)
         if not init_result["success"]:
-            graphrag_progress["status"] = "error"
-            graphrag_progress["message"] = init_result.get("error", "AI initialization failed")
+            deepgit_ai_progress["status"] = "error"
+            deepgit_ai_progress["message"] = init_result.get("error", "AI initialization failed")
             return jsonify(init_result), 500
         
         # Mark as completed and set ready flag
-        graphrag_progress["status"] = "completed"
-        graphrag_progress["current"] = 100
-        graphrag_progress["message"] = "GraphRAG setup completed successfully!"
-        graphrag_ready = True
+        deepgit_ai_progress["status"] = "completed"
+        deepgit_ai_progress["current"] = 100
+        deepgit_ai_progress["message"] = "DeepGitAI setup completed successfully!"
+        deepgit_ai_ready = True
         
         return jsonify({
             "success": True,
-            "message": "GraphRAG setup completed successfully",
+            "message": "DeepGitAI setup completed successfully",
             "ready": True
         })
         
     except Exception as e:
-        graphrag_progress["status"] = "error"
-        graphrag_progress["message"] = str(e)
+        deepgit_ai_progress["status"] = "error"
+        deepgit_ai_progress["message"] = str(e)
         return jsonify({
             "success": False,
             "error": str(e),
-            "message": "An error occurred during GraphRAG setup"
+            "message": "An error occurred during DeepGitAI setup"
         }), 500
 
 
-@app.route("/api/graphrag-change-provider", methods=["POST"])
-def graphrag_change_provider_endpoint():
-    """Change GraphRAG provider without recreating the database."""
+@app.route("/api/deepgit-ai-change-provider", methods=["POST"])
+def deepgit_ai_change_provider_endpoint():
+    """Change DeepGitAI provider without recreating the database."""
     try:
         data = request.get_json()
         
@@ -867,31 +890,31 @@ def graphrag_change_provider_endpoint():
         provider = data.get("provider", "openai")
         api_keys = data.get("apiKeys", {})
         
-        # Merge frontend API keys with config and convert to GraphRAG format
-        graphrag_api_keys = {}
+        # Merge frontend API keys with config and convert to DeepGitAI format
+        deepgit_ai_api_keys = {}
         if provider == "openai":
             api_key = api_keys.get("openaiKey") or config_manager.get("ai_providers.openai.api_key", "")
-            graphrag_api_keys = {"openaiKey": api_key}
+            deepgit_ai_api_keys = {"openaiKey": api_key}
         elif provider == "azure_openai":
             api_key = api_keys.get("azureOpenAIKey") or config_manager.get("ai_providers.azure_openai.api_key", "")
             endpoint = api_keys.get("azureOpenAIEndpoint") or config_manager.get("ai_providers.azure_openai.endpoint", "")
             deployment = api_keys.get("azureOpenAIDeployment") or config_manager.get("ai_providers.azure_openai.deployment_name", "")
-            graphrag_api_keys = {
+            deepgit_ai_api_keys = {
                 "azureOpenAIKey": api_key,
                 "azureOpenAIEndpoint": endpoint,
                 "azureOpenAIDeployment": deployment
             }
         elif provider == "google_genai":
             api_key = api_keys.get("geminiKey") or config_manager.get("ai_providers.google_genai.api_key", "")
-            graphrag_api_keys = {"geminiKey": api_key}
-            provider = "gemini"  # Map to GraphRAG service provider name
+            deepgit_ai_api_keys = {"geminiKey": api_key}
+            provider = "gemini"  # Map to DeepGitAI service provider name
         elif provider == "gemini":
             # Support direct "gemini" provider selection from frontend
             api_key = api_keys.get("geminiKey") or config_manager.get("ai_providers.google_genai.api_key", "")
-            graphrag_api_keys = {"geminiKey": api_key}
+            deepgit_ai_api_keys = {"geminiKey": api_key}
         elif provider == "anthropic":
             api_key = api_keys.get("anthropicKey") or config_manager.get("ai_providers.anthropic.api_key", "")
-            graphrag_api_keys = {"anthropicKey": api_key}
+            deepgit_ai_api_keys = {"anthropicKey": api_key}
         
         if not provider:
             return jsonify({
@@ -901,7 +924,7 @@ def graphrag_change_provider_endpoint():
             }), 400
         
         # Change provider
-        result = graphrag_service.change_provider(provider, graphrag_api_keys)
+        result = deepgit_ai_service.change_provider(provider, deepgit_ai_api_keys)
         
         if result["success"]:
             return jsonify({
@@ -920,8 +943,8 @@ def graphrag_change_provider_endpoint():
         }), 500
 
 
-@app.route("/api/graphrag-update-readme", methods=["POST"])
-def graphrag_update_readme_endpoint():
+@app.route("/api/deepgit-ai-update-readme", methods=["POST"])
+def deepgit_ai_update_readme_endpoint():
     """Update README data with new GitHub token without recreating the database."""
     try:
         data = request.get_json()
@@ -937,7 +960,7 @@ def graphrag_update_readme_endpoint():
             }), 400
         
         # Update README data
-        result = graphrag_service.update_readme_data(github_token)
+        result = deepgit_ai_service.update_readme_data(github_token)
         
         if result["success"]:
             return jsonify({
@@ -955,19 +978,19 @@ def graphrag_update_readme_endpoint():
         }), 500
 
 
-@app.route("/api/graphrag-fix-schema", methods=["POST"])
-def graphrag_fix_schema_endpoint():
+@app.route("/api/deepgit-ai-fix-schema", methods=["POST"])
+def deepgit_ai_fix_schema_endpoint():
     """Fix database schema by adding missing README properties."""
     try:
-        if not graphrag_service.db_path:
+        if not deepgit_ai_service.db_path:
             return jsonify({
                 "success": False,
                 "error": "No database path set",
-                "message": "Please run GraphRAG setup first"
+                "message": "Please run DeepGitAI setup first"
             }), 400
         
         # Fix database schema
-        success = graphrag_service.fix_database_schema(graphrag_service.db_path)
+        success = deepgit_ai_service.fix_database_schema(deepgit_ai_service.db_path)
         
         if success:
             return jsonify({
@@ -1009,7 +1032,7 @@ def get_config_endpoint():
                 "rate_limit_per_hour": config_manager.get("github.rate_limit_per_hour", 5000),
                 "has_token": bool(config_manager.get("github.token", ""))
             },
-            "graphrag": config_manager.get_graphrag_config(),
+            "deepgit_ai": config_manager.get_deepgit_ai_config(),
             "server": config_manager.get_server_config(),
             "database": config_manager.get_database_config()
         }
@@ -1029,7 +1052,7 @@ def get_config_endpoint():
 
 @app.route("/api/config/keys", methods=["GET"])
 def get_config_keys_endpoint():
-    """Get API keys from configuration for GraphRAG setup."""
+    """Get API keys from configuration for DeepGitAI setup."""
     try:
         keys_config = {
             "github": {
@@ -1104,9 +1127,9 @@ def create_example_config_endpoint():
         }), 500
 
 
-@app.route("/api/graphrag", methods=["POST"])
-def graphrag_endpoint():
-    """GraphRAG endpoint for AI-powered graph analysis."""
+@app.route("/api/deepgit-ai", methods=["POST"])
+def deepgit_ai_endpoint():
+    """DeepGitAI endpoint for AI-powered graph analysis."""
     try:
         data = request.get_json()
         
@@ -1115,31 +1138,31 @@ def graphrag_endpoint():
         provider = data.get("provider", "openai")
         api_keys = data.get("apiKeys", {})
         
-        # Merge frontend API keys with config and convert to GraphRAG format
-        graphrag_api_keys = {}
+        # Merge frontend API keys with config and convert to DeepGitAI format
+        deepgit_ai_api_keys = {}
         if provider == "openai":
             api_key = api_keys.get("openaiKey") or config_manager.get("ai_providers.openai.api_key", "")
-            graphrag_api_keys = {"openaiKey": api_key}
+            deepgit_ai_api_keys = {"openaiKey": api_key}
         elif provider == "azure_openai":
             api_key = api_keys.get("azureOpenAIKey") or config_manager.get("ai_providers.azure_openai.api_key", "")
             endpoint = api_keys.get("azureOpenAIEndpoint") or config_manager.get("ai_providers.azure_openai.endpoint", "")
             deployment = api_keys.get("azureOpenAIDeployment") or config_manager.get("ai_providers.azure_openai.deployment_name", "")
-            graphrag_api_keys = {
+            deepgit_ai_api_keys = {
                 "azureOpenAIKey": api_key,
                 "azureOpenAIEndpoint": endpoint,
                 "azureOpenAIDeployment": deployment
             }
         elif provider == "google_genai":
             api_key = api_keys.get("geminiKey") or config_manager.get("ai_providers.google_genai.api_key", "")
-            graphrag_api_keys = {"geminiKey": api_key}
-            provider = "gemini"  # Map to GraphRAG service provider name
+            deepgit_ai_api_keys = {"geminiKey": api_key}
+            provider = "gemini"  # Map to DeepGitAI service provider name
         elif provider == "gemini":
             # Support direct "gemini" provider selection from frontend
             api_key = api_keys.get("geminiKey") or config_manager.get("ai_providers.google_genai.api_key", "")
-            graphrag_api_keys = {"geminiKey": api_key}
+            deepgit_ai_api_keys = {"geminiKey": api_key}
         elif provider == "anthropic":
             api_key = api_keys.get("anthropicKey") or config_manager.get("ai_providers.anthropic.api_key", "")
-            graphrag_api_keys = {"anthropicKey": api_key}
+            deepgit_ai_api_keys = {"anthropicKey": api_key}
         
         if not query:
             return jsonify({
@@ -1148,13 +1171,13 @@ def graphrag_endpoint():
                 "message": "Please provide a query"
             }), 400
         
-        # Initialize GraphRAG with the selected provider if not already initialized
-        init_result = graphrag_service.initialize_graphrag(provider, graphrag_api_keys)
+        # Initialize DeepGitAI with the selected provider if not already initialized
+        init_result = deepgit_ai_service.initialize_deepgit_ai(provider, deepgit_ai_api_keys)
         if not init_result["success"]:
             return jsonify(init_result), 500
         
         # Execute the query
-        query_result = graphrag_service.query_graphrag(query)
+        query_result = deepgit_ai_service.query_deepgit_ai(query)
         if not query_result["success"]:
             return jsonify(query_result), 500
         
@@ -1167,23 +1190,23 @@ def graphrag_endpoint():
         return jsonify({
             "success": False,
             "error": str(e),
-            "message": "An error occurred while processing the GraphRAG query"
+            "message": "An error occurred while processing the DeepGitAI query"
         }), 500
 
 
-@app.route("/api/graphrag-cleanup", methods=["POST"])
-def graphrag_cleanup_endpoint():
-    """Clean up GraphRAG database and resources when user closes window."""
+@app.route("/api/deepgit-ai-cleanup", methods=["POST"])
+def deepgit_ai_cleanup_endpoint():
+    """Clean up DeepGitAI database and resources when user closes window."""
     try:
         data = request.get_json() or {}
         session_id = data.get("sessionId", "")
         
-        # Clean up GraphRAG resources
-        result = graphrag_service.cleanup(session_id)
+        # Clean up DeepGitAI resources
+        result = deepgit_ai_service.cleanup(session_id)
         
         return jsonify({
             "success": True,
-            "message": "GraphRAG cleanup completed successfully",
+            "message": "DeepGitAI cleanup completed successfully",
             "details": result
         })
         
@@ -1191,13 +1214,13 @@ def graphrag_cleanup_endpoint():
         return jsonify({
             "success": False,
             "error": str(e),
-            "message": "An error occurred during GraphRAG cleanup"
+            "message": "An error occurred during DeepGitAI cleanup"
         }), 500
 
 
-@app.route("/api/graphrag-check-changes", methods=["POST"])
-def graphrag_check_changes_endpoint():
-    """Check if GraphRAG database needs to be rebuilt due to graph changes."""
+@app.route("/api/deepgit-ai-check-changes", methods=["POST"])
+def deepgit_ai_check_changes_endpoint():
+    """Check if DeepGitAI database needs to be rebuilt due to graph changes."""
     try:
         data = request.get_json() or {}
         gexf_content = data.get("gexfContent", "")
@@ -1210,7 +1233,7 @@ def graphrag_check_changes_endpoint():
             }), 400
         
         # Check if database should be rebuilt
-        result = graphrag_service.should_rebuild_database(gexf_content)
+        result = deepgit_ai_service.should_rebuild_database(gexf_content)
         
         return jsonify({
             "success": True,

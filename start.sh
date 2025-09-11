@@ -127,4 +127,4 @@ fi
 echo "✅ Both servers are running:"
 echo "   Backend: http://localhost:5002"
 echo "   Frontend: http://localhost:5173"
-echo "   GraphRAG: Click the robot icon (🤖) in the graph controls"
+echo "   DeepGitAI: Click the robot icon (🤖) in the graph controls"

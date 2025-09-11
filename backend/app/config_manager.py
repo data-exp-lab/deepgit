@@ -62,11 +62,13 @@ class ConfigManager:
                 "token": "",
                 "rate_limit_per_hour": 5000
             },
-            "graphrag": {
+            "deepgit_ai": {
                 "timeout_minutes": 50,
                 "batch_size": 50,
                 "cache_hours": 24,
-                "max_repos_per_request": 1000
+                "max_repos_per_request": 1000,
+                "strict_database_only": True,
+                "include_database_context": True
             },
             "server": {
                 "host": "127.0.0.1",
@@ -143,9 +145,9 @@ class ConfigManager:
         """Get GitHub token from configuration."""
         return self.get("github.token", "")
     
-    def get_graphrag_config(self) -> Dict[str, Any]:
-        """Get GraphRAG configuration."""
-        return self.get("graphrag", {})
+    def get_deepgit_ai_config(self) -> Dict[str, Any]:
+        """Get DeepGitAI configuration."""
+        return self.get("deepgit_ai", {})
     
     def get_server_config(self) -> Dict[str, Any]:
         """Get server configuration."""

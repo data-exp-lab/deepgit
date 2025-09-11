@@ -24,11 +24,13 @@
         "token": "ghp_your-github-personal-access-token-here",
         "rate_limit_per_hour": 5000
     },
-    "graphrag": {
+    "deepgit_ai": {
         "timeout_minutes": 50,
         "batch_size": 50,
         "cache_hours": 24,
-        "max_repos_per_request": 1000
+        "max_repos_per_request": 1000,
+        "strict_database_only": true,
+        "include_database_context": true
     },
     "server": {
         "host": "127.0.0.1",

@@ -14,7 +14,7 @@ import GraphSumUp from "./GraphSumUp";
 import NodesAppearanceBlock from "./NodesAppearanceBlock";
 import Settings from "./Settings";
 import SelectedNodePanel from "./SelectedNodePanel";
-import GraphRAGPanel from "./GraphRAGPanel";
+import DeepGitAIPanel from "./GraphRAGPanel";
 
 const ContextPanel: FC = () => {
   const { navState, data, panel, setPanel } = useContext(GraphContext);
@@ -35,8 +35,8 @@ const ContextPanel: FC = () => {
   let content: JSX.Element;
   if (panel === "settings") {
     content = <Settings />;
-  } else if (panel === "graphrag") {
-    content = <GraphRAGPanel />;
+  } else if (panel === "deepgit-ai") {
+    content = <DeepGitAIPanel />;
   } else if (selectedNode) {
     content = <SelectedNodePanel node={navState?.selectedNode as string} data={selectedNode} />;
   } else {
@@ -71,11 +71,11 @@ const ContextPanel: FC = () => {
               <VscSettings /> Settings
             </button>
             <button
-              className={cx("btn ms-2 mt-1", panel === "graphrag" ? selectedButtonClass : "btn-outline-dark")}
-              onClick={() => setPanel("graphrag")}
-              disabled={panel === "graphrag"}
+              className={cx("btn ms-2 mt-1", panel === "deepgit-ai" ? selectedButtonClass : "btn-outline-dark")}
+              onClick={() => setPanel("deepgit-ai")}
+              disabled={panel === "deepgit-ai"}
             >
-              <AiOutlineRobot /> GraphRAG
+              <AiOutlineRobot /> DeepGitAI
             </button>
             {/* <button
               className={cx("btn ms-2 mt-1", "btn-outline-dark")}
@@ -123,7 +123,7 @@ const ContextPanel: FC = () => {
         </div>
       </div>
 
-      <div className="panel-content">
+      <div className={cx("panel-content", panel === "deepgit-ai" && "deepgit-ai-mode")}>
         <div className="flex-grow-1 p-0 m-0">{content}</div>
 
         <hr className="m-0 flex-shrink-0" />

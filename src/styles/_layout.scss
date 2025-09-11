@@ -70,15 +70,89 @@ body {
     flex-direction: column;
 
     @extend .custom-scrollbar;
-    overflow-y: auto;
+    overflow-y: auto; // single scroll ancestor for sticky
 
     &>*>*:not(hr) {
       padding: 1rem;
     }
 
-    // Special handling for GraphRAG panel
-    .graphrag-chat {
+    // Special handling for DeepGitAI panel
+    .deepgit-ai-chat {
       padding: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    // When DeepGitAI tab is active, keep header/input sticky relative to panel scroll
+    &.deepgit-ai-mode {
+      position: relative;
+
+      .deepgit-ai-header {
+        position: sticky; // sticks to panel-content
+        top: 0;
+        z-index: 1000;
+        background: white;
+        border-bottom: 1px solid #e9ecef;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+      }
+
+      .chat-input {
+        position: sticky; // sticks to panel-content
+        bottom: 0;
+        z-index: 999;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+      }
+
+      .chat-messages {
+        flex: 1 1 auto;
+        min-height: 0; // allows shrinking so header/input remain visible
+        overflow: visible; // do not create nested scroll
+      }
+    }
+
+    // Make DeepGitAI header sticky relative to panel content
+    .deepgit-ai-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: white;
+      border-bottom: 1px solid #e9ecef;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    // Make DeepGitAI chat input sticky relative to panel content
+    .chat-input {
+      position: sticky;
+      bottom: 0;
+      z-index: 999;
+      background: white;
+      border-top: 1px solid #e9ecef;
+      box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      flex-shrink: 0; // Prevent input from shrinking
+
+      .input-group {
+        .form-control {
+          border-radius: 20px 0 0 20px;
+          border: 1px solid #ced4da;
+
+          &:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+          }
+        }
+
+        .btn {
+          border-radius: 0 20px 20px 0;
+          border: 1px solid #007bff;
+        }
+      }
     }
   }
 }
