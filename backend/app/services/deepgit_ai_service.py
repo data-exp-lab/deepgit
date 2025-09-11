@@ -10,8 +10,9 @@ import re
 import csv
 import hashlib
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
+from config_manager import ConfigManager
 # from collections import defaultdict  # Removed unused import
 
 # Import required libraries
@@ -39,10 +40,11 @@ try:
     from langgraph.prebuilt import ToolNode
     from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
     from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-    from langchain_openai import ChatOpenAI
-    from langchain_google_genai import ChatGoogleGenerativeAI
+    from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+    from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
     from langchain_core.tools import tool
     from langchain_core.output_parsers import JsonOutputParser
+    from langchain_community.embeddings import HuggingFaceEmbeddings
     from pydantic import BaseModel, Field
 except ImportError as e:
     print(f"❌ Failed to import LangGraph modules: {e}")
@@ -56,14 +58,17 @@ except ImportError as e:
     MessagesPlaceholder = None
     ChatOpenAI = None
     ChatGoogleGenerativeAI = None
+    OpenAIEmbeddings = None
+    GoogleGenerativeAIEmbeddings = None
+    HuggingFaceEmbeddings = None
     tool = None
     JsonOutputParser = None
     BaseModel = None
     Field = None
 
 @dataclass
-class GraphRAGState:
-    """State for the GraphRAG workflow."""
+class DeepGitAIState:
+    """State for the DeepGitAI workflow."""
     messages: list = None
     query: str = ""
     graph_results: dict = None
@@ -79,22 +84,125 @@ class GraphRAGState:
         if self.readme_content is None:
             self.readme_content = []
 
-class GraphRAGService:
-    """Service for handling GraphRAG operations."""
+class DeepGitAIService:
+    """Service for handling DeepGitAI operations."""
     
     def __init__(self):
         self.db_path = None
-        self.graphrag_instance = None
+        self.deepgit_ai_instance = None
         self.session_id = None  # Track which session owns this database
         # Use DuckDB in cache folder for README storage
         self.cache_dir = Path(__file__).parent.parent / "cache"
         self.cache_dir.mkdir(exist_ok=True)
         self.readme_cache_db_path = self.cache_dir / "readme_cache.duckdb"
         self._cache_stats = {"hits": 0, "misses": 0}
+        # Embedding model for README content
+        self.embedding_model = None
+        self.embedding_provider = None
     
     def get_cache_key(self, owner, repo):
         """Generate a cache key for a repository."""
         return hashlib.md5(f"{owner}/{repo}".encode()).hexdigest()
+    
+    def initialize_embeddings(self, provider: str, api_keys: Dict[str, str]) -> Dict[str, Any]:
+        """Initialize the embedding model based on the provider."""
+        try:
+            if provider == "openai":
+                api_key = api_keys.get("openaiKey", "")
+                if not api_key:
+                    return {"success": False, "error": "OpenAI API key not provided"}
+                
+                self.embedding_model = OpenAIEmbeddings(
+                    model="text-embedding-3-small",
+                    api_key=api_key
+                )
+                self.embedding_provider = "openai"
+                
+            elif provider == "azure_openai":
+                api_key = api_keys.get("azureOpenAIKey", "")
+                endpoint = api_keys.get("azureOpenAIEndpoint", "")
+                deployment = api_keys.get("azureOpenAIDeployment", "")
+                
+                if not api_key or not endpoint or not deployment:
+                    return {"success": False, "error": "Azure OpenAI credentials not provided"}
+                
+                self.embedding_model = OpenAIEmbeddings(
+                    model=deployment,
+                    api_key=api_key,
+                    azure_endpoint=endpoint.rstrip('/'),
+                    api_version="2024-02-15-preview"
+                )
+                self.embedding_provider = "azure_openai"
+                
+            elif provider == "gemini":
+                api_key = api_keys.get("geminiKey", "")
+                if not api_key:
+                    return {"success": False, "error": "Gemini API key not provided"}
+                
+                self.embedding_model = GoogleGenerativeAIEmbeddings(
+                    model="models/embedding-001",
+                    google_api_key=api_key
+                )
+                self.embedding_provider = "gemini"
+                
+            else:
+                # Fallback to HuggingFace embeddings (no API key required)
+                try:
+                    self.embedding_model = HuggingFaceEmbeddings(
+                        model_name="sentence-transformers/all-MiniLM-L6-v2",
+                        model_kwargs={'device': 'cpu'}
+                    )
+                    self.embedding_provider = "huggingface"
+                    print("Using HuggingFace embeddings as fallback")
+                except Exception as e:
+                    return {"success": False, "error": f"Failed to initialize HuggingFace embeddings: {e}"}
+            
+            return {"success": True, "message": f"Embeddings initialized with {self.embedding_provider}"}
+            
+        except Exception as e:
+            return {"success": False, "error": str(e), "message": f"Failed to initialize embeddings with {provider}"}
+    
+    def create_readme_embedding(self, readme_content: str) -> Optional[List[float]]:
+        """Create embedding for README content."""
+        if not self.embedding_model or not readme_content:
+            return None
+        
+        try:
+            # Clean and truncate content for embedding
+            cleaned_content = self.clean_text_for_embedding(readme_content)
+            if not cleaned_content:
+                return None
+            
+            # Create embedding
+            embedding = self.embedding_model.embed_query(cleaned_content)
+            return embedding
+            
+        except Exception as e:
+            print(f"Error creating embedding: {e}")
+            return None
+    
+    def clean_text_for_embedding(self, text: str) -> str:
+        """Clean text for embedding generation."""
+        if not text or not isinstance(text, str):
+            return ""
+        
+        # Remove markdown formatting
+        text = re.sub(r'#+\s*', '', text)  # Remove headers
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)  # Remove bold
+        text = re.sub(r'\*(.*?)\*', r'\1', text)  # Remove italic
+        text = re.sub(r'`(.*?)`', r'\1', text)  # Remove code blocks
+        text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)  # Remove code blocks
+        text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)  # Remove links, keep text
+        
+        # Remove extra whitespace and newlines
+        text = re.sub(r'\s+', ' ', text)
+        text = text.strip()
+        
+        # Truncate if too long (most embedding models have limits)
+        if len(text) > 8000:  # Conservative limit
+            text = text[:8000] + "..."
+        
+        return text
     
     def get_cached_repos_batch(self, repo_list):
         """Get list of repositories that already have cached READMEs."""
@@ -214,7 +322,7 @@ class GraphRAGService:
             return None
     
     def cache_readme(self, owner, repo, content):
-        """Store README content in cache database, including 'no README' cases."""
+        """Store README content and embedding in cache database, including 'no README' cases."""
         try:
             # Initialize cache database if it doesn't exist
             self._initialize_cache_database()
@@ -226,16 +334,25 @@ class GraphRAGService:
                 # Clean the content for database storage
                 cleaned_content = self.clean_text_for_csv(content)
                 content_length = len(content)
+                
+                # Create embedding if embedding model is available
+                embedding = None
+                embedding_provider = None
+                if self.embedding_model:
+                    embedding = self.create_readme_embedding(content)
+                    embedding_provider = self.embedding_provider
             else:
                 # Cache "no README" case to avoid repeated GitHub API calls
                 cleaned_content = ""  # Empty string indicates no README found
                 content_length = 0
+                embedding = None
+                embedding_provider = None
             
-            # Insert or update README content in cache database
+            # Insert or update README content and embedding in cache database
             query = """
             INSERT OR REPLACE INTO repository_cache 
-            (owner, repo, readme_content, readme_length, cached_at)
-            VALUES (?, ?, ?, ?, ?)
+            (owner, repo, readme_content, readme_length, readme_embedding, embedding_provider, cached_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """
             
             conn.execute(query, [
@@ -243,6 +360,8 @@ class GraphRAGService:
                 repo, 
                 cleaned_content, 
                 content_length,
+                embedding,
+                embedding_provider,
                 int(time.time())
             ])
             
@@ -266,6 +385,8 @@ class GraphRAGService:
                 repo VARCHAR,
                 readme_content TEXT,
                 readme_length BIGINT,
+                readme_embedding DOUBLE[],
+                embedding_provider VARCHAR,
                 cached_at BIGINT,
                 PRIMARY KEY (owner, repo)
             )
@@ -446,6 +567,8 @@ class GraphRAGService:
                 stargazers STRING,
                 readme_content STRING,
                 readme_length INT64,
+                readme_embedding DOUBLE[],
+                embedding_provider STRING,
                 PRIMARY KEY (id)
             )
             """
@@ -541,7 +664,7 @@ class GraphRAGService:
                     node_id, label, github_url, stars, forks, watchers,
                     is_archived, language_count, pull_requests, issues,
                     primary_language, created_at_year, license_info, topics,
-                    contributors, stargazers, '', 0  # readme_content, readme_length
+                    contributors, stargazers, '', 0, None, None  # readme_content, readme_length, readme_embedding, embedding_provider
                 ])
             
             node_csv_path = node_csv.name
@@ -680,7 +803,7 @@ class GraphRAGService:
         
         headers = {
             'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'DeepGit-GraphRAG/1.0'
+            'User-Agent': 'DeepGit-DeepGitAI/1.0'
         }
         if token:
             headers['Authorization'] = f'token {token}'
@@ -818,7 +941,15 @@ class GraphRAGService:
                 # Clean the content for CSV storage
                 cleaned_content = self.clean_text_for_csv(readme_content)
                 original_length = len(readme_content)
-                readme_data.append((repo_id, cleaned_content, original_length))
+                
+                # Create embedding if embedding model is available
+                embedding = None
+                embedding_provider = None
+                if self.embedding_model:
+                    embedding = self.create_readme_embedding(readme_content)
+                    embedding_provider = self.embedding_provider
+                
+                readme_data.append((repo_id, cleaned_content, original_length, embedding, embedding_provider))
                 print(f"  ✓ Found README ({original_length} characters, stored: {len(cleaned_content)} characters)")
             else:
                 print(f"  ✗ No README found")
@@ -832,8 +963,8 @@ class GraphRAGService:
         # Create temporary CSV file for README data
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, newline='') as readme_csv:
             readme_writer = csv.writer(readme_csv, quoting=csv.QUOTE_ALL)
-            for repo_id, content, length in readme_data:
-                readme_writer.writerow([repo_id, content, length])
+            for repo_id, content, length, embedding, embedding_provider in readme_data:
+                readme_writer.writerow([repo_id, content, length, embedding, embedding_provider])
             readme_csv_path = readme_csv.name
         
         # Import README data with parallel disabled
@@ -925,7 +1056,14 @@ class GraphRAGService:
                         original_length = len(cached_content)
                     else:
                         original_length = len(str(cached_content))
-                    readme_data.append((repo_id, cleaned_content, original_length))
+                    # Create embedding if embedding model is available
+                    embedding = None
+                    embedding_provider = None
+                    if self.embedding_model:
+                        embedding = self.create_readme_embedding(cached_content)
+                        embedding_provider = self.embedding_provider
+                    
+                    readme_data.append((repo_id, cleaned_content, original_length, embedding, embedding_provider))
                     successful += 1
                     continue
                 
@@ -935,7 +1073,15 @@ class GraphRAGService:
                     # Clean the content for CSV storage
                     cleaned_content = self.clean_text_for_csv(readme_content)
                     original_length = len(readme_content)
-                    readme_data.append((repo_id, cleaned_content, original_length))
+                    
+                    # Create embedding if embedding model is available
+                    embedding = None
+                    embedding_provider = None
+                    if self.embedding_model:
+                        embedding = self.create_readme_embedding(readme_content)
+                        embedding_provider = self.embedding_provider
+                    
+                    readme_data.append((repo_id, cleaned_content, original_length, embedding, embedding_provider))
                     successful += 1
                     print(f"    ✓ Found README ({original_length} characters, stored: {len(cleaned_content)} characters)")
                 else:
@@ -960,8 +1106,8 @@ class GraphRAGService:
         # Create temporary CSV file for README data
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, newline='') as readme_csv:
             readme_writer = csv.writer(readme_csv, quoting=csv.QUOTE_ALL)
-            for repo_id, content, length in readme_data:
-                readme_writer.writerow([repo_id, content, length])
+            for repo_id, content, length, embedding, embedding_provider in readme_data:
+                readme_writer.writerow([repo_id, content, length, embedding, embedding_provider])
             readme_csv_path = readme_csv.name
         
         # Import README data with parallel disabled
@@ -1126,7 +1272,15 @@ class GraphRAGService:
                 if cached_content:
                     # Clean the content for CSV storage
                     cleaned_content = self.clean_text_for_csv(cached_content)
-                    readme_data.append((repo_id, cleaned_content, cached_length))
+                    
+                    # Create embedding if embedding model is available
+                    embedding = None
+                    embedding_provider = None
+                    if self.embedding_model:
+                        embedding = self.create_readme_embedding(cached_content)
+                        embedding_provider = self.embedding_provider
+                    
+                    readme_data.append((repo_id, cleaned_content, cached_length, embedding, embedding_provider))
                     successful += 1
                 else:
                     failed += 1
@@ -1142,7 +1296,15 @@ class GraphRAGService:
                     # Clean the content for CSV storage
                     cleaned_content = self.clean_text_for_csv(readme_content)
                     original_length = len(readme_content)
-                    readme_data.append((repo_id, cleaned_content, original_length))
+                    
+                    # Create embedding if embedding model is available
+                    embedding = None
+                    embedding_provider = None
+                    if self.embedding_model:
+                        embedding = self.create_readme_embedding(readme_content)
+                        embedding_provider = self.embedding_provider
+                    
+                    readme_data.append((repo_id, cleaned_content, original_length, embedding, embedding_provider))
                     successful += 1
                 else:
                     failed += 1
@@ -1185,22 +1347,24 @@ class GraphRAGService:
             if processed % 100 == 0 and readme_data:
                 try:
                     # Insert current batch to database
-                    for repo_id, content, length in readme_data:
+                    for repo_id, content, length, embedding, embedding_provider in readme_data:
                         try:
                             conn.execute("""
                                 MERGE (r:Repository {id: $repo_id})
-                                SET r.readme_content = $content, r.readme_length = $length
-                            """, parameters={"repo_id": repo_id, "content": content, "length": length})
+                                SET r.readme_content = $content, r.readme_length = $length, r.readme_embedding = $embedding, r.embedding_provider = $embedding_provider
+                            """, parameters={"repo_id": repo_id, "content": content, "length": length, "embedding": embedding, "embedding_provider": embedding_provider})
                         except Exception as e:
                             if "Cannot find property" in str(e):
                                 # Try to add the properties first
                                 conn.execute("ALTER TABLE Repository ADD COLUMN readme_content STRING")
                                 conn.execute("ALTER TABLE Repository ADD COLUMN readme_length INT64")
+                                conn.execute("ALTER TABLE Repository ADD COLUMN readme_embedding DOUBLE[]")
+                                conn.execute("ALTER TABLE Repository ADD COLUMN embedding_provider STRING")
                                 # Retry the insertion
                                 conn.execute("""
                                     MERGE (r:Repository {id: $repo_id})
-                                    SET r.readme_content = $content, r.readme_length = $length
-                                """, parameters={"repo_id": repo_id, "content": content, "length": length})
+                                    SET r.readme_content = $content, r.readme_length = $length, r.readme_embedding = $embedding, r.embedding_provider = $embedding_provider
+                                """, parameters={"repo_id": repo_id, "content": content, "length": length, "embedding": embedding, "embedding_provider": embedding_provider})
                             else:
                                 print(f"  ⚠️  Checkpoint insertion failed for {repo_id}: {e}")
                     
@@ -1227,7 +1391,7 @@ class GraphRAGService:
         # Insert remaining README data directly into Repository table
         if readme_data:
             print(f"\nInserting final batch of {len(readme_data)} README files into database...")
-            for repo_id, content, length in readme_data:
+            for repo_id, content, length, embedding, embedding_provider in readme_data:
                 try:
                     # Try to insert README data with error handling for missing properties
                     conn.execute("""
@@ -1245,8 +1409,8 @@ class GraphRAGService:
                             # Retry the insertion
                             conn.execute("""
                                 MERGE (r:Repository {id: $repo_id})
-                                SET r.readme_content = $content, r.readme_length = $length
-                            """, parameters={"repo_id": repo_id, "content": content, "length": length})
+                                SET r.readme_content = $content, r.readme_length = $length, r.readme_embedding = $embedding, r.embedding_provider = $embedding_provider
+                            """, parameters={"repo_id": repo_id, "content": content, "length": length, "embedding": embedding, "embedding_provider": embedding_provider})
                         except Exception as retry_e:
                             print(f"  ❌ Failed to add properties or retry insertion: {retry_e}")
                     else:
@@ -1304,7 +1468,7 @@ class GraphRAGService:
             gexf_hash = hashlib.md5(gexf_content.encode()).hexdigest()
             
             # Look for existing database with the same hash
-            existing_db_path = kuzu_dir / f"graphrag_db_{gexf_hash}"
+            existing_db_path = kuzu_dir / f"deepgit_ai_db_{gexf_hash}"
             
             if existing_db_path.exists():
                 # Database already exists for this graph, reuse it
@@ -1409,7 +1573,7 @@ class GraphRAGService:
             gexf_hash = hashlib.md5(gexf_content.encode()).hexdigest()
             
             # Look for existing database with the same hash
-            existing_db_path = kuzu_dir / f"graphrag_db_{gexf_hash}"
+            existing_db_path = kuzu_dir / f"deepgit_ai_db_{gexf_hash}"
             
             if existing_db_path.exists():
                 # Database already exists for this graph, reuse it
@@ -1574,7 +1738,7 @@ class GraphRAGService:
             
             # Look for existing database with the same hash
             kuzu_dir = Path(__file__).parent.parent / "kuzu"
-            existing_db_path = kuzu_dir / f"graphrag_db_{gexf_hash}"
+            existing_db_path = kuzu_dir / f"deepgit_ai_db_{gexf_hash}"
             
             if not existing_db_path.exists():
                 return {
@@ -1652,7 +1816,7 @@ class GraphRAGService:
             }
     
     def change_provider(self, provider: str, api_keys: Dict[str, str]) -> Dict[str, Any]:
-        """Change the GraphRAG provider without recreating the database."""
+        """Change the DeepGitAI provider without recreating the database."""
         try:
             if not self.db_path or not os.path.exists(self.db_path):
                 return {
@@ -1661,8 +1825,8 @@ class GraphRAGService:
                     "message": "Database not found"
                 }
             
-            # Initialize GraphRAG with new provider
-            result = self.initialize_graphrag(provider, api_keys)
+            # Initialize DeepGitAI with new provider
+            result = self.initialize_deepgit_ai(provider, api_keys)
             
             if result["success"]:
                 return {
@@ -1680,8 +1844,8 @@ class GraphRAGService:
                 "message": "Failed to change provider"
             }
     
-    def initialize_graphrag(self, provider: str, api_keys: Dict[str, str]) -> Dict[str, Any]:
-        """Initialize the GraphRAG system with the specified provider."""
+    def initialize_deepgit_ai(self, provider: str, api_keys: Dict[str, str]) -> Dict[str, Any]:
+        """Initialize the DeepGitAI system with the specified provider."""
         try:
             # Check if required modules are available
             if StateGraph is None or END is None:
@@ -1698,6 +1862,12 @@ class GraphRAGService:
                     "message": "Database not found"
                 }
             
+            # Initialize embeddings first
+            embedding_result = self.initialize_embeddings(provider, api_keys)
+            if not embedding_result["success"]:
+                print(f"⚠️ Embedding initialization failed: {embedding_result.get('error', 'Unknown error')}")
+                # Continue without embeddings - not critical for basic functionality
+            
             # Set environment variables for API keys
             if provider == "openai":
                 os.environ["OPENAI_API_KEY"] = api_keys.get("openaiKey", "")
@@ -1708,33 +1878,205 @@ class GraphRAGService:
             elif provider == "gemini":
                 os.environ["GEMINI_API_KEY"] = api_keys.get("geminiKey", "")
             
-            # Initialize GraphRAG
-            self.graphrag_instance = MultiLLMGraphRAG(str(self.db_path), provider)
+            # Initialize DeepGitAI
+            self.deepgit_ai_instance = MultiLLMDeepGitAI(str(self.db_path), provider)
             
             return {
                 "success": True,
-                "message": f"GraphRAG initialized with {provider}"
+                "message": f"DeepGitAI initialized with {provider}",
+                "embeddings_initialized": embedding_result["success"]
             }
             
         except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
-                "message": f"Failed to initialize GraphRAG with {provider}"
+                "message": f"Failed to initialize DeepGitAI with {provider}"
             }
     
-    def query_graphrag(self, query: str) -> Dict[str, Any]:
-        """Execute a query using the GraphRAG system."""
+    def semantic_search_readmes(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Perform semantic search on README content using embeddings."""
+        if not self.embedding_model or not self.db_path:
+            return []
+        
         try:
-            if not self.graphrag_instance:
+            # Create embedding for the query
+            query_embedding = self.create_readme_embedding(query)
+            if not query_embedding:
+                return []
+            
+            # Connect to database
+            db = kuzu.Database(str(self.db_path), read_only=True)
+            conn = kuzu.Connection(db)
+            
+            # Get all repositories with embeddings
+            repos_query = """
+            MATCH (r:Repository)
+            WHERE r.readme_embedding IS NOT NULL AND r.readme_content IS NOT NULL AND r.readme_content <> ''
+            RETURN r.id, r.readme_content, r.readme_embedding, r.stars, r.primaryLanguage, r.topics
+            """
+            
+            result = conn.execute(repos_query).get_as_df()
+            
+            if result.empty:
+                return []
+            
+            # Calculate cosine similarity for each repository
+            similarities = []
+            for _, row in result.iterrows():
+                repo_id = row['r.id']
+                readme_content = row['r.readme_content']
+                embedding = row['r.readme_embedding']
+                stars = row['r.stars']
+                language = row['r.primaryLanguage']
+                topics = row['r.topics']
+                
+                if embedding and len(embedding) > 0:
+                    # Calculate cosine similarity
+                    similarity = self._cosine_similarity(query_embedding, embedding)
+                    similarities.append({
+                        'repo_id': repo_id,
+                        'readme_content': readme_content,
+                        'similarity': similarity,
+                        'stars': stars,
+                        'language': language,
+                        'topics': topics
+                    })
+            
+            # Sort by similarity and return top results
+            similarities.sort(key=lambda x: x['similarity'], reverse=True)
+            return similarities[:limit]
+            
+        except Exception as e:
+            print(f"Error in semantic search: {e}")
+            return []
+    
+    def _cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+        """Calculate cosine similarity between two vectors."""
+        try:
+            import numpy as np
+            
+            # Convert to numpy arrays
+            a = np.array(vec1)
+            b = np.array(vec2)
+            
+            # Calculate cosine similarity
+            dot_product = np.dot(a, b)
+            norm_a = np.linalg.norm(a)
+            norm_b = np.linalg.norm(b)
+            
+            if norm_a == 0 or norm_b == 0:
+                return 0.0
+            
+            return dot_product / (norm_a * norm_b)
+            
+        except Exception as e:
+            print(f"Error calculating cosine similarity: {e}")
+            return 0.0
+    
+    def validate_query_scope(self, query: str) -> Dict[str, Any]:
+        """Validate that the query is within the scope of the database."""
+        try:
+            # Connect to database to check available data
+            db = kuzu.Database(str(self.db_path), read_only=True)
+            conn = kuzu.Connection(db)
+            
+            # Get database statistics
+            repo_count = conn.execute("MATCH (r:Repository) RETURN COUNT(r)").get_as_df().iloc[0, 0]
+            readme_count = conn.execute("""
+                MATCH (r:Repository) 
+                WHERE r.readme_content IS NOT NULL AND r.readme_content <> ''
+                RETURN COUNT(r)
+            """).get_as_df().iloc[0, 0]
+            
+            # Get available languages
+            languages = conn.execute("""
+                MATCH (r:Repository) 
+                WHERE r.primaryLanguage IS NOT NULL AND r.primaryLanguage <> ''
+                RETURN DISTINCT r.primaryLanguage
+                ORDER BY r.primaryLanguage
+            """).get_as_df()
+            
+            # Get available topics
+            topics = conn.execute("""
+                MATCH (r:Repository) 
+                WHERE r.topics IS NOT NULL AND r.topics <> ''
+                RETURN DISTINCT r.topics
+                ORDER BY r.topics
+            """).get_as_df()
+            
+            available_languages = languages['r.primaryLanguage'].tolist() if not languages.empty else []
+            available_topics = topics['r.topics'].tolist() if not topics.empty else []
+            
+            return {
+                "success": True,
+                "database_stats": {
+                    "total_repositories": repo_count,
+                    "repositories_with_readmes": readme_count,
+                    "available_languages": available_languages[:20],  # Limit to first 20
+                    "available_topics": available_topics[:20],  # Limit to first 20
+                    "database_path": str(self.db_path)
+                },
+                "query_scope": "limited_to_database",
+                "message": f"Query will be limited to {repo_count} repositories in the database"
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "Failed to validate query scope"
+            }
+    
+    def add_database_context_to_query(self, query: str) -> str:
+        """Add database context information to the query to limit LLM responses."""
+        try:
+            # Get database statistics
+            scope_info = self.validate_query_scope(query)
+            
+            if not scope_info["success"]:
+                return query
+            
+            db_stats = scope_info["database_stats"]
+            
+            # Create context prefix
+            context_prefix = f"""
+DATABASE CONTEXT:
+- This query is limited to {db_stats['total_repositories']} repositories in the Kuzu database
+- {db_stats['repositories_with_readmes']} repositories have README content available
+- Available programming languages: {', '.join(db_stats['available_languages'][:10])}
+- Available topics: {', '.join(db_stats['available_topics'][:10])}
+
+IMPORTANT: Only provide information about repositories, languages, and topics that exist in this specific database. Do not use external knowledge.
+
+USER QUERY: {query}
+"""
+            
+            return context_prefix
+            
+        except Exception as e:
+            print(f"Error adding database context: {e}")
+            return query
+    
+    def query_deepgit_ai(self, query: str) -> Dict[str, Any]:
+        """Execute a query using the DeepGitAI system."""
+        try:
+            if not self.deepgit_ai_instance:
                 return {
                     "success": False,
-                    "error": "GraphRAG not initialized",
-                    "message": "Please initialize GraphRAG first"
+                    "error": "DeepGitAI not initialized",
+                    "message": "Please initialize DeepGitAI first"
                 }
             
-            # Execute the query
-            result = self.graphrag_instance.query(query)
+            # Execute the query with database context if enabled
+            config_manager = ConfigManager()
+            include_context = config_manager.get("deepgit_ai.include_database_context", True)
+            
+            if include_context:
+                contextualized_query = self.add_database_context_to_query(query)
+                result = self.deepgit_ai_instance.query(contextualized_query)
+            else:
+                result = self.deepgit_ai_instance.query(query)
             
             return {
                 "success": True,
@@ -1752,14 +2094,14 @@ class GraphRAGService:
     def get_database_stats(self) -> Dict[str, Any]:
         """Get database statistics."""
         try:
-            if not self.graphrag_instance:
+            if not self.deepgit_ai_instance:
                 return {
                     "success": False,
-                    "error": "GraphRAG not initialized",
-                    "message": "Please initialize GraphRAG first"
+                    "error": "DeepGitAI not initialized",
+                    "message": "Please initialize DeepGitAI first"
                 }
             
-            stats = self.graphrag_instance.get_database_stats()
+            stats = self.deepgit_ai_instance.get_database_stats()
             
             return {
                 "success": True,
@@ -1794,13 +2136,13 @@ class GraphRAGService:
             if self.db_path and os.path.exists(self.db_path):
                 try:
                     # Close any active connections first
-                    if self.graphrag_instance:
+                    if self.deepgit_ai_instance:
                         # Close database connections
-                        if hasattr(self.graphrag_instance, 'conn'):
-                            self.graphrag_instance.conn.close()
-                        if hasattr(self.graphrag_instance, 'db'):
-                            self.graphrag_instance.db.close()
-                        self.graphrag_instance = None
+                        if hasattr(self.deepgit_ai_instance, 'conn'):
+                            self.deepgit_ai_instance.conn.close()
+                        if hasattr(self.deepgit_ai_instance, 'db'):
+                            self.deepgit_ai_instance.db.close()
+                        self.deepgit_ai_instance = None
                     
                     # Delete the database file (Kuzu databases are files, not directories)
                     os.remove(self.db_path)
@@ -1828,7 +2170,7 @@ class GraphRAGService:
             #         print(f"⚠️  {error_msg}")
             #         cleanup_details["errors"].append(error_msg)
             
-            print("✅ GraphRAG cleanup completed")
+            print("✅ DeepGitAI cleanup completed")
             
         except Exception as e:
             error_msg = f"Unexpected error during cleanup: {e}"
@@ -1838,34 +2180,34 @@ class GraphRAGService:
         return cleanup_details
     
     def detect_graph_changes(self, current_gexf_content: str) -> Dict[str, Any]:
-        """Detect if the current graph has changed compared to the GraphRAG database."""
+        """Detect if the current graph has changed compared to the DeepGitAI database."""
         try:
             if not self.db_path or not os.path.exists(self.db_path):
                 return {
                     "has_changes": False,
-                    "message": "No GraphRAG database exists to compare against"
+                    "message": "No DeepGitAI database exists to compare against"
                 }
             
             # Calculate hash of current GEXF content
             import hashlib
             current_hash = hashlib.md5(current_gexf_content.encode()).hexdigest()
             
-            # Extract hash from database path (format: graphrag_db_{hash})
+            # Extract hash from database path (format: deepgit_ai_db_{hash})
             db_name = os.path.basename(self.db_path)
-            if db_name.startswith("graphrag_db_"):
-                stored_hash = db_name[12:]  # Remove "graphrag_db_" prefix
+            if db_name.startswith("deepgit_ai_db_"):
+                stored_hash = db_name[14:]  # Remove "deepgit_ai_db_" prefix
                 
                 if current_hash != stored_hash:
                     return {
                         "has_changes": True,
                         "current_hash": current_hash,
                         "stored_hash": stored_hash,
-                        "message": "Graph structure has changed. GraphRAG database may be outdated."
+                        "message": "Graph structure has changed. DeepGitAI database may be outdated."
                     }
                 else:
                     return {
                         "has_changes": False,
-                        "message": "Graph structure matches current GraphRAG database"
+                        "message": "Graph structure matches current DeepGitAI database"
                     }
             else:
                 return {
@@ -1881,7 +2223,7 @@ class GraphRAGService:
             }
     
     def should_rebuild_database(self, current_gexf_content: str) -> Dict[str, Any]:
-        """Check if GraphRAG database should be rebuilt based on graph changes."""
+        """Check if DeepGitAI database should be rebuilt based on graph changes."""
         change_detection = self.detect_graph_changes(current_gexf_content)
         
         if change_detection.get("has_changes", False):
@@ -1889,23 +2231,26 @@ class GraphRAGService:
                 "should_rebuild": True,
                 "reason": "Graph structure has changed",
                 "details": change_detection,
-                "message": "The graph structure has changed since the GraphRAG database was created. Would you like to rebuild the database to include the latest changes?"
+                "message": "The graph structure has changed since the DeepGitAI database was created. Would you like to rebuild the database to include the latest changes?"
             }
         else:
             return {
                 "should_rebuild": False,
-                "message": "GraphRAG database is up to date"
+                "message": "DeepGitAI database is up to date"
             }
 
-class MultiLLMGraphRAG:
-    """Enhanced GraphRAG system with support for multiple LLM providers."""
+class MultiLLMDeepGitAI:
+    """Enhanced DeepGitAI system with support for multiple LLM providers."""
     
     def __init__(self, db_path: str, llm_provider: str = "openai"):
-        """Initialize the GraphRAG system."""
+        """Initialize the DeepGitAI system."""
         self.db_path = db_path
-        self.db = kuzu.Database(db_path, read_only=True)  # Use read-only mode for GraphRAG
+        self.db = kuzu.Database(db_path, read_only=True)  # Use read-only mode for DeepGitAI
         self.conn = kuzu.Connection(self.db)
         self.llm_provider = llm_provider
+        
+        # Get reference to the service instance for semantic search
+        self.service = deepgit_ai_service
         
         # Initialize LLM based on provider
         self.llm = self._initialize_llm()
@@ -1913,7 +2258,7 @@ class MultiLLMGraphRAG:
         # Initialize the workflow
         self.workflow = self._create_workflow()
         
-        print(f"Multi-LLM GraphRAG system initialized with database: {db_path}")
+        print(f"Multi-LLM DeepGitAI system initialized with database: {db_path}")
         print(f"LLM Provider: {llm_provider}")
         if llm_provider == "azure_openai":
             deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "unknown")
@@ -2001,7 +2346,7 @@ class MultiLLMGraphRAG:
         """Create the LangGraph workflow."""
         
         # Define the workflow
-        workflow = StateGraph(GraphRAGState)
+        workflow = StateGraph(DeepGitAIState)
         
         # Add nodes
         workflow.add_node("analyze_query", self._analyze_query_node)
@@ -2018,10 +2363,10 @@ class MultiLLMGraphRAG:
         
         return workflow.compile()
     
-    def _analyze_query_node(self, state: GraphRAGState) -> GraphRAGState:
+    def _analyze_query_node(self, state: DeepGitAIState) -> DeepGitAIState:
         """Analyze the user query to determine what graph queries to run."""
         
-        system_prompt = """You are a query analyzer for a GraphRAG system. Your job is to analyze user queries and determine what graph queries should be executed to find relevant information.
+        system_prompt = """You are a query analyzer for a DeepGitAI system. Your job is to analyze user queries and determine what graph queries should be executed to find relevant information.
 
 Available graph queries:
 1. find_similar_repos - Find repositories similar to a given one
@@ -2031,6 +2376,7 @@ Available graph queries:
 5. find_popular_repos - Find most popular repositories
 6. find_recent_repos - Find recently created repositories
 7. find_by_activity - Find repositories by activity level (issues/PRs)
+8. semantic_search - Find repositories using semantic search on README content
 
 Analyze the query and return a JSON with:
 - query_type: The type of graph query to run
@@ -2071,7 +2417,8 @@ Example queries:
             elif "popular" in state.query.lower():
                 state.graph_results["query_type"] = "find_popular_repos"
             else:
-                state.graph_results["query_type"] = "find_popular_repos"  # default
+                # Default to semantic search for general queries
+                state.graph_results["query_type"] = "semantic_search"
                 
         except Exception as e:
             state.error = f"Error analyzing query: {e}"
@@ -2079,7 +2426,7 @@ Example queries:
         
         return state
     
-    def _query_graph_node(self, state: GraphRAGState) -> GraphRAGState:
+    def _query_graph_node(self, state: DeepGitAIState) -> DeepGitAIState:
         """Execute graph queries based on the analysis."""
         
         query_type = state.graph_results.get("query_type", "find_popular_repos")
@@ -2096,6 +2443,8 @@ Example queries:
                 results = self._find_by_topics(topic)
             elif query_type == "find_popular_repos":
                 results = self._find_popular_repositories()
+            elif query_type == "semantic_search":
+                results = self._find_by_semantic_search(state.query)
             else:
                 results = self._find_popular_repositories()
             
@@ -2107,7 +2456,7 @@ Example queries:
         
         return state
     
-    def _retrieve_readmes_node(self, state: GraphRAGState) -> GraphRAGState:
+    def _retrieve_readmes_node(self, state: DeepGitAIState) -> DeepGitAIState:
         """Retrieve README content for the found repositories."""
         
         repos = state.graph_results.get("results", [])
@@ -2129,26 +2478,33 @@ Example queries:
         state.readme_content = readme_data
         return state
     
-    def _generate_answer_node(self, state: GraphRAGState) -> GraphRAGState:
+    def _generate_answer_node(self, state: DeepGitAIState) -> DeepGitAIState:
         """Generate the final answer using the graph results and README content."""
         
-        system_prompt = """You are a helpful assistant that provides information about GitHub repositories based on graph analysis and README content.
+        system_prompt = """You are a helpful assistant that provides information about GitHub repositories based ONLY on the data provided in the context below.
+
+CRITICAL CONSTRAINTS:
+- You MUST ONLY use information from the provided context
+- You MUST NOT use any external knowledge or general information
+- You MUST NOT make assumptions about repositories not in the context
+- You MUST NOT provide information about technologies, languages, or concepts not mentioned in the context
+- If information is not available in the context, you MUST say "This information is not available in the current dataset"
 
 You have access to:
-1. Graph analysis results showing repository relationships and metadata
-2. README content from the repositories
+1. Graph analysis results showing repository relationships and metadata from the Kuzu database
+2. README content from the repositories stored in the database
 
 Provide a comprehensive answer that:
-- Explains the repositories found
-- Highlights key features from READMEs
-- Mentions relationships between repositories
-- Suggests which repositories might be most relevant
+- Explains the repositories found using ONLY the provided data
+- Highlights key features from READMEs in the context
+- Mentions relationships between repositories from the graph data
+- Suggests which repositories might be most relevant based on the data
 
 IMPORTANT: When mentioning repositories, use the format [repository_name](repo_id) to make them clickable. For example:
 - "The [SWI-Prolog/swipl-devel](SWI-Prolog/swipl-devel) repository..."
 - "Check out [souffle-lang/souffle](souffle-lang/souffle) for..."
 
-Be informative but concise."""
+Be informative but concise. If you cannot answer based on the provided context, explicitly state that the information is not available in the current dataset."""
 
         # Prepare context
         graph_results = state.graph_results.get("results", [])
@@ -2226,8 +2582,31 @@ README Preview: {content_preview}
         
         return result.to_dict('records')
     
+    def _find_by_semantic_search(self, query: str, limit: int = 10) -> list:
+        """Find repositories using semantic search on README content."""
+        try:
+            # Use the service's semantic search method
+            semantic_results = self.service.semantic_search_readmes(query, limit)
+            
+            # Convert to the expected format
+            results = []
+            for result in semantic_results:
+                results.append({
+                    "id": result["repo_id"],
+                    "stars": result["stars"],
+                    "primaryLanguage": result["language"],
+                    "topics": result["topics"],
+                    "similarity": result["similarity"],
+                    "readme_content": result["readme_content"]
+                })
+            
+            return results
+            
+        except Exception as e:
+            print(f"Error in semantic search: {e}")
+            return []
+    
     def _find_popular_repositories(self, limit: int = 10) -> list:
-        """Find most popular repositories."""
         
         query = """
         MATCH (r:Repository)
@@ -2261,10 +2640,10 @@ README Preview: {content_preview}
         return None
     
     def query(self, user_query: str) -> str:
-        """Main query interface for the GraphRAG system."""
+        """Main query interface for the DeepGitAI system."""
         
         # Initialize state
-        state = GraphRAGState(
+        state = DeepGitAIState(
             query=user_query,
             messages=[HumanMessage(content=user_query)]
         )
@@ -2319,4 +2698,4 @@ README Preview: {content_preview}
         return stats
 
 # Global instance
-graphrag_service = GraphRAGService()
+deepgit_ai_service = DeepGitAIService()

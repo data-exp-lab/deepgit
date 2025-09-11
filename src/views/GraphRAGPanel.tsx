@@ -33,7 +33,7 @@ interface Message {
     }>;
 }
 
-interface GraphRAGState {
+interface DeepGitAIState {
     graphHash: string;
     isReady: boolean;
     messages: Message[];
@@ -51,7 +51,7 @@ interface SessionAPIKeys {
     geminiKey: string;
 }
 
-const GraphRAGPanel: FC = () => {
+const DeepGitAIPanel: FC = () => {
     const { notify } = useNotifications();
     const { graphFile, data, setNavState, navState, sigma, computedData } = useContext(GraphContext);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -65,7 +65,7 @@ const GraphRAGPanel: FC = () => {
     // Session-only API keys (not persisted to disk)
     const getSessionAPIKeys = (): SessionAPIKeys => {
         try {
-            const saved = sessionStorage.getItem('graphrag_session_keys');
+            const saved = sessionStorage.getItem('deepgit-ai_session_keys');
             return saved ? JSON.parse(saved) : {
                 githubToken: "",
                 openaiKey: "",
@@ -90,7 +90,7 @@ const GraphRAGPanel: FC = () => {
         try {
             const current = getSessionAPIKeys();
             const updated = { ...current, ...keys };
-            sessionStorage.setItem('graphrag_session_keys', JSON.stringify(updated));
+            sessionStorage.setItem('deepgit-ai_session_keys', JSON.stringify(updated));
         } catch (error) {
             console.error('Failed to save session API keys:', error);
         }
@@ -98,18 +98,18 @@ const GraphRAGPanel: FC = () => {
 
     const clearSessionAPIKeys = () => {
         try {
-            sessionStorage.removeItem('graphrag_session_keys');
+            sessionStorage.removeItem('deepgit-ai_session_keys');
         } catch (error) {
             console.error('Failed to clear session API keys:', error);
         }
     };
 
-    // Clean up GraphRAG database on server
-    const cleanupGraphRAGDatabase = async () => {
+    // Clean up DeepGitAI database on server
+    const cleanupDeepGitAIDatabase = async () => {
         try {
-            const sessionId = sessionStorage.getItem('graphrag_session_id') || '';
+            const sessionId = sessionStorage.getItem('deepgit-ai_session_id') || '';
             if (sessionId) {
-                const response = await fetch(API_ENDPOINTS.GRAPHRAG_CLEANUP, {
+                const response = await fetch(API_ENDPOINTS.DEEPGIT_AI_CLEANUP, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -118,25 +118,25 @@ const GraphRAGPanel: FC = () => {
                 });
 
                 if (response.ok) {
-                    console.log('GraphRAG database cleanup completed');
+                    console.log('DeepGitAI database cleanup completed');
                 } else {
-                    console.warn('GraphRAG database cleanup failed:', response.statusText);
+                    console.warn('DeepGitAI database cleanup failed:', response.statusText);
                 }
             }
         } catch (error) {
-            console.error('Failed to cleanup GraphRAG database:', error);
+            console.error('Failed to cleanup DeepGitAI database:', error);
         }
     };
 
-    // Clear all GraphRAG data (API keys and state)
-    const clearAllGraphRAGData = () => {
+    // Clear all DeepGitAI data (API keys and state)
+    const clearAllDeepGitAIData = () => {
         try {
             // Clear session storage (API keys)
-            sessionStorage.removeItem('graphrag_session_keys');
-            // Clear localStorage (GraphRAG state)
-            localStorage.removeItem('graphrag_state');
+            sessionStorage.removeItem('deepgit-ai_session_keys');
+            // Clear localStorage (DeepGitAI state)
+            localStorage.removeItem('deepgit-ai_state');
         } catch (error) {
-            console.error('Failed to clear GraphRAG data:', error);
+            console.error('Failed to clear DeepGitAI data:', error);
         }
     };
 
@@ -144,22 +144,22 @@ const GraphRAGPanel: FC = () => {
     useEffect(() => {
         const handleBeforeUnload = () => {
             // Only clear when the entire browser tab is being closed
-            clearAllGraphRAGData();
+            clearAllDeepGitAIData();
             // Clean up database on server (synchronous for beforeunload)
-            cleanupGraphRAGDatabase();
+            cleanupDeepGitAIDatabase();
         };
 
         const handlePageHide = () => {
             // Clear everything when page is hidden (browser tab closed)
-            clearAllGraphRAGData();
+            clearAllDeepGitAIData();
             // Clean up database on server (asynchronous for pagehide)
-            cleanupGraphRAGDatabase();
+            cleanupDeepGitAIDatabase();
         };
 
         // Don't clear on visibility change (switching between tabs in same page)
         // const handleVisibilityChange = () => {
         //     if (document.visibilityState === 'hidden') {
-        //         clearAllGraphRAGData();
+        //         clearAllDeepGitAIData();
         //     }
         // };
 
@@ -172,16 +172,16 @@ const GraphRAGPanel: FC = () => {
             window.removeEventListener('pagehide', handlePageHide);
             // document.removeEventListener('visibilitychange', handleVisibilityChange);
             // Don't clear on component unmount (just switching tabs)
-            // clearAllGraphRAGData();
+            // clearAllDeepGitAIData();
         };
     }, []);
 
 
 
     // Load persisted state from localStorage
-    const loadPersistedState = (): GraphRAGState | null => {
+    const loadPersistedState = (): DeepGitAIState | null => {
         try {
-            const saved = localStorage.getItem('graphrag_state');
+            const saved = localStorage.getItem('deepgit-ai_state');
             if (!saved) return null;
 
             const parsed = JSON.parse(saved);
@@ -206,7 +206,7 @@ const GraphRAGPanel: FC = () => {
     };
 
     // Save state to localStorage (excluding sensitive data)
-    const saveState = (state: Partial<GraphRAGState>) => {
+    const saveState = (state: Partial<DeepGitAIState>) => {
         try {
             const current = loadPersistedState() || {
                 graphHash: '',
@@ -214,21 +214,21 @@ const GraphRAGPanel: FC = () => {
                 messages: [{
                     id: generateMessageId(),
                     type: 'assistant',
-                    content: 'Hello! I\'m your GraphRAG assistant. I can help you analyze your GitHub repository graph with AI-powered insights. Let\'s get started by setting up the system.',
+                    content: 'Hello! I\'m your DeepGitAI assistant. I can help you analyze your GitHub repository graph with AI-powered insights. Let\'s get started by setting up the system.',
                     timestamp: new Date()
                 }],
                 selectedProvider: "openai"
             };
 
             const updated = { ...current, ...state };
-            localStorage.setItem('graphrag_state', JSON.stringify(updated));
+            localStorage.setItem('deepgit-ai_state', JSON.stringify(updated));
         } catch (error) {
-            console.error('Failed to save GraphRAG state:', error);
+            console.error('Failed to save DeepGitAI state:', error);
         }
     };
 
     // Initialize state from localStorage or defaults
-    const [graphragState, setGraphragState] = useState<GraphRAGState>(() => {
+    const [deepgitAiState, setDeepgitAiState] = useState<DeepGitAIState>(() => {
         const saved = loadPersistedState();
         if (saved && saved.graphHash === '') {
             return saved;
@@ -239,7 +239,7 @@ const GraphRAGPanel: FC = () => {
             messages: [{
                 id: generateMessageId(),
                 type: 'assistant',
-                content: 'Hello! I\'m your GraphRAG assistant. I can help you analyze your GitHub repository graph with AI-powered insights. Let\'s get started by setting up the system.',
+                content: 'Hello! I\'m your DeepGitAI assistant. I can help you analyze your GitHub repository graph with AI-powered insights. Let\'s get started by setting up the system.',
                 timestamp: new Date()
             }],
             selectedProvider: "openai"
@@ -254,18 +254,18 @@ const GraphRAGPanel: FC = () => {
 
     // Detect graph changes
     useEffect(() => {
-        if ('' && '' !== graphragState.graphHash) {
+        if ('' && '' !== deepgitAiState.graphHash) {
             setPendingGraphHash('');
             setShowGraphChangeDialog(true);
         }
-    }, [graphragState.graphHash]);
+    }, [deepgitAiState.graphHash]);
 
     // Check backend health and reset state if needed
     useEffect(() => {
         const checkBackendHealth = async () => {
-            if (graphragState.isReady) {
+            if (deepgitAiState.isReady) {
                 try {
-                    const response = await fetch(API_ENDPOINTS.GRAPHRAG_HEALTH, {
+                    const response = await fetch(API_ENDPOINTS.DEEPGIT_AI_HEALTH, {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json',
@@ -279,13 +279,13 @@ const GraphRAGPanel: FC = () => {
                             messages: [...prevState.messages, {
                                 id: generateMessageId(),
                                 type: 'system' as const,
-                                content: '⚠️ GraphRAG backend was restarted. Please set up the system again.',
+                                content: '⚠️ DeepGitAI backend was restarted. Please set up the system again.',
                                 timestamp: new Date()
                             }]
                         }));
                         notify({
                             type: "warning",
-                            message: "GraphRAG backend was restarted. Please set up the system again.",
+                            message: "DeepGitAI backend was restarted. Please set up the system again.",
                         });
                     }
                 } catch (error) {
@@ -295,37 +295,37 @@ const GraphRAGPanel: FC = () => {
                         messages: [...prevState.messages, {
                             id: generateMessageId(),
                             type: 'system' as const,
-                            content: '❌ Cannot connect to GraphRAG backend. Please ensure the server is running.',
+                            content: '❌ Cannot connect to DeepGitAI backend. Please ensure the server is running.',
                             timestamp: new Date()
                         }]
                     }));
                     notify({
                         type: "error",
-                        message: "Cannot connect to GraphRAG backend. Please ensure the server is running.",
+                        message: "Cannot connect to DeepGitAI backend. Please ensure the server is running.",
                     });
                 }
             }
         };
 
         checkBackendHealth();
-    }, [graphragState.isReady]);
+    }, [deepgitAiState.isReady]);
 
     // Handle graph change confirmation
     const handleGraphChangeConfirm = (useNewGraph: boolean) => {
         if (useNewGraph) {
             // Reset state for new graph
-            const newState: GraphRAGState = {
+            const newState: DeepGitAIState = {
                 graphHash: '',
                 isReady: false,
                 messages: [{
                     id: generateMessageId(),
                     type: 'assistant',
-                    content: 'Hello! I\'m your GraphRAG assistant. I can help you analyze your GitHub repository graph with AI-powered insights. Let\'s get started by setting up the system.',
+                    content: 'Hello! I\'m your DeepGitAI assistant. I can help you analyze your GitHub repository graph with AI-powered insights. Let\'s get started by setting up the system.',
                     timestamp: new Date()
                 }],
-                selectedProvider: graphragState.selectedProvider
+                selectedProvider: deepgitAiState.selectedProvider
             };
-            setGraphragState(newState);
+            setDeepgitAiState(newState);
             saveState(newState);
         }
         setShowGraphChangeDialog(false);
@@ -333,11 +333,11 @@ const GraphRAGPanel: FC = () => {
     };
 
     // Update state and persist changes
-    const updateState = (updates: Partial<GraphRAGState> | ((prevState: GraphRAGState) => Partial<GraphRAGState>)) => {
+    const updateState = (updates: Partial<DeepGitAIState> | ((prevState: DeepGitAIState) => Partial<DeepGitAIState>)) => {
         const newState = typeof updates === 'function'
-            ? { ...graphragState, ...updates(graphragState) }
-            : { ...graphragState, ...updates };
-        setGraphragState(newState);
+            ? { ...deepgitAiState, ...updates(deepgitAiState) }
+            : { ...deepgitAiState, ...updates };
+        setDeepgitAiState(newState);
         saveState(newState);
     };
 
@@ -470,8 +470,8 @@ const GraphRAGPanel: FC = () => {
 
     // Update showSetup based on isReady state
     useEffect(() => {
-        setShowSetup(!graphragState.isReady);
-    }, [graphragState.isReady]);
+        setShowSetup(!deepgitAiState.isReady);
+    }, [deepgitAiState.isReady]);
 
     // Auto-scroll to bottom when new messages are added
     useEffect(() => {
@@ -485,13 +485,13 @@ const GraphRAGPanel: FC = () => {
                 }
             }
         }
-    }, [graphragState.messages]);
+    }, [deepgitAiState.messages]);
 
     // Debug: Log messages when they change
     useEffect(() => {
-        // console.log('Messages updated:', graphragState.messages.length, graphragState.messages);
-        // console.log('Message types:', graphragState.messages.map(m => ({ id: m.id, type: m.type, content: m.content.substring(0, 50) + '...' })));
-    }, [graphragState.messages]);
+        // console.log('Messages updated:', deepgitAiState.messages.length, deepgitAiState.messages);
+        // console.log('Message types:', deepgitAiState.messages.map(m => ({ id: m.id, type: m.type, content: m.content.substring(0, 50) + '...' })));
+    }, [deepgitAiState.messages]);
 
     // Initialize tooltips
     useEffect(() => {
@@ -533,21 +533,21 @@ const GraphRAGPanel: FC = () => {
 
     const validateAPIKeys = (): boolean => {
         const apiKeys = getSessionAPIKeys();
-        if (graphragState.selectedProvider === "openai" && !apiKeys.openaiKey) {
+        if (deepgitAiState.selectedProvider === "openai" && !apiKeys.openaiKey) {
             notify({
                 type: "error",
                 message: "Please enter your OpenAI API key",
             });
             return false;
         }
-        if (graphragState.selectedProvider === "azure_openai" && (!apiKeys.azureOpenAIKey || !apiKeys.azureOpenAIEndpoint || !apiKeys.azureOpenAIDeployment)) {
+        if (deepgitAiState.selectedProvider === "azure_openai" && (!apiKeys.azureOpenAIKey || !apiKeys.azureOpenAIEndpoint || !apiKeys.azureOpenAIDeployment)) {
             notify({
                 type: "error",
                 message: "Please enter all Azure OpenAI credentials",
             });
             return false;
         }
-        if (graphragState.selectedProvider === "gemini" && !apiKeys.geminiKey) {
+        if (deepgitAiState.selectedProvider === "gemini" && !apiKeys.geminiKey) {
             notify({
                 type: "error",
                 message: "Please enter your Gemini API key",
@@ -574,10 +574,10 @@ const GraphRAGPanel: FC = () => {
         setProgressData(null);
 
         // Add user message showing they clicked setup
-        const newMessages = [...graphragState.messages, {
+        const newMessages = [...deepgitAiState.messages, {
             id: generateMessageId(),
             type: 'user' as const,
-            content: 'Please set up the GraphRAG system for me.',
+            content: 'Please set up the DeepGitAI system for me.',
             timestamp: new Date()
         }];
         updateState({ messages: newMessages });
@@ -585,7 +585,7 @@ const GraphRAGPanel: FC = () => {
         const setupMessages = [...newMessages, {
             id: generateMessageId(),
             type: 'system' as const,
-            content: `🔄 Starting GraphRAG setup for ${graphStats.nodes.toLocaleString()} repositories...`,
+            content: `🔄 Starting DeepGitAI setup for ${graphStats.nodes.toLocaleString()} repositories...`,
             timestamp: new Date()
         }];
         updateState({ messages: setupMessages });
@@ -594,7 +594,7 @@ const GraphRAGPanel: FC = () => {
 
         // Reset progress status before creating EventSource
         // try {
-        //     await fetch('http://localhost:5002/api/graphrag-reset-progress', {
+        //     await fetch('http://localhost:5002/api/deepgit-ai-reset-progress', {
         //         method: 'POST',
         //         headers: { 'Content-Type': 'application/json' }
         //     });
@@ -604,23 +604,23 @@ const GraphRAGPanel: FC = () => {
         // }
 
         // Start listening for progress updates
-        // console.log('Creating EventSource connection to:', 'http://localhost:5002/api/graphrag-progress');
-        // const eventSource = new EventSource('http://localhost:5002/api/graphrag-progress');
+        // console.log('Creating EventSource connection to:', 'http://localhost:5002/api/deepgit-ai-progress');
+        // const eventSource = new EventSource('http://localhost:5002/api/deepgit-ai-progress');
         // console.log('EventSource created, readyState:', eventSource.readyState);
 
 
         try {
-            // Generate session ID for this GraphRAG session
-            const sessionId = `graphrag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            sessionStorage.setItem('graphrag_session_id', sessionId);
+            // Generate session ID for this DeepGitAI session
+            const sessionId = `deepgit-ai_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            sessionStorage.setItem('deepgit-ai_session_id', sessionId);
 
-            const response = await fetch(API_ENDPOINTS.GRAPHRAG_SETUP, {
+            const response = await fetch(API_ENDPOINTS.DEEPGIT_AI_SETUP, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    provider: graphragState.selectedProvider,
+                    provider: deepgitAiState.selectedProvider,
                     apiKeys: getSessionAPIKeys(),
                     graphFile: graphFile.textContent,
                     sessionId: sessionId
@@ -630,10 +630,10 @@ const GraphRAGPanel: FC = () => {
             const result = await response.json();
 
             if (result.success) {
-                const finalMessages = [...graphragState.messages, {
+                const finalMessages = [...deepgitAiState.messages, {
                     id: generateMessageId(),
                     type: 'assistant' as const,
-                    content: '🎉 GraphRAG setup completed successfully! You can now ask questions about your repository graph.',
+                    content: '🎉 DeepGitAI setup completed successfully! You can now ask questions about your repository graph.',
                     timestamp: new Date()
                 }];
                 updateState({
@@ -643,10 +643,10 @@ const GraphRAGPanel: FC = () => {
                 });
 
                 // Update the stored graph hash after successful setup
-                sessionStorage.setItem('graphrag_last_graph_hash', '');
+                sessionStorage.setItem('deepgit-ai_last_graph_hash', '');
 
                 // Also update simple statistics
-                sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+                sessionStorage.setItem('deepgit-ai_last_stats', JSON.stringify({
                     nodes: data?.graph.nodes().length || 0,
                     edges: data?.graph.edges().length || 0
                 }));
@@ -655,7 +655,7 @@ const GraphRAGPanel: FC = () => {
                     type: "error",
                     message: result.error || "Setup failed",
                 });
-                const errorMessages = [...graphragState.messages, {
+                const errorMessages = [...deepgitAiState.messages, {
                     id: generateMessageId(),
                     type: 'system' as const,
                     content: `❌ Setup failed: ${result.error || 'Unknown error'}`,
@@ -667,9 +667,9 @@ const GraphRAGPanel: FC = () => {
             console.error('Setup error:', error);
             notify({
                 type: "error",
-                message: "Failed to setup GraphRAG system",
+                message: "Failed to setup DeepGitAI system",
             });
-            const errorMessages = [...graphragState.messages, {
+            const errorMessages = [...deepgitAiState.messages, {
                 id: generateMessageId(),
                 type: 'system' as const,
                 content: `❌ Setup failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -686,7 +686,7 @@ const GraphRAGPanel: FC = () => {
             return;
         }
 
-        if (!graphragState.isReady) {
+        if (!deepgitAiState.isReady) {
             notify({
                 type: "error",
                 message: "Please complete setup first",
@@ -699,7 +699,7 @@ const GraphRAGPanel: FC = () => {
         setIsLoading(true);
 
         // Add user message
-        const newMessages = [...graphragState.messages, {
+        const newMessages = [...deepgitAiState.messages, {
             id: generateMessageId(),
             type: 'user' as const,
             content: userMessage,
@@ -708,14 +708,14 @@ const GraphRAGPanel: FC = () => {
         updateState({ messages: newMessages });
 
         try {
-            const response = await fetch(API_ENDPOINTS.GRAPHRAG_QUERY, {
+            const response = await fetch(API_ENDPOINTS.DEEPGIT_AI_QUERY, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                     query: userMessage,
-                    provider: graphragState.selectedProvider,
+                    provider: deepgitAiState.selectedProvider,
                     apiKeys: getSessionAPIKeys(),
                 }),
             });
@@ -762,7 +762,7 @@ const GraphRAGPanel: FC = () => {
     };
 
 
-    // Check for graph changes only when user navigates to GraphRAG tab
+    // Check for graph changes only when user navigates to DeepGitAI tab
     useEffect(() => {
         if (!data || !graphFile?.textContent) return;
 
@@ -771,7 +771,7 @@ const GraphRAGPanel: FC = () => {
         const currentEdgeCount = graphStats.edges;
 
         // Get stored statistics
-        const storedStats = sessionStorage.getItem('graphrag_last_stats');
+        const storedStats = sessionStorage.getItem('deepgit-ai_last_stats');
 
         // Only check for changes if we have previous stats (not first visit)
         if (storedStats) {
@@ -780,7 +780,7 @@ const GraphRAGPanel: FC = () => {
 
                 // Check if statistics have changed
                 if (lastNodeCount !== currentNodeCount || lastEdgeCount !== currentEdgeCount) {
-                    console.log('Graph statistics changed! User navigated to GraphRAG tab.', {
+                    console.log('Graph statistics changed! User navigated to DeepGitAI tab.', {
                         previous: { nodes: lastNodeCount, edges: lastEdgeCount },
                         current: { nodes: currentNodeCount, edges: currentEdgeCount }
                     });
@@ -791,11 +791,11 @@ const GraphRAGPanel: FC = () => {
                         const changeMessage = {
                             id: generateMessageId(),
                             type: 'system' as const,
-                            content: `📊 **Graph Structure Changed**\n\nI noticed the graph structure has changed since you last used GraphRAG:\n\n**Previous:** ${lastNodeCount} nodes, ${lastEdgeCount} edges\n**Current:** ${currentNodeCount} nodes, ${currentEdgeCount} edges\n\nWould you like me to rebuild the GraphRAG database to include the latest changes?`,
+                            content: `📊 **Graph Structure Changed**\n\nI noticed the graph structure has changed since you last used DeepGitAI:\n\n**Previous:** ${lastNodeCount} nodes, ${lastEdgeCount} edges\n**Current:** ${currentNodeCount} nodes, ${currentEdgeCount} edges\n\nWould you like me to rebuild the DeepGitAI database to include the latest changes?`,
                             timestamp: new Date(),
                             actions: [
                                 {
-                                    label: "Rebuild GraphRAG",
+                                    label: "Rebuild DeepGitAI",
                                     action: "rebuild",
                                     data: { previous: { nodes: lastNodeCount, edges: lastEdgeCount }, current: { nodes: currentNodeCount, edges: currentEdgeCount } }
                                 },
@@ -808,7 +808,7 @@ const GraphRAGPanel: FC = () => {
                         };
 
                         updateState({
-                            messages: [...graphragState.messages, changeMessage]
+                            messages: [...deepgitAiState.messages, changeMessage]
                         });
 
                         setShowRebuildPrompt(true);
@@ -816,7 +816,7 @@ const GraphRAGPanel: FC = () => {
                     }
                 } else {
                     // No changes detected, just update stored statistics
-                    sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+                    sessionStorage.setItem('deepgit-ai_last_stats', JSON.stringify({
                         nodes: currentNodeCount,
                         edges: currentEdgeCount
                     }));
@@ -824,14 +824,14 @@ const GraphRAGPanel: FC = () => {
             } catch (error) {
                 console.error('Error parsing stored stats:', error);
                 // Update stored statistics on error
-                sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+                sessionStorage.setItem('deepgit-ai_last_stats', JSON.stringify({
                     nodes: currentNodeCount,
                     edges: currentEdgeCount
                 }));
             }
         } else {
             // First visit - just store initial statistics without alerting
-            sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+            sessionStorage.setItem('deepgit-ai_last_stats', JSON.stringify({
                 nodes: currentNodeCount,
                 edges: currentEdgeCount
             }));
@@ -841,10 +841,10 @@ const GraphRAGPanel: FC = () => {
     // Handle action button clicks in messages
     const handleMessageAction = (action: string, data: any) => {
         if (action === 'rebuild') {
-            // Trigger GraphRAG rebuild
+            // Trigger DeepGitAI rebuild
             handleSetup().then(() => {
                 // Update stored statistics after successful setup
-                sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+                sessionStorage.setItem('deepgit-ai_last_stats', JSON.stringify({
                     nodes: data.current.nodes,
                     edges: data.current.edges
                 }));
@@ -853,17 +853,17 @@ const GraphRAGPanel: FC = () => {
                 const confirmMessage = {
                     id: generateMessageId(),
                     type: 'assistant' as const,
-                    content: '✅ GraphRAG database has been rebuilt with the latest graph structure. You can now ask questions about your updated graph!',
+                    content: '✅ DeepGitAI database has been rebuilt with the latest graph structure. You can now ask questions about your updated graph!',
                     timestamp: new Date()
                 };
 
                 updateState({
-                    messages: [...graphragState.messages, confirmMessage]
+                    messages: [...deepgitAiState.messages, confirmMessage]
                 });
             });
         } else if (action === 'keep') {
             // User chose to keep existing database
-            sessionStorage.setItem('graphrag_last_stats', JSON.stringify({
+            sessionStorage.setItem('deepgit-ai_last_stats', JSON.stringify({
                 nodes: data.current.nodes,
                 edges: data.current.edges
             }));
@@ -872,12 +872,12 @@ const GraphRAGPanel: FC = () => {
             const confirmMessage = {
                 id: generateMessageId(),
                 type: 'assistant' as const,
-                content: '👍 Got it! I\'ll keep using the existing GraphRAG database. You can continue asking questions about your graph.',
+                content: '👍 Got it! I\'ll keep using the existing DeepGitAI database. You can continue asking questions about your graph.',
                 timestamp: new Date()
             };
 
             updateState({
-                messages: [...graphragState.messages, confirmMessage]
+                messages: [...deepgitAiState.messages, confirmMessage]
             });
         }
 
@@ -1057,7 +1057,7 @@ const GraphRAGPanel: FC = () => {
     };
 
     return (
-        <div className="d-flex flex-column h-100 graphrag-chat">
+        <div className="d-flex flex-column h-100 deepgit-ai-chat" style={{ minHeight: 0 }}>
             {/* Graph Change Confirmation Dialog */}
             {showGraphChangeDialog && (
                 <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
@@ -1075,7 +1075,7 @@ const GraphRAGPanel: FC = () => {
                                 <p>The graph has been updated (filtering, edges, etc.).</p>
                                 <p>Would you like to:</p>
                                 <ul>
-                                    <li><strong>Use the new graph:</strong> Reset GraphRAG setup and start fresh</li>
+                                    <li><strong>Use the new graph:</strong> Reset DeepGitAI setup and start fresh</li>
                                     <li><strong>Keep using the old graph:</strong> Continue with current setup</li>
                                 </ul>
                             </div>
@@ -1101,11 +1101,11 @@ const GraphRAGPanel: FC = () => {
             )}
 
             {/* Header */}
-            <div className="p-3 border-bottom">
+            <div className="p-3 deepgit-ai-header" style={{ position: 'sticky', top: 0, zIndex: 1000, background: 'white' }}>
                 <div className="d-flex align-items-center justify-content-between">
                     <div className="d-flex align-items-center">
                         <AiOutlineRobot className="me-2" />
-                        <h5 className="mb-0">GraphRAG Assistant</h5>
+                        <h5 className="mb-0">DeepGitAI Assistant</h5>
                     </div>
                     <button
                         className="btn btn-sm btn-outline-secondary"
@@ -1122,7 +1122,7 @@ const GraphRAGPanel: FC = () => {
                 <div className="p-3 border-bottom setup-panel">
                     {!graphFile?.textContent && (
                         <div className="alert alert-warning mb-3">
-                            <strong>No Graph Loaded:</strong> Please load a graph first to use GraphRAG.
+                            <strong>No Graph Loaded:</strong> Please load a graph first to use DeepGitAI.
                         </div>
                     )}
 
@@ -1155,7 +1155,7 @@ const GraphRAGPanel: FC = () => {
                         <div className="d-flex align-items-center">
                             <AiOutlineInfoCircle className="me-2" />
                             <div>
-                                <strong>Note:</strong> GraphRAG resets when you update the graph. Everything is cleared when you close the browser tab.
+                                <strong>Note:</strong> DeepGitAI resets when you update the graph. Everything is cleared when you close the browser tab.
                             </div>
                         </div>
                     </div>
@@ -1192,7 +1192,7 @@ const GraphRAGPanel: FC = () => {
                         <label className="form-label">LLM Provider</label>
                         <select
                             className="form-select"
-                            value={graphragState.selectedProvider}
+                            value={deepgitAiState.selectedProvider}
                             onChange={(e) => updateState({ selectedProvider: e.target.value })}
                         >
                             <option value="openai">OpenAI (GPT-4, GPT-3.5)</option>
@@ -1202,7 +1202,7 @@ const GraphRAGPanel: FC = () => {
                     </div>
 
                     {/* Provider-specific configuration */}
-                    {graphragState.selectedProvider === "openai" && (
+                    {deepgitAiState.selectedProvider === "openai" && (
                         <div className="mb-3">
                             <label className="form-label">
                                 <AiOutlineRobot className="me-2" />
@@ -1227,7 +1227,7 @@ const GraphRAGPanel: FC = () => {
                         </div>
                     )}
 
-                    {graphragState.selectedProvider === "azure_openai" && (
+                    {deepgitAiState.selectedProvider === "azure_openai" && (
                         <>
                             <div className="mb-3">
                                 <label className="form-label">
@@ -1294,7 +1294,7 @@ const GraphRAGPanel: FC = () => {
                         </>
                     )}
 
-                    {graphragState.selectedProvider === "gemini" && (
+                    {deepgitAiState.selectedProvider === "gemini" && (
                         <div className="mb-3">
                             <label className="form-label">
                                 <SiGoogle className="me-2" />
@@ -1327,12 +1327,12 @@ const GraphRAGPanel: FC = () => {
                         {isSetupLoading ? (
                             <>
                                 <span className="spinner-border spinner-border-sm me-2" />
-                                Setting up GraphRAG...
+                                Setting up DeepGitAI...
                             </>
                         ) : (
                             <>
-                                {getProviderIcon(graphragState.selectedProvider)}
-                                Setup GraphRAG System
+                                {getProviderIcon(deepgitAiState.selectedProvider)}
+                                Setup DeepGitAI System
                             </>
                         )}
                     </button>
@@ -1340,8 +1340,8 @@ const GraphRAGPanel: FC = () => {
             )}
 
             {/* Chat Messages */}
-            <div className="flex-grow-1 overflow-auto p-3 chat-messages">
-                {graphragState.messages.map((message, index) => {
+            <div className="flex-grow-1 p-3 chat-messages" style={{ minHeight: 0 }}>
+                {deepgitAiState.messages.map((message, index) => {
                     // console.log(`Rendering message ${index}:`, message.type, message.content.substring(0, 50) + '...');
                     return (
                         <div
@@ -1360,7 +1360,7 @@ const GraphRAGPanel: FC = () => {
                             >
                                 <div className="mb-1">
                                     <small className="text-muted">
-                                        {message.type === 'user' ? 'You' : 'GraphRAG'} • {formatTime(message.timestamp)}
+                                        {message.type === 'user' ? 'You' : 'DeepGitAI'} • {formatTime(message.timestamp)}
                                     </small>
                                 </div>
                                 <div style={{ whiteSpace: 'pre-wrap' }}>
@@ -1392,8 +1392,8 @@ const GraphRAGPanel: FC = () => {
             </div>
 
             {/* Chat Input */}
-            {graphragState.isReady && (
-                <div className="p-3 border-top chat-input">
+            {deepgitAiState.isReady && (
+                <div className="p-3 chat-input" style={{ position: 'sticky', bottom: 0, zIndex: 999, background: 'white' }}>
                     <div className="input-group">
                         <input
                             type="text"
@@ -1425,4 +1425,4 @@ const GraphRAGPanel: FC = () => {
     );
 };
 
-export default GraphRAGPanel;
+export default DeepGitAIPanel;
