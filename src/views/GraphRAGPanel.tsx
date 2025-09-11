@@ -1115,6 +1115,223 @@ const DeepGitAIPanel: FC = () => {
                         <VscSettings />
                     </button>
                 </div>
+
+                {showSetup && (
+                    <div className="setup-dropdown p-3">
+                        {!graphFile?.textContent && (
+                            <div className="alert alert-warning mb-3">
+                                <strong>No Graph Loaded:</strong> Please load a graph first to use DeepGitAI.
+                            </div>
+                        )}
+
+                        {graphStats.hasData && (
+                            <div className="card mb-3">
+                                <div className="card-header">
+                                    <h6 className="mb-0">📈 Graph Statistics</h6>
+                                </div>
+                                <div className="card-body">
+                                    <div className="row">
+                                        <div className="col-6">
+                                            <div className="text-center">
+                                                <div className="h4 text-primary mb-1">{graphStats.nodes.toLocaleString()}</div>
+                                                <small className="text-muted">Repositories</small>
+                                            </div>
+                                        </div>
+                                        <div className="col-6">
+                                            <div className="text-center">
+                                                <div className="h4 text-success mb-1">{graphStats.edges.toLocaleString()}</div>
+                                                <small className="text-muted">Connections</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="alert alert-warning mb-3">
+                            <div className="d-flex align-items-center">
+                                <AiOutlineInfoCircle className="me-2" />
+                                <div>
+                                    <strong>Note:</strong> DeepGitAI resets when you update the graph. Everything is cleared when you close the browser tab.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">
+                                <BsGithub className="me-2" />
+                                GitHub Personal Access Token
+                                <AiOutlineQuestionCircle
+                                    id="github-token-tooltip"
+                                    className="ms-2"
+                                    style={{ color: '#6c757d', cursor: 'help' }}
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    data-bs-html="true"
+                                    title="Required for accessing GitHub repository data. Stored only in browser memory and cleared when tab closes. Never sent to servers or stored permanently."
+                                />
+                            </label>
+                            <input
+                                type="password"
+                                className="form-control"
+                                placeholder="ghp_..."
+                                value={sessionAPIKeys.githubToken}
+                                onChange={(e) => handleAPIKeyChange("githubToken", e.target.value)}
+                            />
+                            <small className="form-text text-muted">
+                                Required for accessing GitHub repository data
+                            </small>
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="form-label">LLM Provider</label>
+                            <select
+                                className="form-select"
+                                value={deepgitAiState.selectedProvider}
+                                onChange={(e) => updateState({ selectedProvider: e.target.value })}
+                            >
+                                <option value="openai">OpenAI (GPT-4, GPT-3.5)</option>
+                                <option value="azure_openai">Azure OpenAI</option>
+                                <option value="gemini">Google Gemini</option>
+                            </select>
+                        </div>
+
+                        {deepgitAiState.selectedProvider === "openai" && (
+                            <div className="mb-3">
+                                <label className="form-label">
+                                    <AiOutlineRobot className="me-2" />
+                                    OpenAI API Key
+                                    <AiOutlineQuestionCircle
+                                        id="openai-key-tooltip"
+                                        className="ms-2"
+                                        style={{ color: '#6c757d', cursor: 'help' }}
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        data-bs-html="true"
+                                        title="Your OpenAI API key for GPT models. Stored only in browser memory and cleared when tab closes. Never sent to servers or stored permanently."
+                                    />
+                                </label>
+                                <input
+                                    type="password"
+                                    className="form-control"
+                                    placeholder="sk-..."
+                                    value={sessionAPIKeys.openaiKey}
+                                    onChange={(e) => handleAPIKeyChange("openaiKey", e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        {deepgitAiState.selectedProvider === "azure_openai" && (
+                            <>
+                                <div className="mb-3">
+                                    <label className="form-label">
+                                        <FaMicrosoft className="me-2" />
+                                        Azure OpenAI API Key
+                                        <AiOutlineQuestionCircle
+                                            id="azure-key-tooltip"
+                                            className="ms-2"
+                                            style={{ color: '#6c757d', cursor: 'help' }}
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            data-bs-html="true"
+                                            title="Your Azure OpenAI API key. Stored only in browser memory and cleared when tab closes. Never sent to servers or stored permanently."
+                                        />
+                                    </label>
+                                    <input
+                                        type="password"
+                                        className="form-control"
+                                        placeholder="Azure API Key"
+                                        value={sessionAPIKeys.azureOpenAIKey}
+                                        onChange={(e) => handleAPIKeyChange("azureOpenAIKey", e.target.value)}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Azure OpenAI Endpoint
+                                        <AiOutlineQuestionCircle
+                                            id="azure-endpoint-tooltip"
+                                            className="ms-2"
+                                            style={{ color: '#6c757d', cursor: 'help' }}
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            data-bs-html="true"
+                                            title="Your Azure OpenAI endpoint URL. Stored only in browser memory and cleared when tab closes. Never sent to servers or stored permanently."
+                                        />
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="https://your-resource.openai.azure.com/"
+                                        value={sessionAPIKeys.azureOpenAIEndpoint}
+                                        onChange={(e) => handleAPIKeyChange("azureOpenAIEndpoint", e.target.value)}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Azure OpenAI Deployment Name
+                                        <AiOutlineQuestionCircle
+                                            id="azure-deployment-tooltip"
+                                            className="ms-2"
+                                            style={{ color: '#6c757d', cursor: 'help' }}
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            data-bs-html="true"
+                                            title="Your Azure OpenAI deployment name (e.g., gpt-4). Stored only in browser memory and cleared when tab closes. Never sent to servers or stored permanently."
+                                        />
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="gpt-4"
+                                        value={sessionAPIKeys.azureOpenAIDeployment}
+                                        onChange={(e) => handleAPIKeyChange("azureOpenAIDeployment", e.target.value)}
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        {deepgitAiState.selectedProvider === "gemini" && (
+                            <div className="mb-3">
+                                <label className="form-label">
+                                    <SiGoogle className="me-2" />
+                                    Google Gemini API Key
+                                    <AiOutlineQuestionCircle
+                                        id="gemini-key-tooltip"
+                                        className="ms-2"
+                                        style={{ color: '#6c757d', cursor: 'help' }}
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        data-bs-html="true"
+                                        title="Your Google Gemini API key. Stored only in browser memory and cleared when tab closes. Never sent to servers or stored permanently."
+                                    />
+                                </label>
+                                <input
+                                    type="password"
+                                    className="form-control"
+                                    placeholder="AIza..."
+                                    value={sessionAPIKeys.geminiKey}
+                                    onChange={(e) => handleAPIKeyChange("geminiKey", e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        <button
+                            className="btn btn-primary w-100"
+                            onClick={handleSetup}
+                            disabled={isSetupLoading || !graphFile?.textContent}
+                        >
+                            {isSetupLoading ? (
+                                <>
+                                    <span className="spinner-border spinner-border-sm me-2" />
+                                    Setting up DeepGitAI...
+                                </>
+                            ) : (
+                                <>
+                                    {getProviderIcon(deepgitAiState.selectedProvider)}
+                                    Setup DeepGitAI System
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Setup Panel */}

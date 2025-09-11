@@ -2400,6 +2400,12 @@ Example queries:
         try:
             # Parse the response to extract query type and parameters
             content = response.content
+            # If user provided explicit owner/repo anywhere, prefer graph similarity
+            repo_explicit = re.search(r"([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)", state.query)
+            if repo_explicit:
+                state.graph_results["query_type"] = "find_similar_repos"
+                state.graph_results["repo_name"] = repo_explicit.group(1)
+                return state
             if "find_similar_repos" in content.lower():
                 state.graph_results["query_type"] = "find_similar_repos"
                 # Extract repository name
@@ -2444,7 +2450,13 @@ Example queries:
             elif query_type == "find_popular_repos":
                 results = self._find_popular_repositories()
             elif query_type == "semantic_search":
-                results = self._find_by_semantic_search(state.query)
+                # Try embeddings; if not available/empty, fall back to graph popularity
+                try:
+                    results = self._find_by_semantic_search(state.query)
+                    if not results:
+                        results = self._find_popular_repositories()
+                except Exception:
+                    results = self._find_popular_repositories()
             else:
                 results = self._find_popular_repositories()
             
@@ -2479,32 +2491,32 @@ Example queries:
         return state
     
     def _generate_answer_node(self, state: DeepGitAIState) -> DeepGitAIState:
-        """Generate the final answer using the graph results and README content."""
+        """Generate the final answer using graph metadata (RAG from DB) and README content when available."""
         
-        system_prompt = """You are a helpful assistant that provides information about GitHub repositories based ONLY on the data provided in the context below.
+        system_prompt = """You are a helpful assistant that answers based on the database context provided.
 
-CRITICAL CONSTRAINTS:
-- You MUST ONLY use information from the provided context
-- You MUST NOT use any external knowledge or general information
-- You MUST NOT make assumptions about repositories not in the context
-- You MUST NOT provide information about technologies, languages, or concepts not mentioned in the context
-- If information is not available in the context, you MUST say "This information is not available in the current dataset"
+Rules:
+- Prefer information from the context (graph metadata and README text).
+- If README content is missing, still answer using graph metadata (stars, primaryLanguage, topics, and relationships).
+- Do not invent repository names that are not present in the context. If a specific detail is missing, omit it rather than declining the answer.
 
-You have access to:
-1. Graph analysis results showing repository relationships and metadata from the Kuzu database
-2. README content from the repositories stored in the database
+Provenance (MUST DO):
+- For EVERY repository you mention, append a provenance tag at the end of its line:
+  - "Source: README" if the repository appears in the README Content section below
+  - "Source: Graph" otherwise
+- If Source: README, include a short Evidence line with a 1–2 sentence snippet derived from the README content for that repo. Keep evidence concise.
 
-Provide a comprehensive answer that:
-- Explains the repositories found using ONLY the provided data
-- Highlights key features from READMEs in the context
-- Mentions relationships between repositories from the graph data
-- Suggests which repositories might be most relevant based on the data
+You can use:
+1) Graph analysis results (ids, stars, primaryLanguage, topics, relationships)
+2) README content snippets (when present)
 
-IMPORTANT: When mentioning repositories, use the format [repository_name](repo_id) to make them clickable. For example:
-- "The [SWI-Prolog/swipl-devel](SWI-Prolog/swipl-devel) repository..."
-- "Check out [souffle-lang/souffle](souffle-lang/souffle) for..."
+Write a concise, helpful answer that:
+- Explains relevant repositories to explore and why
+- Uses README insights when available; otherwise use graph metadata
+- Mentions relationships between repositories when present
 
-Be informative but concise. If you cannot answer based on the provided context, explicitly state that the information is not available in the current dataset."""
+When mentioning repositories, use [repository_name](repo_id) so they are clickable.
+Always include the provenance tag (Source: README|Graph) for each repository and Evidence when Source: README."""
 
         # Prepare context
         graph_results = state.graph_results.get("results", [])
