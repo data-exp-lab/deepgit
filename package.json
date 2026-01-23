@@ -29,7 +29,7 @@
     "graphology-types": "^0.24.8",
     "iwanthue": "^2.0.0",
     "jotai": "^2.10.3",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "lucide-react": "^0.510.0",
     "rc-slider": "^11.1.7",
     "react": "^18.3.1",
